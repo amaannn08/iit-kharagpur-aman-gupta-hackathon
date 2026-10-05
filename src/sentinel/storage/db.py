@@ -1,11 +1,23 @@
 """SQLite database engine and session management."""
 
+from pathlib import Path
 from typing import Generator
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, declarative_base, sessionmaker
 
 from sentinel.config import settings
+
+
+def _ensure_sqlite_parent_dir(url: str) -> None:
+    """Ensure parent directory exists for SQLite database files."""
+    if url.startswith("sqlite:///"):
+        raw_path = url[len("sqlite:///") :]
+        if raw_path and raw_path != ":memory:":
+            Path(raw_path).resolve().parent.mkdir(parents=True, exist_ok=True)
+
+
+_ensure_sqlite_parent_dir(settings.database_url)
 
 engine = create_engine(
     settings.database_url,
@@ -28,4 +40,5 @@ def get_db() -> Generator[Session, None, None]:
 
 def init_db() -> None:
     """Create all database tables."""
+    _ensure_sqlite_parent_dir(settings.database_url)
     Base.metadata.create_all(bind=engine)

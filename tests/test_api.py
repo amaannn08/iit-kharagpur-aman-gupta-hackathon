@@ -1,8 +1,13 @@
 """Unit tests for FastAPI endpoints: health, datasets, and scenarios."""
 
+import subprocess
+import sys
+
 from fastapi.testclient import TestClient
 
 from sentinel.api.app import app
+from sentinel.config import settings
+from sentinel.storage.db import init_db
 
 client = TestClient(app)
 
@@ -61,3 +66,42 @@ def test_scenarios_endpoint():
     assert "SCENARIO-CREDIT-01" in scenario_ids
     assert "SCENARIO-RATE-01" in scenario_ids
     assert "SCENARIO-SUPPLY-01" in scenario_ids
+
+
+def test_runtime_database_isolation_and_no_root_db():
+    """Verify default database is stored in .runtime and root sentinel.db is not created."""
+    init_db()
+
+    root_db = settings.base_dir / "sentinel.db"
+    assert not root_db.exists(), f"Forbidden database file detected at repository root: {root_db}"
+
+    runtime_db = settings.base_dir / ".runtime" / "sentinel.db"
+    assert runtime_db.exists(), f"Expected runtime database file at {runtime_db}"
+
+    # Also verify lifespan context manager initialization
+    with TestClient(app):
+        assert not root_db.exists(), f"Forbidden root DB created during app lifespan: {root_db}"
+
+
+def test_hygiene_verification_passes_with_runtime_db_and_rejects_external_db():
+    """Verify verify_hygiene passes with .runtime DB but rejects forbidden external DBs."""
+    script_path = settings.base_dir / "scripts" / "verify_hygiene.py"
+
+    # 1. Standard run must pass cleanly
+    res = subprocess.run([sys.executable, str(script_path)], capture_output=True, text=True)
+    assert res.returncode == 0, f"Hygiene check failed: {res.stdout}\n{res.stderr}"
+
+    # 2. Placing a forbidden db in repo root must trigger failure
+    probe_db = settings.base_dir / "forbidden_test.db"
+    try:
+        probe_db.write_text("probe")
+        fail_res = subprocess.run(
+            [sys.executable, str(script_path)],
+            capture_output=True,
+            text=True,
+        )
+        assert fail_res.returncode != 0
+        assert "Forbidden extension detected: forbidden_test.db" in fail_res.stderr
+    finally:
+        if probe_db.exists():
+            probe_db.unlink()

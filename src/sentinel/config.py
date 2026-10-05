@@ -26,7 +26,8 @@ class Settings(BaseSettings):
     # Paths
     base_dir: Path = Path(__file__).resolve().parent.parent.parent
     data_dir: Path = base_dir / "data"
-    database_url: str = f"sqlite:///{base_dir / 'sentinel.db'}"
+    runtime_dir: Path = base_dir / ".runtime"
+    database_url: str = f"sqlite:///{base_dir / '.runtime' / 'sentinel.db'}"
 
     # Replay parameters
     default_replay_speed: str = "1x"

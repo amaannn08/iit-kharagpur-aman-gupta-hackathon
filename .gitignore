@@ -60,6 +60,7 @@ yarn-error.log*
 pnpm-debug.log*
 
 # Databases & local state
+.runtime/
 *.sqlite
 *.sqlite3
 *.db

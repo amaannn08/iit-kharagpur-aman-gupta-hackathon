@@ -81,8 +81,17 @@ def check_forbidden_files() -> bool:
     forbidden_files = {"secrets.json", ".env"}
 
     violations = []
-    # Walk repository ignoring .venv, node_modules, .git
-    ignored_dirs = {".git", ".venv", "venv", "node_modules", "dist", ".vite", "__pycache__"}
+    # Walk repository ignoring virtualenvs, build artifacts, and runtime directory
+    ignored_dirs = {
+        ".git",
+        ".venv",
+        "venv",
+        "node_modules",
+        "dist",
+        ".vite",
+        "__pycache__",
+        ".runtime",
+    }
 
     for root, dirs, files in os.walk(REPO_ROOT):
         dirs[:] = [d for d in dirs if d not in ignored_dirs]
