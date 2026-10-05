@@ -3,7 +3,7 @@
 from datetime import date
 from enum import Enum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class AssetClass(str, Enum):
@@ -29,6 +29,8 @@ class LoanPosition(BaseModel):
 
 
 class BondPosition(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     position_id: str
     asset_class: AssetClass = AssetClass.BOND
     entity_id: str
@@ -63,6 +65,8 @@ class SwapPosition(BaseModel):
 
 
 class CashPosition(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     position_id: str
     asset_class: AssetClass = AssetClass.CASH
     entity_id: str

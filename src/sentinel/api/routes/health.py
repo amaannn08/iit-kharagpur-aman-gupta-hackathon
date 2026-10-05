@@ -1,6 +1,6 @@
 """Health and runtime readiness endpoint."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import APIRouter
 
@@ -29,7 +29,7 @@ def get_health():
         "project": settings.project_name,
         "version": settings.version,
         "mode": settings.mode,
-        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "datasets_ready": datasets_present,
         "environment": {
             "offline_only": True,
