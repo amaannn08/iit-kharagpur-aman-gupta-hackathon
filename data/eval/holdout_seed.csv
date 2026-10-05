@@ -1,0 +1,13 @@
+eval_id,text,gold_entity,gold_sentiment_label,gold_sentiment_score,gold_event_class,gold_severity_score,is_adversarial
+eval-001,"Apex Industrial Holdings missed its scheduled $45M credit facility coupon payment, triggering default covenants.",APEX,negative,-0.92,CREDIT,9,false
+eval-002,"Apex Industrial Holdings formally denies bankruptcy rumors and confirms all credit lines remain fully operational.",APEX,positive,0.65,CREDIT,3,true
+eval-003,"Federal Reserve surprises markets by hiking benchmark interest rates 75 basis points to combat stubborn inflation.",MACRO,negative,-0.78,MACRO,8,false
+eval-004,"Central bank maintains interest rates unchanged as consumer price index stabilizes near target.",MACRO,neutral,0.05,MACRO,2,false
+eval-005,"Titan Steel declared force majeure at primary blast furnace following catastrophic industrial fire.",TSTEL,negative,-0.85,SUPPLY_CHAIN,8,false
+eval-006,"Meridian Financial posts record quarterly earnings as commercial net interest margin expands 35 bps.",MFIN,positive,0.88,EARNINGS,4,false
+eval-007,"DOJ initiates formal antitrust monopolization lawsuit against Quantum Semiconductor merger.",QSEM,negative,-0.75,REGULATORY,7,false
+eval-008,"Starlight Energy announced $4.8B all-cash acquisition of SolarWave Infrastructure.",SLEN,neutral,0.10,M_AND_A,5,false
+eval-009,"Unpatched zero-day flaw in CloudSecure enterprise gateway actively exploited by ransomware actors.",CSEC,negative,-0.89,CYBER,8,false
+eval-010,"BioHealth Pharma wins priority FDA approval for breakthrough oncology therapeutic with zero restrictions.",BHPH,positive,0.92,PRODUCT,5,false
+eval-011,"Caterpillar heavy machinery sales declined 4% in Latin America due to regional election uncertainty.",CAT,negative,-0.40,EARNINGS,4,true
+eval-012,"Apple announces annual shareholder meeting date and regular quarterly dividend declaration.",AAPL,neutral,0.02,OTHER,1,false

@@ -1,0 +1,21 @@
+{
+  "scenario_id": "SCENARIO-SUPPLY-01",
+  "name": "Industrial Materials & Logistics Disruption",
+  "description": "Simulates blast furnace force majeure at Titan Steel and maritime hub congestion propagating credit widening and operating delays to downstream automotive manufacturing.",
+  "event_class": "SUPPLY_CHAIN",
+  "trigger_impact_score": 7,
+  "target_entity": "TSTEL",
+  "direct_shocks": {
+    "bond_spread_shift_bps": 95.0,
+    "loan_pd_increment": 0.015,
+    "lgd_increment": 0.0
+  },
+  "contagion": {
+    "enabled": true,
+    "hop_decay": 0.60,
+    "max_hops": 2
+  },
+  "macro_shocks": {
+    "benchmark_yield_shift_bps": 0.0
+  }
+}

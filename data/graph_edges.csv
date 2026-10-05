@@ -1,0 +1,11 @@
+source_ticker,target_ticker,relationship_type,transmission_factor,sign,is_synthetic,rationale
+TSTEL,VAUTO,supplier,0.65,1,true,"Titan Steel supplies specialized structural steel sheets to Vanguard Auto factories"
+GLOG,VAUTO,logistics_partner,0.50,1,true,"Global Logistics handles maritime inbound freight for Vanguard Auto assembly"
+QSEM,CSEC,component_supplier,0.40,1,true,"Quantum Semiconductor provides specialized cryptographic accelerator chips to CloudSecure"
+LITH,VAUTO,raw_materials,0.70,1,true,"Lithium One provides battery-grade lithium carbonate for Vanguard EV battery cells"
+APEX,TSTEL,customer,0.45,1,true,"Apex Industrial purchases industrial fabrication from Titan Steel"
+APEX,GLOG,customer,0.35,1,true,"Apex Industrial contracts outbound equipment freight with Global Logistics"
+MFIN,APEX,lender,0.80,1,true,"Meridian Financial holds syndicated credit exposure to Apex Industrial"
+MFIN,SLEN,lender,0.60,1,true,"Meridian Financial co-arranged utility project financing for Starlight Energy"
+CSEC,FSBK,security_vendor,0.55,1,true,"CloudSecure provides edge protection for FinSecure payment gateways"
+PTEL,DCLD,infrastructure_provider,0.50,1,true,"Pacific Telecom routes enterprise bandwidth for DataCloud cloud clusters"

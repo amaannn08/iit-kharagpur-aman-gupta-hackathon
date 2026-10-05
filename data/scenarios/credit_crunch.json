@@ -1,0 +1,21 @@
+{
+  "scenario_id": "SCENARIO-CREDIT-01",
+  "name": "Single-Issuer Credit Deterioration & Contagion",
+  "description": "Simulates acute credit distress for Apex Industrial Holdings with severe spread blowout, rating downgrade, and loan PD expansion.",
+  "event_class": "CREDIT",
+  "trigger_impact_score": 8,
+  "target_entity": "APEX",
+  "direct_shocks": {
+    "bond_spread_shift_bps": 150.0,
+    "loan_pd_increment": 0.025,
+    "lgd_increment": 0.05
+  },
+  "contagion": {
+    "enabled": true,
+    "hop_decay": 0.50,
+    "max_hops": 2
+  },
+  "macro_shocks": {
+    "benchmark_yield_shift_bps": 0.0
+  }
+}

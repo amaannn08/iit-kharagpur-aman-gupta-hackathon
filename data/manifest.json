@@ -1,0 +1,164 @@
+{
+  "manifest_version": "1.0",
+  "generated_at": "2026-10-05T22:46:00Z",
+  "author": "Aman Gupta (IIT Kharagpur)",
+  "compliance": {
+    "confidential_client_data": false,
+    "proprietary_data": false,
+    "synthetic_data_disclosed": true,
+    "hackathon_guidelines_section_8_compliant": true
+  },
+  "datasets": [
+    {
+      "file_path": "data/news_demo.csv",
+      "format": "csv",
+      "description": "Curated synthetic financial news headlines and narrative paragraphs covering credit, macro, supply chain, regulatory, and earnings events.",
+      "is_synthetic": true,
+      "license": "CC-BY-4.0 (Authored Synthetic)",
+      "sha256": "0f4ec4ae71089cf953abf953ecd888746f56e0cba487d703220ad2d4369b32fb",
+      "byte_size": 8906,
+      "record_count": 25,
+      "primary_keys": ["record_id"],
+      "columns": [
+        "record_id",
+        "source_id",
+        "source_type",
+        "headline",
+        "body",
+        "published_at",
+        "timestamp_quality",
+        "simulated_at",
+        "is_synthetic",
+        "primary_entity_id",
+        "event_class"
+      ]
+    },
+    {
+      "file_path": "data/social_demo.csv",
+      "format": "csv",
+      "description": "Curated synthetic financial social media posts containing cashtags, trader sentiment chatter, and market rumors.",
+      "is_synthetic": true,
+      "license": "CC-BY-4.0 (Authored Synthetic)",
+      "sha256": "38115556c42fc7b5557f2106c4f12c887e49bc8c6ec0044c62e1104e37a60f13",
+      "byte_size": 6177,
+      "record_count": 25,
+      "primary_keys": ["record_id"],
+      "columns": [
+        "record_id",
+        "source_id",
+        "source_type",
+        "text",
+        "author_handle",
+        "published_at",
+        "timestamp_quality",
+        "simulated_at",
+        "is_synthetic",
+        "cashtags",
+        "primary_entity_id"
+      ]
+    },
+    {
+      "file_path": "data/entity_aliases.csv",
+      "format": "csv",
+      "description": "Curated reference universe mapping tickers to canonical corporate names, sectors, cashtags, aliases, and ambiguity flags.",
+      "is_synthetic": false,
+      "license": "Public Domain / CC0",
+      "sha256": "beeae2b4eaf41cf2980e5424dec3c682907d8c49f6032ce0819043808ceb5482",
+      "byte_size": 1763,
+      "record_count": 23,
+      "primary_keys": ["ticker"],
+      "columns": ["ticker", "canonical_name", "sector", "cashtags", "aliases", "is_ambiguous"]
+    },
+    {
+      "file_path": "data/wholesale_positions.json",
+      "format": "json",
+      "description": "Synthetic $500M institutional wholesale banking portfolio comprising syndicated corporate loans, corporate bonds, SOFR interest rate swaps, and cash reserves.",
+      "is_synthetic": true,
+      "license": "CC-BY-4.0 (Authored Synthetic)",
+      "sha256": "e2cc26e7dbe8f6254ee33a009a1b0926d7e2ada5ce2f885dce32da058c8703c8",
+      "byte_size": 5865,
+      "record_count": 13,
+      "primary_keys": ["position_id"]
+    },
+    {
+      "file_path": "data/graph_edges.csv",
+      "format": "csv",
+      "description": "Directed contagion graph edges mapping customer-supplier dependencies and credit linkages for second-order risk propagation.",
+      "is_synthetic": true,
+      "license": "CC-BY-4.0 (Authored Synthetic)",
+      "sha256": "d23e1032c12b83428e6aa750ed008d1616c06f4c66cf2e591d11f5e644df2ae1",
+      "byte_size": 1236,
+      "record_count": 10,
+      "columns": [
+        "source_ticker",
+        "target_ticker",
+        "relationship_type",
+        "transmission_factor",
+        "sign",
+        "is_synthetic",
+        "rationale"
+      ]
+    },
+    {
+      "file_path": "data/scenarios/credit_crunch.json",
+      "format": "json",
+      "description": "Scenario configuration for issuer credit deterioration (+150 bps spread blowout, +2.5% loan PD).",
+      "is_synthetic": true,
+      "license": "CC-BY-4.0 (Authored Synthetic)",
+      "sha256": "1b2a0ae5f9c04d6a13406e3dda5601ab954e0c8e640226ce810f1b038a95a0f6",
+      "byte_size": 601,
+      "record_count": 1
+    },
+    {
+      "file_path": "data/scenarios/rate_shock.json",
+      "format": "json",
+      "description": "Scenario configuration for macroeconomic parallel yield curve surge (+100 bps).",
+      "is_synthetic": true,
+      "license": "CC-BY-4.0 (Authored Synthetic)",
+      "sha256": "ea6513299ee9577f4550ea830418fa30c9c8e2380057990112877e4ba32650f3",
+      "byte_size": 602,
+      "record_count": 1
+    },
+    {
+      "file_path": "data/scenarios/supply_disruption.json",
+      "format": "json",
+      "description": "Scenario configuration for industrial materials force majeure with multi-hop supply contagion.",
+      "is_synthetic": true,
+      "license": "CC-BY-4.0 (Authored Synthetic)",
+      "sha256": "14393c7042bee309095939e6771f0ed9af862d2acb45fac5a0e5a2d86b0fd6ad",
+      "byte_size": 643,
+      "record_count": 1
+    },
+    {
+      "file_path": "data/eval/annotation_rubric.md",
+      "format": "markdown",
+      "description": "Evaluation annotation rubric detailing the 9 event taxonomy classes and 1-10 severity rubric calculation.",
+      "is_synthetic": false,
+      "license": "CC-BY-4.0",
+      "sha256": "9b4b3f5c2bc6aada0c22386deef5777e58dcf64a0e150464419374fac61f4d9d",
+      "byte_size": 3480,
+      "record_count": 1
+    },
+    {
+      "file_path": "data/eval/holdout_seed.csv",
+      "format": "csv",
+      "description": "Frozen evaluation holdout seed rows with gold-standard sentiment, event class, and severity scores.",
+      "is_synthetic": true,
+      "license": "CC-BY-4.0 (Authored Synthetic)",
+      "sha256": "34909e6fb231c931b7c4660d8e2a1ca63a062e5b4ab158e98c0c634643a834e0",
+      "byte_size": 1887,
+      "record_count": 12,
+      "primary_keys": ["eval_id"],
+      "columns": [
+        "eval_id",
+        "text",
+        "gold_entity",
+        "gold_sentiment_label",
+        "gold_sentiment_score",
+        "gold_event_class",
+        "gold_severity_score",
+        "is_adversarial"
+      ]
+    }
+  ]
+}

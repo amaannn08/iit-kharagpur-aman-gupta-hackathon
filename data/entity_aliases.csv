@@ -1,0 +1,24 @@
+ticker,canonical_name,sector,cashtags,aliases,is_ambiguous
+APEX,Apex Industrial Holdings,Industrials,$APEX,"Apex Industrial,Apex Corp,Apex Group",false
+GLOG,Global Logistics Corp,Transportation,$GLOG,"Global Logistics,GLOG International",false
+QSEM,Quantum Semiconductor,Technology,$QSEM,"Quantum Semi,Quantum Semiconductor Inc",false
+MFIN,Meridian Financial Group,Financials,$MFIN,"Meridian Financial,Meridian Bank",false
+SLEN,Starlight Energy,Energy,$SLEN,"Starlight Energy,Starlight Power",false
+CSEC,CloudSecure Systems,Technology,$CSEC,"CloudSecure,Cloud Secure Inc",false
+BHPH,BioHealth Pharma,Healthcare,$BHPH,"BioHealth,BioHealth Therapeutics",false
+TSTEL,Titan Steel Industries,Materials,$TSTEL,"Titan Steel,Titan Mills",false
+MEDX,Medix Diagnostics,Healthcare,$MEDX,"Medix,Medix Lab",false
+VAUTO,Vanguard Auto,Consumer Cyclical,$VAUTO,"Vanguard Auto,Vanguard Motors",false
+FSBK,FinSecure Bank,Financials,$FSBK,"FinSecure,FinSecure Bancorp",false
+OMNI,Omni Retail Group,Consumer Defensive,$OMNI,"Omni Retail,Omni Superstores",false
+LITH,Lithium One Resources,Materials,$LITH,"Lithium One,Lithium 1",false
+DCLD,DataCloud Corp,Technology,$DCLD,"DataCloud,DataCloud Systems",false
+PTEL,Pacific Telecom,Communication Services,$PTEL,"Pacific Telecom,PacTel",false
+AERO,AeroTech Industries,Industrials,$AERO,"AeroTech,AeroTech Defense",false
+JPM,JPMorgan Chase & Co,Financials,$JPM,"JPMorgan,JPM,Chase",false
+AAPL,Apple Inc,Technology,$AAPL,"Apple,AAPL",true
+CAT,Caterpillar Inc,Industrials,$CAT,"Caterpillar,CAT",true
+MSFT,Microsoft Corp,Technology,$MSFT,"Microsoft,MSFT",false
+NVDA,NVIDIA Corp,Technology,$NVDA,"Nvidia,NVDA",false
+TSLA,Tesla Inc,Consumer Cyclical,$TSLA,"Tesla,TSLA",false
+BAC,Bank of America,Financials,$BAC,"Bank of America,BofA,BAC",false

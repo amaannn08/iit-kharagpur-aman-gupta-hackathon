@@ -1,0 +1,21 @@
+{
+  "scenario_id": "SCENARIO-RATE-01",
+  "name": "Macro Parallel Rate Hike Shock (+100 bps)",
+  "description": "Simulates a surprise 100 basis point parallel upward shift in sovereign benchmark curves impacting fixed-rate bonds and interest rate swaps.",
+  "event_class": "MACRO",
+  "trigger_impact_score": 8,
+  "target_entity": "MACRO",
+  "direct_shocks": {
+    "bond_spread_shift_bps": 0.0,
+    "loan_pd_increment": 0.0,
+    "lgd_increment": 0.0
+  },
+  "contagion": {
+    "enabled": false,
+    "hop_decay": 0.0,
+    "max_hops": 0
+  },
+  "macro_shocks": {
+    "benchmark_yield_shift_bps": 100.0
+  }
+}
