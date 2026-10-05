@@ -59,7 +59,7 @@ uv run pytest -v
 ### Step 6: Verify Frontend Build & Test Suite
 ```bash
 cd frontend
-npm install
+npm ci
 npm test
 npm run build
 cd ..

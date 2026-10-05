@@ -136,7 +136,7 @@ uv run pytest -v
 ### Step 4: Run Frontend Tests & Production Build
 ```bash
 cd frontend
-npm install
+npm ci
 npm test
 npm run build
 cd ..
