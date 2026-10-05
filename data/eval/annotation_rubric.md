@@ -43,3 +43,12 @@ $$\text{Impact Score} = \min\left(10, \max\left(1, \text{Base Score} + \text{Sco
 - **+0:** Exploratory rumors, preliminary inquiries, or unconfirmed commentary.
 - **+1:** Formal regulatory filing (SEC 8-K, formal notice) or verified operational stoppage.
 - **+2:** Missed payment, immediate credit covenant breach, or irreversible business cessation.
+
+---
+
+## 3. Authorship & Licensing
+
+- **Author:** Aman Gupta (Indian Institute of Technology Kharagpur)
+- **License:** MIT License (Project-Authored Evaluation Rubric, consistent with repository root `LICENSE`)
+- **Provenance Notice:** Conforms to `data/DATA_LICENSE.md`. Contains zero confidential or proprietary criteria from S&P Global or CRISIL.
+
