@@ -1,0 +1,67 @@
+name: S&P Sentinel CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend-verification:
+    name: Backend Lint, Hygiene & Test Suite
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+          enable-cache: true
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install and Sync Dependencies
+        run: uv sync
+
+      - name: Run Ruff Linter
+        run: uv run ruff check .
+
+      - name: Run Hygiene & Manifest Cryptographic Verification
+        run: python scripts/verify_hygiene.py
+
+      - name: Run Backend Pytest Suite
+        run: uv run pytest -v
+
+  frontend-verification:
+    name: Frontend Test, Typecheck & Production Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Frontend Dependencies
+        run: |
+          cd frontend
+          npm install
+
+      - name: Run Frontend Tests (Vitest)
+        run: |
+          cd frontend
+          npm test
+
+      - name: Run Production Build (tsc + vite)
+        run: |
+          cd frontend
+          npm run build
