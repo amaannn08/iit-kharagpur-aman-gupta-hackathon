@@ -1,6 +1,16 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-terminal-bg: #0B0F17;
+  --color-terminal-card: #111827;
+  --color-terminal-border: #1F2937;
+  --color-terminal-text: #E5E7EB;
+  --color-terminal-muted: #9CA3AF;
+  --color-terminal-accent: #38BDF8;
+  --color-terminal-warning: #F59E0B;
+  --color-terminal-danger: #EF4444;
+  --color-terminal-success: #10B981;
+}
 
 :root {
   color-scheme: dark;
