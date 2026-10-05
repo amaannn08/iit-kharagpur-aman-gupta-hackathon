@@ -160,10 +160,10 @@ export function App() {
               </div>
               <div className="flex items-center gap-2 text-xs font-mono">
                 <span className="px-2.5 py-1 rounded bg-gray-900 border border-gray-800 text-gray-300">
-                  Manifest: v{manifest?.manifest_version ?? '1.0'}
+                  Manifest: {manifest ? `v${manifest.manifest_version}` : 'Unavailable'}
                 </span>
                 <span className="px-2.5 py-1 rounded bg-cyan-950/80 text-cyan-300 border border-cyan-800">
-                  {manifest?.datasets.length ?? 10} Registered Datasets
+                  {manifest ? `${manifest.datasets.length} Registered Datasets` : '0 Registered Datasets'}
                 </span>
               </div>
             </div>
@@ -216,9 +216,11 @@ export function App() {
                 <div className="text-xs text-gray-400">Dataset Provenance</div>
                 <div className="text-base font-bold text-cyan-400 font-mono mt-1 flex items-center gap-1.5">
                   <FileCheck className="w-4 h-4 text-cyan-400" />
-                  SHA-256 AUDITED
+                  {manifest ? 'SHA-256 AUDITED' : 'AWAITING MANIFEST'}
                 </div>
-                <div className="text-[11px] text-gray-500 mt-0.5">License: MIT (Project-Authored)</div>
+                <div className="text-[11px] text-gray-500 mt-0.5">
+                  {manifest ? 'License: Audited Offline Fixtures' : 'Manifest: Not Loaded'}
+                </div>
               </div>
             </div>
 
@@ -232,97 +234,67 @@ export function App() {
                   data/manifest.json • Hackathon Section 8 & 9 Compliant
                 </span>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs text-left">
-                  <thead className="text-gray-400 border-b border-gray-800 font-mono text-[11px]">
-                    <tr>
-                      <th className="pb-2">Dataset File Path</th>
-                      <th className="pb-2">Format</th>
-                      <th className="pb-2">Records</th>
-                      <th className="pb-2">Data Type</th>
-                      <th className="pb-2">License</th>
-                      <th className="pb-2 text-right">SHA-256 (Prefix)</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-800/60 font-mono text-xs">
-                    {(manifest?.datasets ?? [
-                      {
-                        file_path: 'data/news_demo.csv',
-                        format: 'csv',
-                        record_count: 25,
-                        is_synthetic: true,
-                        license: 'MIT License (Project-Authored Synthetic Data)',
-                        sha256: '0f4ec4ae71089cf953abf953ecd888746f56e0cba487d703220ad2d4369b32fb',
-                        byte_size: 8906,
-                        description: 'Curated synthetic financial news headlines',
-                      },
-                      {
-                        file_path: 'data/social_demo.csv',
-                        format: 'csv',
-                        record_count: 25,
-                        is_synthetic: true,
-                        license: 'MIT License (Project-Authored Synthetic Data)',
-                        sha256: '38115556c42fc7b5557f2106c4f12c887e49bc8c6ec0044c62e1104e37a60f13',
-                        byte_size: 6177,
-                        description: 'Curated synthetic social posts',
-                      },
-                      {
-                        file_path: 'data/entity_aliases.csv',
-                        format: 'csv',
-                        record_count: 23,
-                        is_synthetic: false,
-                        license: 'Public Factual Identifiers / MIT Reference Universe',
-                        sha256: 'beeae2b4eaf41cf2980e5424dec3c682907d8c49f6032ce0819043808ceb5482',
-                        byte_size: 1763,
-                        description: 'Curated reference universe mapping',
-                      },
-                      {
-                        file_path: 'data/wholesale_positions.json',
-                        format: 'json',
-                        record_count: 13,
-                        is_synthetic: true,
-                        license: 'MIT License (Project-Authored Synthetic Data)',
-                        sha256: 'e2cc26e7dbe8f6254ee33a009a1b0926d7e2ada5ce2f885dce32da058c8703c8',
-                        byte_size: 5865,
-                        description: 'Synthetic $500M institutional wholesale portfolio',
-                      },
-                      {
-                        file_path: 'data/graph_edges.csv',
-                        format: 'csv',
-                        record_count: 10,
-                        is_synthetic: true,
-                        license: 'MIT License (Project-Authored Synthetic Relationships)',
-                        sha256: 'd23e1032c12b83428e6aa750ed008d1616c06f4c66cf2e591d11f5e644df2ae1',
-                        byte_size: 1236,
-                        description: 'Directed contagion graph edges',
-                      },
-                    ]).map((ds) => (
-                      <tr key={ds.file_path} className="hover:bg-gray-900/40">
-                        <td className="py-2.5 text-cyan-400 font-semibold">{ds.file_path}</td>
-                        <td className="text-gray-400 uppercase">{ds.format}</td>
-                        <td className="text-white">{ds.record_count}</td>
-                        <td>
-                          {ds.is_synthetic ? (
-                            <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/30 text-[10px]">
-                              SYNTHETIC
-                            </span>
-                          ) : (
-                            <span className="px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/30 text-[10px]">
-                              FACTUAL REF
-                            </span>
-                          )}
-                        </td>
-                        <td className="text-gray-300 text-[11px] truncate max-w-xs">{ds.license}</td>
-                        <td className="py-2.5 text-right text-gray-500 font-mono text-[11px]">
-                          {ds.sha256 ? `${ds.sha256.slice(0, 12)}...` : 'n/a'}
-                        </td>
+              {loading ? (
+                <div className="py-8 text-center text-gray-400 font-mono flex items-center justify-center gap-2">
+                  <div className="w-4 h-4 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+                  <span>Loading dataset manifest from /api/datasets...</span>
+                </div>
+              ) : !manifest ? (
+                <div className="py-8 text-center border border-dashed border-gray-800 rounded bg-[#070B11] p-6 space-y-2">
+                  <AlertTriangle className="w-6 h-6 text-amber-400 mx-auto" />
+                  <div className="text-sm font-semibold text-gray-300">Dataset Manifest Unavailable</div>
+                  <p className="text-xs text-gray-500 max-w-md mx-auto">
+                    Unable to load dataset metadata from <code className="text-cyan-400 font-mono">/api/datasets</code>.
+                    Start the local backend API to verify offline datasets and cryptographic checksums.
+                  </p>
+                </div>
+              ) : manifest.datasets.length === 0 ? (
+                <div className="py-8 text-center text-gray-500 font-mono border border-gray-800 rounded p-4">
+                  No registered datasets found in manifest.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs text-left">
+                    <thead className="text-gray-400 border-b border-gray-800 font-mono text-[11px]">
+                      <tr>
+                        <th className="pb-2">Dataset File Path</th>
+                        <th className="pb-2">Format</th>
+                        <th className="pb-2">Records</th>
+                        <th className="pb-2">Data Type</th>
+                        <th className="pb-2">License</th>
+                        <th className="pb-2 text-right">SHA-256 (Prefix)</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="divide-y divide-gray-800/60 font-mono text-xs">
+                      {manifest.datasets.map((ds) => (
+                        <tr key={ds.file_path} className="hover:bg-gray-900/40">
+                          <td className="py-2.5 text-cyan-400 font-semibold">{ds.file_path}</td>
+                          <td className="text-gray-400 uppercase">{ds.format}</td>
+                          <td className="text-white">{ds.record_count}</td>
+                          <td>
+                            {ds.is_synthetic ? (
+                              <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/30 text-[10px]">
+                                SYNTHETIC
+                              </span>
+                            ) : (
+                              <span className="px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/30 text-[10px]">
+                                FACTUAL REF
+                              </span>
+                            )}
+                          </td>
+                          <td className="text-gray-300 text-[11px] truncate max-w-xs">{ds.license ?? 'N/A'}</td>
+                          <td className="py-2.5 text-right text-gray-500 font-mono text-[11px]">
+                            {ds.sha256 ? `${ds.sha256.slice(0, 12)}...` : 'n/a'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
+
         )}
 
         {activeTab === 'feed' && (

@@ -103,4 +103,37 @@ describe('S&P Sentinel Risk Terminal', () => {
       screen.getByText(/Evaluation Framework & Release Gates/i)
     ).toBeInTheDocument();
   });
+
+  it('renders fetched manifest state with dataset count derived only from fetched data', async () => {
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByText('1 Registered Datasets')).toBeInTheDocument();
+      expect(screen.getByText('Manifest: v1.0')).toBeInTheDocument();
+      expect(screen.getByText('SHA-256 AUDITED')).toBeInTheDocument();
+      expect(screen.getByText('data/news_demo.csv')).toBeInTheDocument();
+    });
+  });
+
+  it('renders clear unavailable state without hardcoded fallback records when API fails', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.reject(new Error('Network error: Connection refused')))
+    );
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Dataset Manifest Unavailable/i)).toBeInTheDocument();
+      expect(screen.getByText('0 Registered Datasets')).toBeInTheDocument();
+      expect(screen.getByText('Manifest: Unavailable')).toBeInTheDocument();
+      expect(screen.getByText('AWAITING MANIFEST')).toBeInTheDocument();
+    });
+
+    // Verify absolutely no hardcoded fallback records are rendered
+    expect(screen.queryByText('data/news_demo.csv')).not.toBeInTheDocument();
+    expect(screen.queryByText('data/social_demo.csv')).not.toBeInTheDocument();
+    expect(screen.queryByText('data/wholesale_positions.json')).not.toBeInTheDocument();
+  });
 });
+
