@@ -32,10 +32,12 @@ SEED_TRAINING_CORPUS: List[Tuple[str, str]] = [
     ("missed scheduled coupon payment default covenant breach debt restructuring", "CREDIT"),
     ("downgraded to junk status credit rating cut to Baa3 by Moody's", "CREDIT"),
     ("bankruptcy protection chapter 11 filing insolvent credit lines frozen", "CREDIT"),
+    ("files emergency chapter 11 bankruptcy petition debt default insolvency", "CREDIT"),
     ("liquidity shortfall unable to meet commercial paper redemption obligations", "CREDIT"),
     ("bank run depositor outflows trigger emergency liquidity borrowing", "CREDIT"),
     ("default on credit facility borrower distressed restructuring", "CREDIT"),
     ("credit facility coupon payment missed default covenants triggered", "CREDIT"),
+
     # MACRO
     ("Federal Reserve raises benchmark interest rates 50 basis points to curb inflation", "MACRO"),
     ("central bank cuts discount rate amid slowing economic growth and disinflation", "MACRO"),
@@ -102,8 +104,9 @@ class EventClassifier:
     def __init__(
         self,
         model_path: Optional[Union[str, Path]] = None,
-        confidence_threshold: float = 0.50,
+        confidence_threshold: float = 0.40,
     ) -> None:
+
         self.model_path = (
             Path(model_path) if model_path else Path(".runtime/models/events/model.joblib")
         )

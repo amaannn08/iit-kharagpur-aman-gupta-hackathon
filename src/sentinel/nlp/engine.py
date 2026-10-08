@@ -23,8 +23,9 @@ class NLPEngine:
         event_classifier: Optional[EventClassifier] = None,
         severity_engine: Optional[SeverityRubricEngine] = None,
         action_impact_threshold: int = 7,
-        action_confidence_threshold: float = 0.50,
+        action_confidence_threshold: float = 0.40,
     ) -> None:
+
         self.entity_linker = entity_linker or EntityLinker()
         self.sentiment_analyzer = sentiment_analyzer or FinBERTSentimentAnalyzer()
         self.event_classifier = event_classifier or EventClassifier(

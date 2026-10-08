@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from sentinel.api.events import broadcaster
 from sentinel.api.routes.stress import stress_engine
 from sentinel.contracts.records import InputRecord
 from sentinel.ingestion.adapters import NewsAdapter, SocialAdapter
@@ -113,12 +114,26 @@ async def step_replay(
         repo.save_signal(sig)
 
         # Module B automated stress test trigger on eligible high-impact signals (PRD 9.3)
+        stress_result = None
         if stress_engine.should_trigger(sig):
             stress_result = stress_engine.trigger_from_signal(sig)
             if stress_result:
                 repo.save_stress_run(stress_result)
 
+        # Broadcast live event to SSE subscribers
+        await broadcaster.broadcast(
+            event_type="signal_emitted",
+            data={
+                "signal": sig.model_dump(mode="json"),
+                "record": record.model_dump(mode="json"),
+                "stress_run": (
+                    stress_result.model_dump(mode="json") if stress_result else None
+                ),
+            },
+        )
+
         return sig
+
 
     step_result = await replay_controller.step(processor=persist_and_process)
     repo.upsert_run(replay_controller.get_status())
