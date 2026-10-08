@@ -45,6 +45,7 @@ FINANCIAL_CONTEXT_KEYWORDS = {
     "equity",
     "equities",
     "wall street",
+    "sales",
 }
 
 

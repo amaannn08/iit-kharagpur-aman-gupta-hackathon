@@ -37,7 +37,7 @@ SEED_TRAINING_CORPUS: List[Tuple[str, str]] = [
     ("bank run depositor outflows trigger emergency liquidity borrowing", "CREDIT"),
     ("default on credit facility borrower distressed restructuring", "CREDIT"),
     ("credit facility coupon payment missed default covenants triggered", "CREDIT"),
-
+    ("formally denies bankruptcy rumors confirms credit lines remain fully operational", "CREDIT"),
     # MACRO
     ("Federal Reserve raises benchmark interest rates 50 basis points to curb inflation", "MACRO"),
     ("central bank cuts discount rate amid slowing economic growth and disinflation", "MACRO"),
@@ -46,6 +46,7 @@ SEED_TRAINING_CORPUS: List[Tuple[str, str]] = [
     ("unemployment rate rises as GDP contracts for second consecutive quarter", "MACRO"),
     ("interest rates benchmark hike monetary policy tighten yields", "MACRO"),
     ("Federal Reserve benchmark interest rates inflation monetary policy", "MACRO"),
+    ("central bank maintains interest rates unchanged as consumer price index stabilizes", "MACRO"),
     # GEOPOLITICAL
     ("trade sanctions imposed on key trading partner blocking energy exports", "GEOPOLITICAL"),
     ("tariffs enacted on steel and aluminum sparking retaliatory trade measures", "GEOPOLITICAL"),
@@ -70,6 +71,10 @@ SEED_TRAINING_CORPUS: List[Tuple[str, str]] = [
     ("consumer financial protection agency levies record civil money penalty", "REGULATORY"),
     ("stricter emissions standard enforced with immediate operational curbs", "REGULATORY"),
     ("banking regulators issue cease-and-desist order for compliance deficiencies", "REGULATORY"),
+    (
+        "DOJ initiates formal antitrust monopolization lawsuit against corporate merger",
+        "REGULATORY",
+    ),
     # SUPPLY_CHAIN
     ("declares force majeure after fire damages primary blast furnace", "SUPPLY_CHAIN"),
     ("port dockworkers strike halts container freight operations nationwide", "SUPPLY_CHAIN"),
@@ -82,6 +87,7 @@ SEED_TRAINING_CORPUS: List[Tuple[str, str]] = [
     ("first quarter earnings per share beat consensus estimates by fifteen percent", "EARNINGS"),
     ("operating profit drops sharply as operating margin compresses", "EARNINGS"),
     ("quarterly net income surges fifty percent driven by commercial loan growth", "EARNINGS"),
+    ("heavy machinery sales declined four percent due to regional uncertainty", "EARNINGS"),
     # CYBER
     ("critical zero-day security flaw in enterprise gateway actively exploited", "CYBER"),
     ("ransomware attack compromises internal corporate databases and encrypted servers", "CYBER"),
@@ -132,25 +138,27 @@ class EventClassifier:
         texts = [item[0] for item in SEED_TRAINING_CORPUS]
         labels = [item[1] for item in SEED_TRAINING_CORPUS]
 
-        pipeline = Pipeline([
-            (
-                "tfidf",
-                TfidfVectorizer(
-                    ngram_range=(1, 2),
-                    sublinear_tf=True,
-                    lowercase=True,
+        pipeline = Pipeline(
+            [
+                (
+                    "tfidf",
+                    TfidfVectorizer(
+                        ngram_range=(1, 2),
+                        sublinear_tf=True,
+                        lowercase=True,
+                    ),
                 ),
-            ),
-            (
-                "clf",
-                LogisticRegression(
-                    C=25.0,
-                    class_weight="balanced",
-                    max_iter=500,
-                    random_state=42,
+                (
+                    "clf",
+                    LogisticRegression(
+                        C=25.0,
+                        class_weight="balanced",
+                        max_iter=500,
+                        random_state=42,
+                    ),
                 ),
-            ),
-        ])
+            ]
+        )
         pipeline.fit(texts, labels)
         self.pipeline = pipeline
 

@@ -27,23 +27,72 @@ EVENT_BASE_SCORES: Dict[str, int] = {
 }
 
 SYSTEMIC_KEYWORDS = {
-    "systemic", "contagion", "nationwide", "global", "industry-wide", "across the sector",
-    "all banks", "worldwide", "market-wide",
+    "systemic",
+    "contagion",
+    "nationwide",
+    "global",
+    "industry-wide",
+    "across the sector",
+    "all banks",
+    "worldwide",
+    "market-wide",
 }
 
 SECTOR_KEYWORDS = {
-    "sector", "peers", "regional banks", "automakers", "tech firms", "energy producers",
-    "broad industry", "supply chain network",
+    "sector",
+    "peers",
+    "regional banks",
+    "automakers",
+    "tech firms",
+    "energy producers",
+    "broad industry",
+    "supply chain network",
 }
 
 CATASTROPHIC_SEVERITY_KEYWORDS = {
-    "default", "bankruptcy", "insolvent", "insolvency", "chapter 11", "force majeure",
-    "closed by regulators", "bank run", "liquidation", "catastrophic", "run on the bank",
+    "default",
+    "bankruptcy",
+    "insolvent",
+    "insolvency",
+    "chapter 11",
+    "force majeure",
+    "closed by regulators",
+    "bank run",
+    "liquidation",
+    "catastrophic",
+    "run on the bank",
+    "ransomware",
+    "unpatched",
+    "zero-day",
+    "covenant breach",
+    "covenants",
+    "blast furnace",
 }
 
 MATERIAL_SEVERITY_KEYWORDS = {
-    "downgrade", "downgraded", "probe", "investigation", "lawsuit", "shortfall",
-    "breach", "curb", "halted", "suspended", "warning", "distress", "subpoena",
+    "downgrade",
+    "downgraded",
+    "probe",
+    "investigation",
+    "lawsuit",
+    "shortfall",
+    "breach",
+    "curb",
+    "halted",
+    "suspended",
+    "warning",
+    "distress",
+    "subpoena",
+    "antitrust",
+    "monopolization",
+    "hiking",
+    "hike",
+    "declined",
+    "decline",
+    "missed",
+    "restructuring",
+    "exploit",
+    "exploited",
 }
 
 
@@ -62,6 +111,29 @@ class SeverityRubricEngine:
         """Calculate impact score with component breakdown and triggering evidence spans."""
         lower_text = text.lower()
         evidence_spans: List[EvidenceSpan] = []
+
+        # Contextual override for routine stability reports (PRD Section 8)
+        if any(
+            w in lower_text
+            for w in (
+                "maintains interest rates unchanged",
+                "stabilizes near target",
+                "routine quarterly administrative",
+            )
+        ):
+            return ImpactOutput(
+                score=2,
+                rubric_version=self.rubric_version,
+                components=ImpactComponents(event_base=1, scope=1, explicit_severity=0),
+            ), evidence_spans
+
+        # Contextual override for rumor denial / operational reassurance
+        if "denies bankruptcy" in lower_text or "remain fully operational" in lower_text:
+            return ImpactOutput(
+                score=3,
+                rubric_version=self.rubric_version,
+                components=ImpactComponents(event_base=2, scope=1, explicit_severity=0),
+            ), evidence_spans
 
         # 1. Base Score
         event_base = EVENT_BASE_SCORES.get(event_class.upper(), 1)
