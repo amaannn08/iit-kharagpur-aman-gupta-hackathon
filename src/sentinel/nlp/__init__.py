@@ -1,5 +1,6 @@
 """Natural language processing engine for financial text analysis."""
 
+from sentinel.nlp.engine import NLPEngine
 from sentinel.nlp.entities import EntityLinker, KnownEntity
 from sentinel.nlp.events import SUPPORTED_EVENT_CLASSES, EventClassifier
 from sentinel.nlp.sentiment import FinBERTSentimentAnalyzer
@@ -10,6 +11,7 @@ __all__ = [
     "EventClassifier",
     "FinBERTSentimentAnalyzer",
     "KnownEntity",
+    "NLPEngine",
     "SUPPORTED_EVENT_CLASSES",
     "SeverityRubricEngine",
 ]
