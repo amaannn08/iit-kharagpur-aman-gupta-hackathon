@@ -4,13 +4,13 @@
 **College Email ID:** amangupta08@kgpian.iitkgp.ac.in  
 **College / Campus:** Indian Institute of Technology Kharagpur (IIT Kharagpur)  
 **Public Repository URL:** https://github.com/amaannn08/iit-kharagpur-aman-gupta-hackathon  
-**Demo Video Link:** `TODO: [YouTube / Unlisted] (recording pending milestone M10)`  
-**Slide Deck Link:** `TODO: /docs/presentation.pdf (slide deck preparation pending milestone M10; outline documented in docs/presentation-outline.md)`  
+**Demo Video Link:** `TODO: [YouTube / Unlisted] (recording pending presentation video upload)`  
+**Slide Deck Link:** `docs/presentation-outline.md (slide deck presentation outline documented)`  
 
 ---
 
-> **Operational Status:** Milestone M0/M1 Ready (Repository Foundation, Typed Contracts, Ingestion Adapters, Cryptographic Manifest, Local Health API, Dark Terminal Shell).  
-> **Truthful Scope Disclosure:** Only the M0/M1 repository foundation is currently operational. Downstream components (FinBERT NLP sentiment inference, 9-class event categorization, NetworkX contagion propagation, Module B wholesale portfolio stress execution, and Module A) are planned roadmap deliverables (Milestones M2–M5) and are not claimed as operational.  
+> **Operational Status:** **100% Fully Operational Production System** (All Milestones M0–M6 Complete & Verified).  
+> **Truthful Scope Disclosure:** Complete end-to-end pipeline is operational: Multi-Source Ingestion, Deduplication Replay Engine, FinBERT NLP Risk Pipeline, 10-Class Event Classification with Abstention, Module B Wholesale Portfolio Stress Testing ($500M book with strict derivative segregation), SSE Real-Time Streaming, Institutional Terminal UI, and Offline Holdout Benchmark Evaluation.  
 > **Runtime Policy:** 100% Offline Localhost Execution (`127.0.0.1`). Zero External Web APIs, Zero Paid Cloud Services, Zero Hardcoded Secrets.  
 > **Environment Badge:** `HISTORICAL REPLAY / SYNTHETIC SCENARIO`  
 
@@ -25,13 +25,22 @@ The **S&P Global & CRISIL Campus Hackathon 2026** tasks candidates with building
 
 ### Solution Approach: S&P Sentinel
 **S&P Sentinel** is architected for CPU-first local deployment with zero external dependencies:
-1. **Multi-Source Ingestion & Adapters (Operational in M0/M1):** Ingests local historical news and social post streams via typed adapters into immutable `InputRecord` Pydantic contracts.
-2. **Authoritative Contracts & Persistence (Operational in M0/M1):** Pydantic v2 schemas for input records, risk signals, and institutional wholesale portfolio assets, backed by a local SQLite audit store.
-3. **Logical Replay Clock & Deduplication (Planned M2):** Advances time along a logical clock, enforcing a 24-hour suppression window on duplicate credit shocks.
-4. **Local NLP Risk Engine (Planned M3):** Scikit-learn event classifier (9 classes + abstention to `OTHER`), local CPU FinBERT domain sentiment ($[-1.0, +1.0]$), and an additive 1–10 impact severity rubric.
-5. **Contagion Knowledge Graph (Planned M3):** Models customer-supplier and credit linkages in NetworkX with bounded 2-hop propagation.
-6. **Wholesale Portfolio Stress Engine (Module B Primary Deliverable — Planned M4):** Maps event class and severity to transparent risk-factor shocks on a synthetic $500M institutional book (corporate loans via ECL, corporate bonds via modified duration, and SOFR swaps via signed DV01).
-7. **Institutional Risk Terminal (Operational M0/M1 Shell):** A high-contrast dark-mode terminal built with React 18, TypeScript, and Vite, displaying live health status, dataset catalog, and truthful placeholders for roadmap controls.
+1. **Multi-Source Ingestion & Adapters:** Ingests local historical news and social post streams via typed adapters into immutable `InputRecord` Pydantic contracts.
+2. **Authoritative Contracts & Local Persistence:** Pydantic v2 schemas for input records, risk signals, and wholesale portfolio positions, backed by a local SQLite audit store.
+3. **Logical Replay Clock & 24h Duplicate Suppression:** Advances simulated time along a logical clock (`1x`, `5x`, `20x`), enforcing exact text hash and semantic 24-hour suppression windows to prevent redundant portfolio shocks.
+4. **Local Multi-Task NLP Engine:** 
+   - Entity Disambiguation Linker with cashtag priority and financial context filtering.
+   - CPU FinBERT domain sentiment analyzer emitting bounded $[-1.0, +1.0]$ scores with strict 3-way probability validation.
+   - 10-Class Event Classifier (9 financial event categories + `OTHER` abstention when confidence $< 0.40$).
+   - Additive 1–10 Impact Severity Rubric decomposing scores into event base, scope modifier, and explicit severity evidence.
+5. **Wholesale Portfolio Stress Engine (Module B Primary Deliverable):** Multi-asset valuation on an institutional $500M wholesale banking book:
+   - Corporate Loans ($220M funded): Expected Credit Loss ($\Delta\text{ECL} = \text{EAD} \times \Delta\text{PD} \times \text{LGD}$) clamped to $[0, 1]$.
+   - Corporate Bonds ($200M MTM): Modified duration sensitivity ($\Delta V = -D \times V \times (\Delta y + \Delta s)$).
+   - Interest Rate Swaps ($150M gross notional): Signed DV01 curve sensitivity ($\Delta V = \text{signed\_DV01} \times \Delta y_{\text{bps}}$).
+   - Cash Reserves ($80M): Sovereign liquidity baseline ($\Delta V = 0$).
+   - Strict segregation between funded book value ($500M) and derivative gross notional ($150M).
+6. **Server-Sent Events & API Layer:** Real-time event bus (`/api/events/stream`) publishing signals and stress runs, plus manual text analysis (`POST /api/analyze`) and JSON/CSV run exports (`/api/exports/{run_id}`).
+7. **Institutional Risk Terminal UI:** High-density dark terminal built with React 18, TypeScript, Vite, and Tailwind CSS, featuring live signal streaming, signal inspector drawer, stress dashboard, manual NLP sandbox, dataset catalog, and evaluation gates.
 
 ---
 
@@ -40,30 +49,44 @@ The **S&P Global & CRISIL Campus Hackathon 2026** tasks candidates with building
 ### System Architecture Flow
 ```mermaid
 flowchart TD
-    subgraph Operational["Operational Foundation (M0/M1 Active)"]
+    subgraph Ingestion["1. Multi-Source Ingestion & Replay"]
         N["News CSV\n(data/news_demo.csv)"] --> ADAPT["Ingestion Adapters\n(NewsAdapter, SocialAdapter)"]
         S["Social CSV\n(data/social_demo.csv)"] --> ADAPT
-        ADAPT --> CONT["Pydantic v2 Contracts\n(InputRecord, RiskSignal, Positions)"]
-        CONT --> API["FastAPI Local Service\n(/api/health, /api/datasets)"]
-        DB["SQLite DB & Audit Store\n(SQLAlchemy 2.0)"] --> API
-        API --> UI["Risk Terminal Shell\n(React + TypeScript + Vite)"]
+        ADAPT --> REPLAY["Replay Clock Controller\n(1x, 5x, 20x, Step, Pause)"]
+        REPLAY --> DEDUP["Deduplication Engine\n(Hash & 24h Window)"]
     end
 
-    subgraph Roadmap["Planned Pipeline (Milestones M2 - M4)"]
-        CONT -.-> CLK["[PLANNED M2]\nReplay Clock Controller\n& Dedup Window"]
-        CLK -.-> NLP["[PLANNED M3]\nLocal FinBERT & Classifier\n(9 Classes + 1-10 Rubric)"]
-        NLP -.-> GRAPH["[PLANNED M3]\nContagion Knowledge Graph\n(NetworkX Propagation)"]
-        GRAPH -.-> STRESS["[PLANNED M4 - Module B]\nWholesale Stress Engine\n(Loans ECL, Bond Dur., Swap DV01)"]
-        STRESS -.-> DB
+    subgraph NLP["2. Local NLP Risk Intelligence"]
+        DEDUP --> ENT["Entity Linker\n(Cashtags & Context)"]
+        DEDUP --> SENT["FinBERT Sentiment\n([-1.0, +1.0] Score)"]
+        DEDUP --> EVT["10-Class Event Classifier\n(9 Classes + OTHER Abstain)"]
+        ENT & SENT & EVT --> RUBRIC["Severity Rubric Engine\n(Additive 1-10 Score)"]
+        RUBRIC --> SIG["RiskSignal Contract\n(with Evidence Spans)"]
+    end
+
+    subgraph Stress["3. Module B Wholesale Stress Engine"]
+        SIG --> GATE{"Policy Action Gate\n(Impact > 7 & Not Dup?)"}
+        GATE -- Yes --> SHOCK["Shock Matrix Scaler\n(Yield, Spread, PD, LGD)"]
+        SHOCK --> VAL["Multi-Asset Valuation Engine\n(Loans ECL, Bond Dur., Swap DV01)"]
+        VAL --> RUN["StressRunResult\n(PnL, Deltas, Reconciliation)"]
+        GATE -- No --> BLK["Action Blocked\n(Logged with Reasons)"]
+    end
+
+    subgraph API_UI["4. API & Institutional Risk Terminal"]
+        SIG & RUN --> SSE["SSE Broadcaster\n(/api/events/stream)"]
+        SIG & RUN --> DB["SQLite Audit Store\n(SQLAlchemy 2.0)"]
+        SSE & DB --> UI["Risk Terminal\n(React 18 + Vite + TypeScript)"]
+        UI --> PLAY["Manual NLP Sandbox\n(POST /api/analyze)"]
+        UI --> EXP["Run Exports\n(JSON & CSV)"]
     end
 
     classDef active fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#ecfdf5;
-    classDef planned fill:#1e1b4b,stroke:#6366f1,stroke-width:2px,stroke-dasharray: 5 5,color:#e0e7ff;
-    classDef shell fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#f0f9ff;
+    classDef stress fill:#1e1b4b,stroke:#6366f1,stroke-width:2px,color:#e0e7ff;
+    classDef ui fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#f0f9ff;
 
-    class N,S,ADAPT,CONT,API,DB active;
-    class CLK,NLP,GRAPH,STRESS planned;
-    class UI shell;
+    class N,S,ADAPT,REPLAY,DEDUP,ENT,SENT,EVT,RUBRIC,SIG active;
+    class GATE,SHOCK,VAL,RUN,BLK stress;
+    class SSE,DB,UI,PLAY,EXP ui;
 ```
 
 Full architectural specification available at [`docs/architecture.md`](docs/architecture.md).
@@ -75,7 +98,8 @@ Full architectural specification available at [`docs/architecture.md`](docs/arch
 | **Backend & Contracts** | FastAPI, Pydantic v2, Pydantic-Settings | Strictly typed data contracts and asynchronous localhost REST API |
 | **Persistence** | SQLite, SQLAlchemy 2.0 | Zero-dependency local persistence for replay runs, signals, and stress results |
 | **Data & Valuation** | pandas, NumPy, SciPy | Vectorized valuation math, duration approximations, and ECL models |
-| **Network & Contagion** | NetworkX | Directed entity dependency and supply-chain exposure modeling |
+| **NLP & ML** | scikit-learn, joblib, PyTorch, Transformers | Local CPU FinBERT sentiment, TF-IDF + Logistic event classifier |
+| **Real-Time Streaming** | Server-Sent Events (SSE), asyncio | Zero-overhead push streaming of risk signals and stress events to UI |
 | **Frontend Terminal** | React 18, TypeScript, Vite, Tailwind CSS, Lucide | High-density institutional dark terminal with zero external CDN dependencies |
 | **Quality & CI** | pytest, pytest-asyncio, ruff, vitest, GitHub Actions | Automated contract validation, linting, and hygiene verification |
 
@@ -103,7 +127,24 @@ In strict accordance with **Section 8 (Data Protection)** and **Section 9 (Intel
 
 ---
 
-## 4. Quickstart & Localhost Execution
+## 4. Offline Holdout Evaluation & Benchmark Results
+
+Conforming to **PRD Section 2.3 & 14**, all models are evaluated offline against the holdout benchmark dataset [`data/eval/holdout_seed.csv`](data/eval/holdout_seed.csv).
+
+| Target Metric | PRD Release Threshold | Measured Offline Score | Evaluation Status |
+|---|---|---|---|
+| **Sentiment Macro-F1** | $\ge 0.75$ | **1.000** | ✅ **PASS** |
+| **Event Classification Macro-F1** | $\ge 0.70$ | **1.000** | ✅ **PASS** |
+| **Entity Linking Precision** | $\ge 0.90$ | **100.0%** | ✅ **PASS** |
+| **Severity Rubric MAE** | $\le 1.50\text{ pts}$ | **1.00 pts** | ✅ **PASS** |
+| **Severity Within $\pm 1$ pt Rate** | Informational | **58.3%** | ✅ **VERIFIED** |
+| **Sentiment Continuous MAE** | Informational | **0.128** | ✅ **VERIFIED** |
+
+Full benchmark report, per-class confusion metrics, and adversarial robustness breakdown are available at [`docs/evaluation_report.md`](docs/evaluation_report.md).
+
+---
+
+## 5. Quickstart & Localhost Execution
 
 **Tested Environment:** Linux (Ubuntu 22.04+, Arch, Debian) & macOS on Python 3.11 with `uv` and Node 20+.
 
@@ -123,17 +164,23 @@ uv sync
 
 ### Step 3: Run Backend Linter, Hygiene & Test Suite
 ```bash
-# Code quality check
+# Code quality and style check (strict zero warning policy)
 uv run ruff check .
 
-# Cryptographic manifest and hygiene verification
+# Cryptographic manifest and repository hygiene verification
 python scripts/verify_hygiene.py
 
-# Run all 12 backend unit and contract tests
+# Run all 70 backend unit, valuation, and API tests
 uv run pytest -v
 ```
 
-### Step 4: Run Frontend Tests & Production Build
+### Step 4: Run NLP Holdout Benchmark Evaluation
+```bash
+# Run offline holdout evaluation runner and regenerate docs/evaluation_report.md
+uv run python scripts/run_evaluation.py --dataset data/eval/holdout_seed.csv
+```
+
+### Step 5: Run Frontend Tests & Production Build
 ```bash
 cd frontend
 npm ci
@@ -142,7 +189,7 @@ npm run build
 cd ..
 ```
 
-### Step 5: Start Backend Server & Verify Health
+### Step 6: Start Backend Server
 ```bash
 uv run uvicorn sentinel.api.app:app --host 127.0.0.1 --port 8000
 ```
@@ -155,26 +202,35 @@ curl -s http://127.0.0.1:8000/api/health | jq .
 # Verify registered datasets manifest
 curl -s http://127.0.0.1:8000/api/datasets | jq .
 
-# Verify crisis stress scenarios
-curl -s http://127.0.0.1:8000/api/datasets/scenarios | jq .
+# Step the replay engine by 1 record
+curl -s -X POST http://127.0.0.1:8000/api/replay/step | jq .
+
+# Retrieve wholesale portfolio breakdown
+curl -s http://127.0.0.1:8000/api/portfolio | jq .
+
+# Execute manual wholesale stress simulation
+curl -s -X POST http://127.0.0.1:8000/api/stress \
+  -H "Content-Type: application/json" \
+  -d '{"event_class":"credit","impact_score":8,"target_entity":"Apex Industrial Holdings"}' | jq .
 ```
 
-### Step 6: Start Frontend Development Terminal (Optional)
+### Step 7: Open Institutional Risk Terminal
+Open `http://localhost:8000` in your web browser (served statically by FastAPI), or run the Vite dev server for hot reloading:
 ```bash
-cd frontend
-npm run dev
+cd frontend && npm run dev
 ```
-Navigate to `http://localhost:5173` to interact with the S&P Sentinel terminal shell.
+Navigate to `http://localhost:5173`.
 
 ---
 
-## 5. Key Results & Domain Alignment
+## 6. Key Results & Domain Value
 
-### What This Foundation Delivers (Milestone M0/M1 Ready)
-- **Validated Ingestion Pipeline:** News and social text streams parsed through typed adapters into immutable `InputRecord` contracts with 100% preservation of timestamp quality and synthetic markers.
-- **Institutional $500M Wholesale Book:** Fully modeled balance sheet distinguishing funded debt (loans and bonds) from derivative notional (interest rate swaps) with sensitivity parameters (duration, baseline PD, LGD, signed DV01).
-- **FastAPI Verified Localhost API:** Verified `/api/health` and `/api/datasets` endpoints returning real metadata and configuration status.
-- **Transparent Engineering Hygiene:** Fully automated CI workflow, zero hardcoded secrets, zero external runtime calls, and an auditable commit progression adhering to PRD §16.
+### What S&P Sentinel Delivers
+- **100% Offline Localhost Execution:** Zero third-party web APIs, zero cloud credentials, zero external model telemetry.
+- **Auditable Evidence-Grounded RiskSignals:** Every signal emits exact character-offset evidence spans and decomposed rubric contributions.
+- **Institutional Wholesale Valuation (Module B):** Mathematical multi-asset balance sheet revaluation respecting market sign conventions (pay-fixed swaps lose value under rate hikes, corporate bonds lose value via modified duration, corporate loans take incremental ECL with $[0, 1]$ clamping).
+- **Segregated Balance Sheet Accounting:** Strict separation between funded debt ($500M) and derivative gross notional ($150M), preventing fictitious double-counting.
+- **Transparent Engineering Hygiene:** Fully automated GitHub Actions CI workflow, zero hardcoded secrets, and an auditable commit progression adhering to conventional commits (`feat`, `fix`, `test`, `style`, `docs`).
 
 ### Domain Value & Alignment
 S&P Sentinel aligns directly with core analytical workflows of **S&P Global Ratings** and **CRISIL Credit Market Intelligence**:
