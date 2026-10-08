@@ -9,6 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from sentinel.api.routes.datasets import router as datasets_router
 from sentinel.api.routes.health import router as health_router
 from sentinel.api.routes.replay import router as replay_router
+from sentinel.api.routes.signals import router as signals_router
 from sentinel.config import settings
 from sentinel.storage.db import init_db
 
@@ -51,6 +52,7 @@ def create_app() -> FastAPI:
     app.include_router(health_router, prefix="/api")
     app.include_router(datasets_router, prefix="/api")
     app.include_router(replay_router, prefix="/api")
+    app.include_router(signals_router, prefix="/api")
 
     # Serve compiled frontend assets if available
     frontend_dist = settings.base_dir / "frontend" / "dist"

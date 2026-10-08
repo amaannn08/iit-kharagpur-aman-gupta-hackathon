@@ -9,6 +9,7 @@ from uuid import uuid4
 from pydantic import BaseModel
 
 from sentinel.contracts.records import InputRecord
+from sentinel.contracts.signals import RiskSignal
 from sentinel.replay.clock import LogicalClock, ReplaySpeed, sort_records_deterministically
 from sentinel.replay.dedup import DedupDecision, ExactTextDeduplicator
 
@@ -44,12 +45,16 @@ class ReplayStepResult(BaseModel):
 
     record: InputRecord
     dedup: DedupDecision
+    signal: Optional[RiskSignal] = None
     simulated_at: Optional[datetime] = None
     success: bool = True
     error_message: Optional[str] = None
 
 
-RecordProcessor = Callable[[InputRecord, DedupDecision], Coroutine[None, None, None]]
+RecordProcessor = Callable[
+    [InputRecord, DedupDecision],
+    Coroutine[None, None, Optional[RiskSignal]],
+]
 
 
 class ReplayController:
@@ -177,8 +182,9 @@ class ReplayController:
             dedup_decision = self._dedup.process(record.record_id, record.text)
 
             # Invoke downstream processor if provided
+            sig = None
             if processor:
-                await processor(record, dedup_decision)
+                sig = await processor(record, dedup_decision)
 
             self._processed_count += 1
             if not self._queue and self._state == RunState.RUNNING:
@@ -187,6 +193,7 @@ class ReplayController:
             return ReplayStepResult(
                 record=record,
                 dedup=dedup_decision,
+                signal=sig,
                 simulated_at=sim_time,
                 success=True,
             )

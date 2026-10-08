@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from sentinel.contracts.records import InputRecord
 from sentinel.ingestion.adapters import NewsAdapter, SocialAdapter
+from sentinel.nlp.engine import NLPEngine
 from sentinel.replay.controller import (
     ReplayController,
     ReplayStatus,
@@ -19,8 +20,9 @@ from sentinel.storage.repository import ReplayRepository
 
 router = APIRouter(prefix="/replay", tags=["Replay Controller"])
 
-# Singleton controller instance for backend runtime
+# Singleton controller and NLP engine instances for backend runtime
 replay_controller = ReplayController()
+nlp_engine = NLPEngine()
 
 
 class LoadScenarioRequest(BaseModel):
@@ -96,13 +98,20 @@ def load_replay_scenario(
 async def step_replay(
     db: Session = Depends(get_db),
 ) -> Optional[ReplayStepResult]:
-    """Deterministically advance one record from the replay queue."""
+    """Deterministically advance one record from the replay queue and emit RiskSignal."""
     repo = ReplayRepository(db)
 
-    async def persist_step(record: InputRecord, dedup):
+    async def persist_and_process(record: InputRecord, dedup):
         repo.save_record(record, dedup, run_id=replay_controller.run_id)
+        sig = nlp_engine.process_record(
+            record,
+            run_id=replay_controller.run_id,
+            dedup_decision=dedup,
+        )
+        repo.save_signal(sig)
+        return sig
 
-    step_result = await replay_controller.step(processor=persist_step)
+    step_result = await replay_controller.step(processor=persist_and_process)
     repo.upsert_run(replay_controller.get_status())
     return step_result
 

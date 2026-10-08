@@ -58,6 +58,7 @@ class SignalModel(Base):
     duplicate_group_id = Column(String(64), nullable=True)
     eligible_for_action = Column(Boolean, default=True, nullable=False)
     action_block_reasons = Column(Text, nullable=True)
+    raw_json = Column(Text, nullable=True)
 
 
 class StressRunModel(Base):

@@ -3,5 +3,6 @@
 from sentinel.api.routes.datasets import router as datasets_router
 from sentinel.api.routes.health import router as health_router
 from sentinel.api.routes.replay import router as replay_router
+from sentinel.api.routes.signals import router as signals_router
 
-__all__ = ["datasets_router", "health_router", "replay_router"]
+__all__ = ["datasets_router", "health_router", "replay_router", "signals_router"]

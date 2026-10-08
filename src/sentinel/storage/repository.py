@@ -1,13 +1,16 @@
 """Data access repository for runs, records, signals, and audit lineage."""
 
-from typing import List, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 from sqlalchemy.orm import Session
 
 from sentinel.contracts.records import InputRecord
 from sentinel.replay.controller import ReplayStatus
 from sentinel.replay.dedup import DedupDecision
-from sentinel.storage.models import RecordModel, RunModel
+from sentinel.storage.models import RecordModel, RunModel, SignalModel
+
+if TYPE_CHECKING:
+    from sentinel.contracts.signals import RiskSignal
 
 
 class ReplayRepository:
@@ -90,5 +93,50 @@ class ReplayRepository:
             self.session.query(RecordModel)
             .filter_by(run_id=run_id)
             .order_by(RecordModel.sequence_number.asc())
+            .all()
+        )
+
+    def save_signal(self, signal: "RiskSignal") -> SignalModel:
+        """Store emitted RiskSignal and its JSON contract in SQLite."""
+        import json
+
+        sig_model = SignalModel(
+            signal_id=signal.signal_id,
+            run_id=signal.run_id,
+            record_id=signal.record_id,
+            entity_name=signal.entity.name,
+            entity_ticker=signal.entity.ticker,
+            sentiment_score=signal.sentiment.score,
+            sentiment_label=signal.sentiment.label,
+            event_label=signal.event.label,
+            event_confidence=signal.event.confidence,
+            impact_score=signal.impact.score,
+            processed_at=signal.processed_at,
+            duplicate_group_id=signal.duplicate_group_id,
+            eligible_for_action=signal.eligible_for_action,
+            action_block_reasons=",".join(signal.action_block_reasons),
+            raw_json=json.dumps(signal.model_dump(mode="json")),
+        )
+        self.session.add(sig_model)
+        self.session.commit()
+        self.session.refresh(sig_model)
+        return sig_model
+
+    def get_signals_for_run(self, run_id: str) -> List[SignalModel]:
+        return (
+            self.session.query(SignalModel)
+            .filter_by(run_id=run_id)
+            .order_by(SignalModel.processed_at.asc())
+            .all()
+        )
+
+    def get_signal(self, signal_id: str) -> Optional[SignalModel]:
+        return self.session.query(SignalModel).filter_by(signal_id=signal_id).first()
+
+    def list_signals(self, limit: int = 50) -> List[SignalModel]:
+        return (
+            self.session.query(SignalModel)
+            .order_by(SignalModel.processed_at.desc())
+            .limit(limit)
             .all()
         )
