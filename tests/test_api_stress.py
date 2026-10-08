@@ -21,7 +21,6 @@ def client():
         yield test_client
 
 
-
 def test_api_get_portfolio(client: TestClient):
     """Verify /api/stress/portfolio returns wholesale portfolio with funded segregation."""
     resp = client.get("/api/stress/portfolio")

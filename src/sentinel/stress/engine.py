@@ -70,8 +70,6 @@ class StressEngine:
             or "lowers rates" in evidence_text
         )
 
-
-
         shock = build_scaled_shock(
             event_class=event_class,
             impact_score=impact,

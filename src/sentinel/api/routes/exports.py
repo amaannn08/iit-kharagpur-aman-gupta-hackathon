@@ -19,7 +19,6 @@ def export_run_data(
     run_id: str,
     format: str = Query(default="json", pattern="^(json|csv)$"),
     db: Session = Depends(get_db),
-
 ) -> Response:
     """Export complete audit records and stress lineage for a replay run as JSON or CSV."""
     repo = ReplayRepository(db)
@@ -36,45 +35,49 @@ def export_run_data(
     if format == "csv":
         output = io.StringIO()
         writer = csv.writer(output)
-        writer.writerow([
-            "run_id",
-            "record_id",
-            "source_id",
-            "source_type",
-            "text",
-            "is_duplicate",
-            "duplicate_group_id",
-            "entity_name",
-            "entity_ticker",
-            "sentiment_label",
-            "sentiment_score",
-            "event_label",
-            "event_confidence",
-            "impact_score",
-            "eligible_for_action",
-            "action_block_reasons",
-        ])
+        writer.writerow(
+            [
+                "run_id",
+                "record_id",
+                "source_id",
+                "source_type",
+                "text",
+                "is_duplicate",
+                "duplicate_group_id",
+                "entity_name",
+                "entity_ticker",
+                "sentiment_label",
+                "sentiment_score",
+                "event_label",
+                "event_confidence",
+                "impact_score",
+                "eligible_for_action",
+                "action_block_reasons",
+            ]
+        )
 
         for rec in records:
             sig = signals_map.get(rec.record_id)
-            writer.writerow([
-                run_id,
-                rec.record_id,
-                rec.source_id,
-                rec.source_type,
-                rec.text,
-                rec.is_duplicate,
-                rec.duplicate_group_id or "",
-                sig.entity_name if sig else "",
-                sig.entity_ticker if sig else "",
-                sig.sentiment_label if sig else "",
-                sig.sentiment_score if sig else "",
-                sig.event_label if sig else "",
-                sig.event_confidence if sig else "",
-                sig.impact_score if sig else "",
-                sig.eligible_for_action if sig else "",
-                sig.action_block_reasons if sig else "",
-            ])
+            writer.writerow(
+                [
+                    run_id,
+                    rec.record_id,
+                    rec.source_id,
+                    rec.source_type,
+                    rec.text,
+                    rec.is_duplicate,
+                    rec.duplicate_group_id or "",
+                    sig.entity_name if sig else "",
+                    sig.entity_ticker if sig else "",
+                    sig.sentiment_label if sig else "",
+                    sig.sentiment_score if sig else "",
+                    sig.event_label if sig else "",
+                    sig.event_confidence if sig else "",
+                    sig.impact_score if sig else "",
+                    sig.eligible_for_action if sig else "",
+                    sig.action_block_reasons if sig else "",
+                ]
+            )
 
         csv_content = output.getvalue()
         return Response(

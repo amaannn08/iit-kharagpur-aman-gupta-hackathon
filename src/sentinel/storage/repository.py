@@ -14,7 +14,6 @@ if TYPE_CHECKING:
     from sentinel.contracts.stress import StressRunResult
 
 
-
 class ReplayRepository:
     """Encapsulates persistence operations for replay runs and records."""
 
@@ -175,4 +174,3 @@ class ReplayRepository:
         if run_id:
             query = query.filter_by(run_id=run_id)
         return query.order_by(StressRunModel.executed_at.desc()).limit(limit).all()
-

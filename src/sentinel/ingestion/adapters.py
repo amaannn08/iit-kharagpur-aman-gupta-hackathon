@@ -46,9 +46,7 @@ class NewsAdapter:
                     text=text_content,
                     headline=row.get("headline"),
                     published_at=published_at,
-                    timestamp_quality=TimestampQuality(
-                        row.get("timestamp_quality", "synthetic")
-                    ),
+                    timestamp_quality=TimestampQuality(row.get("timestamp_quality", "synthetic")),
                     simulated_at=simulated_at,
                     is_synthetic=row.get("is_synthetic", "true").lower() == "true",
                     primary_entity_id=row.get("primary_entity_id"),
@@ -96,9 +94,7 @@ class SocialAdapter:
                     source_type=SourceType.SOCIAL,
                     text=text_content,
                     published_at=published_at,
-                    timestamp_quality=TimestampQuality(
-                        row.get("timestamp_quality", "synthetic")
-                    ),
+                    timestamp_quality=TimestampQuality(row.get("timestamp_quality", "synthetic")),
                     simulated_at=simulated_at,
                     is_synthetic=row.get("is_synthetic", "true").lower() == "true",
                     primary_entity_id=row.get("primary_entity_id"),

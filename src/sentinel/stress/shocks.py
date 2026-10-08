@@ -93,9 +93,7 @@ def build_scaled_shock(
         benchmark_yield_shift_bps=round(
             baseline.benchmark_yield_shift_bps * scale * yield_direction, 2
         ),
-
         scale_multiplier=scale,
         target_entity=target_entity,
         target_scope=target_scope,
     )
-

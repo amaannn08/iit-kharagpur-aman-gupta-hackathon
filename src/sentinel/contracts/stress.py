@@ -149,4 +149,3 @@ class StressRunResult(BaseModel):
     sector_breakdown: List[SectorStressSummary]
     position_deltas: List[PositionStressDelta]
     reconciliation_passed: bool
-

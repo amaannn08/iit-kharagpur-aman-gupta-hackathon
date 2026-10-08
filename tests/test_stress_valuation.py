@@ -35,7 +35,6 @@ def test_portfolio_funded_and_derivative_segregation(portfolio: WholesalePortfol
 def test_bond_duration_valuation_and_bps_conversion(engine: ValuationEngine):
     """PRD 9.4 & 13.3: Verify delta = -duration * value * shift with exact bps conversion."""
     bond = BondPosition(
-
         position_id="TEST-BOND-1",
         asset_class=AssetClass.BOND,
         entity_id="APEX",
@@ -73,7 +72,6 @@ def test_bond_duration_valuation_and_bps_conversion(engine: ValuationEngine):
 def test_loan_ecl_valuation_and_clamping(engine: ValuationEngine):
     """PRD 9.4 & 13.3: Incremental ECL = EAD * delta_PD * LGD and PD/LGD clamped."""
     loan = LoanPosition(
-
         position_id="TEST-LOAN-1",
         asset_class=AssetClass.LOAN,
         entity_id="APEX",
@@ -218,7 +216,6 @@ def test_full_portfolio_reconciliation_invariants(engine: ValuationEngine):
     # 3. Baseline + Total P&L = Stressed Book Value
     expected_stressed = result.baseline_total_book_value_usd + result.total_pnl_usd
     assert pytest.approx(expected_stressed, abs=0.05) == result.stressed_total_book_value_usd
-
 
     # 4. Built-in reconciliation flag must be True
     assert result.reconciliation_passed is True

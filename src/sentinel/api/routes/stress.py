@@ -44,7 +44,6 @@ def get_portfolio() -> Dict[str, Any]:
     return stress_engine.portfolio.to_dict()
 
 
-
 @router.post("/simulate", response_model=StressRunResult)
 def simulate_stress(
     req: ManualStressRequest,

@@ -46,7 +46,6 @@ def make_signal(
             resolved=True,
         ),
         sentiment=SentimentOutput(
-
             score=-0.75,
             label="negative",
             probabilities=SentimentProbabilities(positive=0.05, neutral=0.20, negative=0.75),
@@ -60,7 +59,6 @@ def make_signal(
         eligible_for_action=eligible_for_action,
         action_block_reasons=[],
     )
-
 
 
 def test_stress_engine_trigger_criteria(stress_engine: StressEngine):

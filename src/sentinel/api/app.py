@@ -76,9 +76,6 @@ def create_app() -> FastAPI:
         "/api/stress/{stress_id}", get_stress_run_detail, methods=["GET"], tags=["Stress"]
     )
 
-
-
-
     # Serve compiled frontend assets if available
     frontend_dist = settings.base_dir / "frontend" / "dist"
     if frontend_dist.exists() and (frontend_dist / "index.html").exists():

@@ -12,9 +12,7 @@ def test_sentiment_negative_distress_detection():
     assert output.score < 0.0
     assert output.probabilities.negative > output.probabilities.positive
     total_prob = (
-        output.probabilities.positive
-        + output.probabilities.negative
-        + output.probabilities.neutral
+        output.probabilities.positive + output.probabilities.negative + output.probabilities.neutral
     )
     assert abs(total_prob - 1.0) < 0.01
 
@@ -28,9 +26,7 @@ def test_sentiment_positive_earnings_growth():
     assert output.score > 0.0
     assert output.probabilities.positive > output.probabilities.negative
     total_prob = (
-        output.probabilities.positive
-        + output.probabilities.negative
-        + output.probabilities.neutral
+        output.probabilities.positive + output.probabilities.negative + output.probabilities.neutral
     )
     assert abs(total_prob - 1.0) < 0.01
 

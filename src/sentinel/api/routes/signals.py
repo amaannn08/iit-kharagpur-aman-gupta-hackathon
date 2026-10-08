@@ -26,16 +26,18 @@ def list_latest_signals(
         if m.raw_json:
             results.append(json.loads(m.raw_json))
         else:
-            results.append({
-                "signal_id": m.signal_id,
-                "run_id": m.run_id,
-                "record_id": m.record_id,
-                "entity": {"name": m.entity_name, "ticker": m.entity_ticker},
-                "sentiment": {"score": m.sentiment_score, "label": m.sentiment_label},
-                "event": {"label": m.event_label, "confidence": m.event_confidence},
-                "impact": {"score": m.impact_score},
-                "eligible_for_action": m.eligible_for_action,
-            })
+            results.append(
+                {
+                    "signal_id": m.signal_id,
+                    "run_id": m.run_id,
+                    "record_id": m.record_id,
+                    "entity": {"name": m.entity_name, "ticker": m.entity_ticker},
+                    "sentiment": {"score": m.sentiment_score, "label": m.sentiment_label},
+                    "event": {"label": m.event_label, "confidence": m.event_confidence},
+                    "impact": {"score": m.impact_score},
+                    "eligible_for_action": m.eligible_for_action,
+                }
+            )
     return results
 
 

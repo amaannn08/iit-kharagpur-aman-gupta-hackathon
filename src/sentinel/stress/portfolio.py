@@ -98,4 +98,3 @@ class WholesalePortfolio:
             "swaps": [pos.model_dump(mode="json") for pos in self.swaps],
             "cash": [pos.model_dump(mode="json") for pos in self.cash],
         }
-

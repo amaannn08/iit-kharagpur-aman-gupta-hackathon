@@ -27,7 +27,6 @@ replay_controller = ReplayController()
 nlp_engine = NLPEngine()
 
 
-
 class LoadScenarioRequest(BaseModel):
     scenario_id: str
     sources: List[str] = ["news_demo", "social_demo"]
@@ -126,14 +125,11 @@ async def step_replay(
             data={
                 "signal": sig.model_dump(mode="json"),
                 "record": record.model_dump(mode="json"),
-                "stress_run": (
-                    stress_result.model_dump(mode="json") if stress_result else None
-                ),
+                "stress_run": (stress_result.model_dump(mode="json") if stress_result else None),
             },
         )
 
         return sig
-
 
     step_result = await replay_controller.step(processor=persist_and_process)
     repo.upsert_run(replay_controller.get_status())
@@ -166,7 +162,6 @@ def reset_replay(db: Session = Depends(get_db)) -> ReplayStatus:
     status = replay_controller.get_status()
     ReplayRepository(db).upsert_run(status)
     return status
-
 
 
 @router.post("/speed", response_model=ReplayStatus)

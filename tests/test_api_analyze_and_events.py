@@ -50,7 +50,6 @@ def test_api_manual_analyze_severe_credit_triggers_stress(client: TestClient):
             "debt default, triggering systemic contagion across nationwide supply chain network."
         ),
         "source_type": "news",
-
     }
     resp = client.post("/api/analyze", json=payload)
     assert resp.status_code == 200
@@ -92,7 +91,6 @@ def test_api_exports_json_and_csv(client: TestClient):
     step_resp = client.post("/api/replay/step")
     run_id = step_resp.json()["signal"]["run_id"]
 
-
     # 2. Export as JSON
     json_resp = client.get(f"/api/exports/{run_id}?format=json")
     assert json_resp.status_code == 200
@@ -118,13 +116,15 @@ def test_api_direct_prd_aliases(client: TestClient):
     expected_name = "Synthetic Wholesale Institutional Credit & Rates Portfolio"
     assert port_resp.json()["portfolio_name"] == expected_name
 
-
     # POST /api/stress
-    stress_resp = client.post("/api/stress", json={
-        "event_class": "MACRO",
-        "impact_score": 8,
-        "target_scope": "systemic",
-    })
+    stress_resp = client.post(
+        "/api/stress",
+        json={
+            "event_class": "MACRO",
+            "impact_score": 8,
+            "target_scope": "systemic",
+        },
+    )
     assert stress_resp.status_code == 200
     stress_data = stress_resp.json()
     assert stress_data["event_class"] == "MACRO"

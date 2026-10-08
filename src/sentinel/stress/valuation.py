@@ -62,9 +62,7 @@ class ValuationEngine:
     def value_bond(self, bond: BondPosition, shock: ScaledShock) -> PositionStressDelta:
         """Bond valuation: delta = -modified_duration * value * (yield_shift + spread_shift)."""
 
-        in_scope = self._is_position_in_scope(
-            bond.entity_id, bond.sector, AssetClass.BOND, shock
-        )
+        in_scope = self._is_position_in_scope(bond.entity_id, bond.sector, AssetClass.BOND, shock)
 
         baseline_val = bond.market_value
 
@@ -103,9 +101,7 @@ class ValuationEngine:
 
     def value_loan(self, loan: LoanPosition, shock: ScaledShock) -> PositionStressDelta:
         """Loan valuation: Incremental ECL = EAD * (stressed_PD - baseline_PD) * LGD."""
-        in_scope = self._is_position_in_scope(
-            loan.entity_id, loan.sector, AssetClass.LOAN, shock
-        )
+        in_scope = self._is_position_in_scope(loan.entity_id, loan.sector, AssetClass.LOAN, shock)
 
         baseline_val = loan.market_value
         baseline_ecl = loan.ead * loan.baseline_pd * loan.lgd
@@ -151,9 +147,7 @@ class ValuationEngine:
 
     def value_swap(self, swap: SwapPosition, shock: ScaledShock) -> PositionStressDelta:
         """Swap valuation: delta_value = signed_DV01 * yield_shift_bps."""
-        in_scope = self._is_position_in_scope(
-            swap.entity_id, swap.sector, AssetClass.SWAP, shock
-        )
+        in_scope = self._is_position_in_scope(swap.entity_id, swap.sector, AssetClass.SWAP, shock)
 
         baseline_val = swap.market_value
 

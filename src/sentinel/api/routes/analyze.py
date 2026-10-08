@@ -61,7 +61,6 @@ async def analyze_manual_text(
         published_at=now,
         timestamp_quality="original",
         simulated_at=now,
-
         is_synthetic=False,
     )
 
