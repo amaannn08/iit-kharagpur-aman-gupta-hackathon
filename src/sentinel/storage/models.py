@@ -25,7 +25,8 @@ class RunModel(Base):
 class RecordModel(Base):
     __tablename__ = "records"
 
-    record_id = Column(String(64), primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    record_id = Column(String(64), nullable=False, index=True)
     run_id = Column(String(64), ForeignKey("runs.run_id"), nullable=True, index=True)
     source_id = Column(String(64), nullable=False)
     source_type = Column(String(32), nullable=False)
@@ -42,9 +43,10 @@ class RecordModel(Base):
 class SignalModel(Base):
     __tablename__ = "signals"
 
-    signal_id = Column(String(64), primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    signal_id = Column(String(64), nullable=False, index=True)
     run_id = Column(String(64), ForeignKey("runs.run_id"), nullable=False, index=True)
-    record_id = Column(String(64), ForeignKey("records.record_id"), nullable=False)
+    record_id = Column(String(64), nullable=False, index=True)
     entity_name = Column(String(128), nullable=True)
     entity_ticker = Column(String(32), nullable=True, index=True)
     sentiment_score = Column(Float, nullable=False)

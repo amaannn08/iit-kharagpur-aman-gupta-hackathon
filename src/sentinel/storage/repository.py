@@ -52,7 +52,11 @@ class ReplayRepository:
         run_id: Optional[str] = None,
     ) -> RecordModel:
         """Store ingested record along with its deduplication audit state."""
-        existing = self.session.query(RecordModel).filter_by(record_id=record.record_id).first()
+        existing = (
+            self.session.query(RecordModel)
+            .filter_by(record_id=record.record_id, run_id=run_id)
+            .first()
+        )
         if existing:
             return existing
 
