@@ -77,9 +77,10 @@
       "description": "Synthetic $500M institutional wholesale banking portfolio comprising syndicated corporate loans, corporate bonds, SOFR interest rate swaps, and cash reserves.",
       "is_synthetic": true,
       "license": "MIT License (Project-Authored Synthetic Data)",
-      "sha256": "e2cc26e7dbe8f6254ee33a009a1b0926d7e2ada5ce2f885dce32da058c8703c8",
+      "sha256": "814e797c6b6e029bc09b9ab7566238664b83bbab5968222169a49c47751dd193",
       "byte_size": 5865,
       "record_count": 13,
+
       "primary_keys": ["position_id"]
     },
     {

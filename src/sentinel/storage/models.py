@@ -72,3 +72,5 @@ class StressRunModel(Base):
     stressed_value_usd = Column(Float, nullable=False)
     total_loss_usd = Column(Float, nullable=False)
     executed_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    raw_json = Column(Text, nullable=True)
+

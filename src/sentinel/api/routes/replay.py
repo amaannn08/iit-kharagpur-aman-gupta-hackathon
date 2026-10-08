@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from sentinel.api.routes.stress import stress_engine
 from sentinel.contracts.records import InputRecord
 from sentinel.ingestion.adapters import NewsAdapter, SocialAdapter
 from sentinel.nlp.engine import NLPEngine
@@ -23,6 +24,7 @@ router = APIRouter(prefix="/replay", tags=["Replay Controller"])
 # Singleton controller and NLP engine instances for backend runtime
 replay_controller = ReplayController()
 nlp_engine = NLPEngine()
+
 
 
 class LoadScenarioRequest(BaseModel):
@@ -109,6 +111,13 @@ async def step_replay(
             dedup_decision=dedup,
         )
         repo.save_signal(sig)
+
+        # Module B automated stress test trigger on eligible high-impact signals (PRD 9.3)
+        if stress_engine.should_trigger(sig):
+            stress_result = stress_engine.trigger_from_signal(sig)
+            if stress_result:
+                repo.save_stress_run(stress_result)
+
         return sig
 
     step_result = await replay_controller.step(processor=persist_and_process)
@@ -138,9 +147,11 @@ def resume_replay(db: Session = Depends(get_db)) -> ReplayStatus:
 def reset_replay(db: Session = Depends(get_db)) -> ReplayStatus:
     """Reset replay controller, clear queue, and assign a clean run ID."""
     replay_controller.reset()
+    stress_engine.reset_triggers()
     status = replay_controller.get_status()
     ReplayRepository(db).upsert_run(status)
     return status
+
 
 
 @router.post("/speed", response_model=ReplayStatus)

@@ -7,10 +7,12 @@ from sqlalchemy.orm import Session
 from sentinel.contracts.records import InputRecord
 from sentinel.replay.controller import ReplayStatus
 from sentinel.replay.dedup import DedupDecision
-from sentinel.storage.models import RecordModel, RunModel, SignalModel
+from sentinel.storage.models import RecordModel, RunModel, SignalModel, StressRunModel
 
 if TYPE_CHECKING:
     from sentinel.contracts.signals import RiskSignal
+    from sentinel.contracts.stress import StressRunResult
+
 
 
 class ReplayRepository:
@@ -140,3 +142,37 @@ class ReplayRepository:
             .limit(limit)
             .all()
         )
+
+    def save_stress_run(self, result: "StressRunResult") -> StressRunModel:
+        """Store executed StressRunResult in SQLite with JSON contract."""
+        import json
+        from datetime import datetime
+
+        stress_model = StressRunModel(
+            stress_id=result.stress_id,
+            run_id=result.run_id,
+            scenario_id=result.target_scope,
+            trigger_signal_id=result.trigger_signal_id,
+            baseline_value_usd=result.baseline_total_book_value_usd,
+            stressed_value_usd=result.stressed_total_book_value_usd,
+            total_loss_usd=result.total_pnl_usd,
+            executed_at=datetime.fromisoformat(result.executed_at),
+            raw_json=json.dumps(result.model_dump(mode="json")),
+        )
+        self.session.add(stress_model)
+        self.session.commit()
+        self.session.refresh(stress_model)
+        return stress_model
+
+    def get_stress_run(self, stress_id: str) -> Optional[StressRunModel]:
+        return self.session.query(StressRunModel).filter_by(stress_id=stress_id).first()
+
+    def list_stress_runs(
+        self, run_id: Optional[str] = None, limit: int = 50
+    ) -> List[StressRunModel]:
+        query = self.session.query(StressRunModel)
+
+        if run_id:
+            query = query.filter_by(run_id=run_id)
+        return query.order_by(StressRunModel.executed_at.desc()).limit(limit).all()
+

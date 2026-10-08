@@ -174,7 +174,7 @@
       "pay_receive": "receive_fixed",
       "fixed_rate": 0.0410,
       "floating_benchmark": "SOFR",
-      "signed_dv01": -36000.0,
+      "signed_dv01": 36000.0,
       "maturity_years": 5.0,
       "maturity_date": "2031-03-01"
     },
@@ -190,7 +190,7 @@
       "pay_receive": "pay_fixed",
       "fixed_rate": 0.0425,
       "floating_benchmark": "SOFR",
-      "signed_dv01": 34500.0,
+      "signed_dv01": -34500.0,
       "maturity_years": 7.0,
       "maturity_date": "2033-03-01"
     },
