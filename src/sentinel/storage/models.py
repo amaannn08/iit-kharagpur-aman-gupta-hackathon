@@ -14,8 +14,12 @@ class RunModel(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     status = Column(String(32), default="idle", nullable=False)
     scenario_id = Column(String(64), nullable=True)
-    total_records = Column(Integer, default=0)
-    processed_signals = Column(Integer, default=0)
+    speed = Column(Float, default=1.0, nullable=False)
+    current_simulated_at = Column(DateTime, nullable=True)
+    total_records = Column(Integer, default=0, nullable=False)
+    processed_records = Column(Integer, default=0, nullable=False)
+    duplicate_count = Column(Integer, default=0, nullable=False)
+    error_count = Column(Integer, default=0, nullable=False)
 
 
 class RecordModel(Base):
@@ -26,9 +30,13 @@ class RecordModel(Base):
     source_id = Column(String(64), nullable=False)
     source_type = Column(String(32), nullable=False)
     text = Column(Text, nullable=False)
+    sequence_number = Column(Integer, nullable=True)
     published_at = Column(DateTime, nullable=True)
     simulated_at = Column(DateTime, nullable=True)
-    is_synthetic = Column(Boolean, default=True)
+    is_synthetic = Column(Boolean, default=True, nullable=False)
+    is_duplicate = Column(Boolean, default=False, nullable=False)
+    duplicate_group_id = Column(String(64), nullable=True, index=True)
+    canonical_record_id = Column(String(64), nullable=True)
 
 
 class SignalModel(Base):
@@ -37,6 +45,7 @@ class SignalModel(Base):
     signal_id = Column(String(64), primary_key=True, index=True)
     run_id = Column(String(64), ForeignKey("runs.run_id"), nullable=False, index=True)
     record_id = Column(String(64), ForeignKey("records.record_id"), nullable=False)
+    entity_name = Column(String(128), nullable=True)
     entity_ticker = Column(String(32), nullable=True, index=True)
     sentiment_score = Column(Float, nullable=False)
     sentiment_label = Column(String(32), nullable=False)
@@ -44,7 +53,9 @@ class SignalModel(Base):
     event_confidence = Column(Float, nullable=False)
     impact_score = Column(Integer, nullable=False)
     processed_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    eligible_for_action = Column(Boolean, default=True)
+    duplicate_group_id = Column(String(64), nullable=True)
+    eligible_for_action = Column(Boolean, default=True, nullable=False)
+    action_block_reasons = Column(Text, nullable=True)
 
 
 class StressRunModel(Base):
