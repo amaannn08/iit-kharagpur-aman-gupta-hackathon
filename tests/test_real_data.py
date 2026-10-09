@@ -97,3 +97,9 @@ def test_hf_label_files_have_expected_label_space():
     assert labels == set(range(20))
     with open(DATA / "train/hf_fin_sentiment/sent_valid.csv", newline="") as f:
         assert {int(r["label"]) for r in csv.DictReader(f)} == {0, 1, 2}
+
+
+def test_committed_data_files_contain_no_carriage_returns():
+    """.gitattributes forces eol=lf; any CR would make clone bytes differ from manifest hashes."""
+    for p in list((DATA / "real").rglob("*.csv")) + list((DATA / "train").rglob("*.csv")):
+        assert b"\r" not in p.read_bytes(), p

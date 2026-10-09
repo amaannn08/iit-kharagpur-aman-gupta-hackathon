@@ -89,6 +89,12 @@ LICENSES = {
 }
 
 
+def clean_text(text: object) -> str:
+    """Normalize CR/CRLF to LF: .gitattributes forces eol=lf, so a stray CR would make the
+    committed bytes differ from the manifest SHA-256 on a fresh clone."""
+    return str(text).replace("\r\n", "\n").replace("\r", "\n").strip()
+
+
 def rid(prefix: str, *parts: object) -> str:
     digest = hashlib.sha1("|".join(map(str, parts)).encode()).hexdigest()[:12]
     return f"{prefix}-{digest}"
@@ -122,8 +128,8 @@ def polygon() -> int:
                 "record_id": record_id,
                 "source_id": "kaggle_rdolphin_polygon_news",
                 "source_type": "news",
-                "headline": a["title"].strip(),
-                "body": (a.get("description") or "").strip(),
+                "headline": clean_text(a["title"]),
+                "body": clean_text(a.get("description") or ""),
                 "published_at": a["published_utc"],
                 "timestamp_quality": "original",
                 "simulated_at": "",
@@ -193,7 +199,7 @@ def tweets(n: int) -> int:
             "record_id": tw.record_id,
             "source_id": "kaggle_thedevastator_stock_tweets",
             "source_type": "social",
-            "text": tw.TWEET.astype(str).str.strip(),
+            "text": tw.TWEET.map(clean_text),
             "author_handle": "",
             "published_at": tw.published_at,
             "timestamp_quality": "date_only",
@@ -241,7 +247,7 @@ def parse_gkg_rows(lines) -> list:
         m = re.search(r"<PAGE_TITLE>(.*?)</PAGE_TITLE>", g[26])
         if not m:
             continue
-        title = html.unescape(m.group(1)).strip()
+        title = clean_text(html.unescape(m.group(1)))
         if len(title) < 25:
             continue
         ts = pd.to_datetime(g[1], format="%Y%m%d%H%M%S").strftime("%Y-%m-%dT%H:%M:%SZ")

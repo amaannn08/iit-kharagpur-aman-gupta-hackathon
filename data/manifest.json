@@ -242,8 +242,8 @@
         "cashtags",
         "primary_entity_id"
       ],
-      "byte_size": 1168857,
-      "sha256": "c3b87d52ab1aaa6b385e10e131dd619fefe2b2977c97e88b04a4b247fda26e1f",
+      "byte_size": 1163807,
+      "sha256": "16f1297efeb4e374d1eda7989b8c562d8053eb371a31e14fef6c1e904aacecc7",
       "record_count": 5000
     },
     {
@@ -379,5 +379,5 @@
       "record_count": 600
     }
   ],
-  "updated_at": "2026-10-09T13:52:57.629861+00:00"
+  "updated_at": "2026-10-09T13:55:21.825095+00:00"
 }
