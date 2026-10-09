@@ -62,8 +62,24 @@ In strict compliance with **Hackathon Guidelines Section 8 (Confidentiality & Da
 
 ## 6. Real Public Datasets
 
-Earlier revisions of this repository contained hand-written fixture rows under `data/external/`
-and `data/portfolio/credit_sleeve.*` that were labeled as Kaggle data. They were not real Kaggle
-records and have been removed. Real public datasets are fetched by `scripts/data/fetch_real.py`
-into the gitignored `data/raw/real/` cache; committed samples and their licenses are documented
-in the sections added alongside them.
+Real public datasets are downloaded by `scripts/data/fetch_real.py` into the gitignored
+`data/raw/real/` cache. The repository commits samples or derived aggregates only; each folder
+carries a LICENSE file with attribution, and `data/manifest.json` records license, source URL,
+SHA-256 and row count for every file. Third-party data keeps its own license and is not covered
+by the project's MIT license.
+
+| Committed path | Source | License |
+|---|---|---|
+| `data/train/hf_fin_topic/`, `data/train/hf_fin_sentiment/` | zeroshot/twitter-financial-news-topic, -sentiment (Hugging Face) | MIT |
+| `data/real/polygon_news/` | Kaggle rdolphin/financial-news-with-ticker-level-sentiment (Polygon.io news) | MIT |
+| `data/real/stock_tweets/` (5,000-row sample) | Kaggle thedevastator/tweet-sentiment-s-impact-on-stock-returns | CC0; tweet text subject to X terms |
+| `data/train/phrasebank/` (600-row sample) | FinancialPhraseBank, Malo et al. (2014) | CC BY-NC-SA 3.0 (bundled License.txt; Kaggle lists 4.0) |
+| `data/portfolio/credit_sleeve.json` (aggregates) | Kaggle computingvictor/transactions-fraud-datasets | Apache-2.0 |
+| `data/train/sec_8k/items.csv` | SEC EDGAR Form 8-K filings | US public record |
+| `data/real/gdelt/snapshot.csv` | GDELT Project 2.0 GKG (cite "The GDELT Project") | GDELT open data |
+| `data/universe/entities.csv` | Wikipedia list of S&P 500 companies; SEC company_tickers.json | CC BY-SA 4.0 (constituent list); US public domain (SEC) |
+| `data/market/*.json|csv` | Statistics derived from Yahoo Finance closes via yfinance | Derived values only; raw prices not redistributed |
+
+Earlier revisions contained hand-written fixture rows under `data/external/` and an 8-user
+`data/portfolio/credit_sleeve.*` that were labeled as Kaggle data; they were not real records and
+were removed.
