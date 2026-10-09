@@ -12,6 +12,7 @@ class AssetClass(str, Enum):
     BOND = "bond"
     SWAP = "swap"
     CASH = "cash"
+    EQUITY = "equity"
 
 
 class LoanPosition(BaseModel):
@@ -86,6 +87,19 @@ class CashPosition(BaseModel):
     maturity_date: date
 
 
+class EquityPosition(BaseModel):
+    position_id: str
+    asset_class: AssetClass = AssetClass.EQUITY
+    entity_id: str = Field(..., description="Ticker")
+    counterparty_name: str
+    sector: str
+    currency: str = "USD"
+    market_value: float = Field(..., ge=0.0)
+    beta: float = Field(..., description="Beta vs SPY estimated from real daily returns")
+    volatility_annual: float = Field(0.0, ge=0.0)
+    sleeve: str = Field(default="equity")
+
+
 class PortfolioSummary(BaseModel):
     total_book_value_usd: float = Field(..., ge=0.0)
     corporate_loans_value_usd: float = Field(..., ge=0.0)
@@ -93,6 +107,7 @@ class PortfolioSummary(BaseModel):
     cash_reserves_usd: float = Field(..., ge=0.0)
     interest_rate_swaps_mtm_usd: float = 0.0
     interest_rate_swaps_gross_notional_usd: float = Field(..., ge=0.0)
+    equities_value_usd: float = Field(0.0, ge=0.0)
 
 
 class PositionStressDelta(BaseModel):
@@ -109,6 +124,7 @@ class PositionStressDelta(BaseModel):
     ecl_stressed_usd: float = 0.0
     incremental_ecl_usd: float = 0.0
     market_risk_pnl_usd: float = 0.0
+    operational_loss_usd: float = 0.0
     applied_shock_summary: str = "Unimpacted"
     is_contagion: bool = False
     contagion_hops: int = 0

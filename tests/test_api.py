@@ -60,9 +60,10 @@ def test_scenarios_endpoint():
 
     payload = response.json()
     scenarios = payload.get("scenarios", [])
-    assert len(scenarios) == 3
-
     scenario_ids = [s["scenario_id"] for s in scenarios]
+    assert len(scenarios) == 8  # 3 authored + 5 measured historical windows
+    assert {f"HIST-{k}" for k in ("COVID_2020", "RUSSIA_2022", "FED_JUN_2022", "SVB_2023",
+                                  "FED_PIVOT_2023")} <= set(scenario_ids)  # fmt: skip
     assert "SCENARIO-CREDIT-01" in scenario_ids
     assert "SCENARIO-RATE-01" in scenario_ids
     assert "SCENARIO-SUPPLY-01" in scenario_ids

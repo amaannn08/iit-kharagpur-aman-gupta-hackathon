@@ -1,13 +1,19 @@
 """Event-triggered stress testing orchestrator conforming to PRD Section 9.3."""
 
+import json
 from pathlib import Path
-from typing import Optional, Set, Union
+from typing import List, Optional, Set, Union
 
 from sentinel.config import settings
 from sentinel.contracts.signals import RiskSignal
 from sentinel.contracts.stress import StressRunResult
 from sentinel.stress.portfolio import WholesalePortfolio
-from sentinel.stress.shocks import DEFAULT_SHOCK_CATALOG, build_scaled_shock
+from sentinel.stress.shocks import (
+    DEFAULT_SHOCK_CATALOG,
+    ScaledShock,
+    build_scaled_shock,
+    shock_from_scenario,
+)
 from sentinel.stress.valuation import ValuationEngine
 
 
@@ -110,6 +116,7 @@ class StressEngine:
             target_entity=target_entity,
             target_scope=scope,
             is_easing=is_easing,
+            target_sector=signal.entity.sector,
         )
 
         enable_contagion = scope == "entity" and event_class in {"CREDIT", "SUPPLY_CHAIN"}
@@ -125,7 +132,7 @@ class StressEngine:
         )
 
         self.acted_signal_ids.add(signal.signal_id)
-        return result
+        return self._mark_exposure(result)
 
     def run_manual_stress(
         self,
@@ -155,6 +162,63 @@ class StressEngine:
             impact_score=impact_score,
             enable_contagion=enable_contagion,
         )
+
+    @staticmethod
+    def _mark_exposure(result: StressRunResult) -> StressRunResult:
+        """A trigger whose shock touches no position is reported as NO_EXPOSURE, not a $0 loss."""
+        if all(abs(p.pnl_usd) < 0.005 for p in result.position_deltas):
+            result.status = "NO_EXPOSURE"
+        return result
+
+    def list_scenarios(self) -> List[dict]:
+        out = []
+        for path in sorted((settings.data_dir / "scenarios").glob("*.json")):
+            out.append(json.loads(path.read_text(encoding="utf-8")))
+        return out
+
+    def run_scenario(self, scenario_id: str, run_id: str = "scenario-run") -> StressRunResult:
+        """Run a named scenario file (e.g. HIST-SVB_2023: the measured SVB-window market move)."""
+        scenario = next((s for s in self.list_scenarios() if s["scenario_id"] == scenario_id), None)
+        if scenario is None:
+            raise KeyError(scenario_id)
+        contagion = scenario.get("contagion", {})
+        result = self.valuation_engine.run_stress_test(
+            shock=shock_from_scenario(scenario),
+            run_id=run_id,
+            trigger_type="SCENARIO",
+            event_class=scenario.get("event_class", "MACRO"),
+            impact_score=int(scenario.get("trigger_impact_score", 8)),
+            enable_contagion=bool(contagion.get("enabled")),
+            max_hops=int(contagion.get("max_hops", 2) or 2),
+            hop_decay=float(contagion.get("hop_decay", 0.6) or 0.6),
+        )
+        return self._mark_exposure(result)
+
+    def run_custom_stress(
+        self,
+        equity_shock_pct: float = 0.0,
+        benchmark_yield_shift_bps: float = 0.0,
+        bond_spread_shift_bps: float = 0.0,
+        loan_pd_increment: float = 0.0,
+        lgd_increment: float = 0.0,
+        run_id: str = "custom-run",
+    ) -> StressRunResult:
+        """Explicit systemic shock set, e.g. the PS example: equities -10%, rates +200 bp."""
+        shock = ScaledShock(
+            bond_spread_shift_bps=bond_spread_shift_bps,
+            loan_pd_increment=loan_pd_increment,
+            lgd_increment=lgd_increment,
+            benchmark_yield_shift_bps=benchmark_yield_shift_bps,
+            scale_multiplier=1.0,
+            target_entity=None,
+            target_scope="systemic",
+            equity_shock_pct=equity_shock_pct,
+            catalog_entry="custom",
+        )
+        result = self.valuation_engine.run_stress_test(
+            shock=shock, run_id=run_id, trigger_type="USER_TRIGGERED", event_class="CUSTOM"
+        )
+        return self._mark_exposure(result)
 
     def reset_triggers(self) -> None:
         """Reset deduplication cache of acted-upon signals."""

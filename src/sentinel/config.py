@@ -38,6 +38,7 @@ class Settings(BaseSettings):
     portfolio_files: List[str] = [
         "wholesale_positions.json",
         "portfolio/credit_sleeve.json",
+        "portfolio/equity_sleeve.json",
     ]
 
     # Decision gating thresholds

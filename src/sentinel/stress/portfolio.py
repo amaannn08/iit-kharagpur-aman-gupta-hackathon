@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Optional, Sequence, Union
 from sentinel.contracts.stress import (
     BondPosition,
     CashPosition,
+    EquityPosition,
     LoanPosition,
     PortfolioSummary,
     SwapPosition,
@@ -26,6 +27,7 @@ class WholesalePortfolio:
         bonds: List[BondPosition],
         swaps: List[SwapPosition],
         cash: List[CashPosition],
+        equities: Optional[List[EquityPosition]] = None,
     ) -> None:
         self.portfolio_name = portfolio_name
         self.base_currency = base_currency
@@ -35,6 +37,7 @@ class WholesalePortfolio:
         self.bonds = bonds
         self.swaps = swaps
         self.cash = cash
+        self.equities: List[EquityPosition] = equities or []
         self.sector_fraud_rates: Dict[str, float] = {}  # from the retail sleeve, if loaded
 
     @classmethod
@@ -52,6 +55,7 @@ class WholesalePortfolio:
         bonds: List[BondPosition] = []
         swaps: List[SwapPosition] = []
         cash: List[CashPosition] = []
+        equities: List[EquityPosition] = []
 
         for p in data.get("positions", []):
             asset_class = p.get("asset_class")
@@ -63,6 +67,8 @@ class WholesalePortfolio:
                 swaps.append(SwapPosition.model_validate(p))
             elif asset_class == "cash":
                 cash.append(CashPosition.model_validate(p))
+            elif asset_class == "equity":
+                equities.append(EquityPosition.model_validate(p))
 
         return cls(
             portfolio_name=data.get("portfolio_name", "Wholesale Portfolio"),
@@ -73,6 +79,7 @@ class WholesalePortfolio:
             bonds=bonds,
             swaps=swaps,
             cash=cash,
+            equities=equities,
         )
 
     @classmethod
@@ -93,6 +100,7 @@ class WholesalePortfolio:
             bonds=[x for b in books for x in b.bonds],
             swaps=[x for b in books for x in b.swaps],
             cash=[x for b in books for x in b.cash],
+            equities=[x for b in books for x in b.equities],
         )
         merged.summary = merged._computed_summary()
         for b in books:
@@ -104,6 +112,11 @@ class WholesalePortfolio:
         data = json.loads(path.read_text(encoding="utf-8"))
         loans = [
             LoanPosition.model_validate(p) for p in data["positions"] if p["asset_class"] == "loan"
+        ]
+        equities = [
+            EquityPosition.model_validate(p)
+            for p in data["positions"]
+            if p["asset_class"] == "equity"
         ]
         sleeve = cls(
             portfolio_name=data.get("portfolio_name", path.stem),
@@ -120,6 +133,7 @@ class WholesalePortfolio:
             bonds=[],
             swaps=[],
             cash=[],
+            equities=equities,
         )
         sleeve.sector_fraud_rates = data.get("sector_fraud_rates", {})
         return sleeve
@@ -132,21 +146,19 @@ class WholesalePortfolio:
             cash_reserves_usd=sum(p.market_value for p in self.cash),
             interest_rate_swaps_mtm_usd=sum(p.market_value for p in self.swaps),
             interest_rate_swaps_gross_notional_usd=self.total_derivative_notional,
+            equities_value_usd=sum(p.market_value for p in self.equities),
         )
 
     def sleeve_totals(self) -> Dict[str, float]:
         totals: Dict[str, float] = {}
-        for pos in [*self.loans, *self.bonds, *self.cash]:
+        for pos in [*self.loans, *self.bonds, *self.cash, *self.equities]:
             totals[pos.sleeve] = totals.get(pos.sleeve, 0.0) + pos.market_value
         return totals
 
     @property
     def total_funded_exposure(self) -> float:
-        """Funded exposure: loans + bonds + cash."""
-        loan_val = sum(pos.market_value for pos in self.loans)
-        bond_val = sum(pos.market_value for pos in self.bonds)
-        cash_val = sum(pos.market_value for pos in self.cash)
-        return loan_val + bond_val + cash_val
+        """Funded exposure: loans + bonds + cash + equities (never derivative notional)."""
+        return sum(p.market_value for p in [*self.loans, *self.bonds, *self.cash, *self.equities])
 
     @property
     def total_derivative_notional(self) -> float:
@@ -163,5 +175,6 @@ class WholesalePortfolio:
             "bonds": [pos.model_dump(mode="json") for pos in self.bonds],
             "swaps": [pos.model_dump(mode="json") for pos in self.swaps],
             "cash": [pos.model_dump(mode="json") for pos in self.cash],
+            "equities": [pos.model_dump(mode="json") for pos in self.equities],
             "funded_value_by_sleeve_usd": self.sleeve_totals(),
         }

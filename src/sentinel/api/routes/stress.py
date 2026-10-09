@@ -27,6 +27,17 @@ class ManualStressRequest(BaseModel):
     run_id: str = Field("manual-sandbox", description="Associated run identifier")
 
 
+class CustomStressRequest(BaseModel):
+    """Explicit systemic shock set (PS Module B example: equities -10%, rates +2%)."""
+
+    equity_shock_pct: float = Field(0.0, ge=-1.0, le=1.0, description="e.g. -0.10 for -10%")
+    benchmark_yield_shift_bps: float = Field(0.0, ge=-1000, le=1000)
+    bond_spread_shift_bps: float = Field(0.0, ge=-1000, le=3000)
+    loan_pd_increment: float = Field(0.0, ge=-1.0, le=1.0)
+    lgd_increment: float = Field(0.0, ge=-1.0, le=1.0)
+    run_id: str = "custom-sandbox"
+
+
 class PersistedStressSummary(BaseModel):
     stress_id: str
     run_id: str
@@ -61,6 +72,31 @@ def simulate_stress(
 
     repo = ReplayRepository(db)
     repo.save_stress_run(result)
+    return result
+
+
+@router.get("/scenarios")
+def list_stress_scenarios() -> Dict[str, Any]:
+    """Runnable named scenarios, including five measured historical stress windows."""
+    return {"scenarios": stress_engine.list_scenarios()}
+
+
+@router.post("/scenario/{scenario_id}", response_model=StressRunResult)
+def run_stress_scenario(scenario_id: str, db: Session = Depends(get_db)) -> StressRunResult:
+    """Run a named scenario file against the full portfolio and persist the result."""
+    try:
+        result = stress_engine.run_scenario(scenario_id, run_id=f"scenario-{scenario_id}")
+    except KeyError:
+        raise HTTPException(status_code=404, detail=f"Scenario '{scenario_id}' not found.")
+    ReplayRepository(db).save_stress_run(result)
+    return result
+
+
+@router.post("/custom", response_model=StressRunResult)
+def run_custom_stress(req: CustomStressRequest, db: Session = Depends(get_db)) -> StressRunResult:
+    """Run an explicit systemic shock set and persist the result."""
+    result = stress_engine.run_custom_stress(**req.model_dump())
+    ReplayRepository(db).save_stress_run(result)
     return result
 
 
