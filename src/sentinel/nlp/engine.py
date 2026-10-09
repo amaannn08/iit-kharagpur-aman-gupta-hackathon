@@ -5,7 +5,7 @@ from typing import List, Optional
 from uuid import uuid4
 
 from sentinel.config import settings
-from sentinel.contracts.records import InputRecord
+from sentinel.contracts.records import InputRecord, SourceType
 from sentinel.contracts.signals import (
     EntityReference,
     EventOutput,
@@ -15,6 +15,7 @@ from sentinel.contracts.signals import (
 )
 from sentinel.nlp.entities import EntityLinker
 from sentinel.nlp.events import EventClassifier
+from sentinel.nlp.relevance import social_block_reason
 from sentinel.nlp.sentiment import (
     FinBERTSentimentAnalyzer,
     apply_macro_polarity,
@@ -150,6 +151,10 @@ class NLPEngine:
         if not entity_ref.resolved:
             eligible = False
             block_reasons.append("UNRESOLVED_ENTITY")
+
+        if record.source_type == SourceType.SOCIAL and (reason := social_block_reason(record.text)):
+            eligible = False
+            block_reasons.append(reason)
 
         duplicate_group_id = (
             dedup_decision.duplicate_group_id
