@@ -38,6 +38,8 @@ class ReplayStatus(BaseModel):
     duplicate_count: int
     error_count: int
     step_count: int
+    sources: List[str] = Field(default_factory=list)
+    source_badges: List[str] = Field(default_factory=list)
 
 
 class ReplayStepResult(BaseModel):
@@ -74,6 +76,9 @@ class ReplayController:
         self._dedup = ExactTextDeduplicator()
 
         self._queue: List[InputRecord] = []
+        self._known_ids: set = set()
+        self._sources: List[str] = []
+        self._badges: List[str] = []
         self._total_records: int = 0
         self._processed_count: int = 0
         self._in_flight: int = 0
@@ -113,9 +118,17 @@ class ReplayController:
             duplicate_count=self._dedup.total_duplicates,
             error_count=self._error_count,
             step_count=self._clock.step_count,
+            sources=list(self._sources),
+            source_badges=sorted(set(self._badges)),
         )
 
-    def load_scenario(self, scenario_id: str, records: List[InputRecord]) -> None:
+    def load_scenario(
+        self,
+        scenario_id: str,
+        records: List[InputRecord],
+        sources: Optional[List[str]] = None,
+        badges: Optional[List[str]] = None,
+    ) -> None:
         """Initialize or reset controller with a sorted set of scenario records."""
         if len(records) > self.max_queue_size:
             raise ValueError(
@@ -127,7 +140,19 @@ class ReplayController:
         # Strict deterministic ordering
         self._queue = sort_records_deterministically(records)
         self._total_records = len(self._queue)
+        self._known_ids = {r.record_id for r in records}
+        self._sources, self._badges = list(sources or []), list(badges or [])
         self._state = RunState.IDLE
+
+    def append_records(self, records: List[InputRecord]) -> int:
+        """Queue records not seen in this run (live capture files grow while a run is open)."""
+        fresh = [r for r in records if r.record_id not in self._known_ids]
+        room = self.max_queue_size - len(self._queue)
+        fresh = sort_records_deterministically(fresh)[: max(0, room)]
+        self._queue = sort_records_deterministically(self._queue + fresh)
+        self._known_ids.update(r.record_id for r in fresh)
+        self._total_records += len(fresh)
+        return len(fresh)
 
     def set_speed(self, speed: float) -> None:
         self._clock.set_speed(speed)
@@ -157,6 +182,9 @@ class ReplayController:
         self._clock.reset()
         self._dedup.reset()
         self._queue.clear()
+        self._known_ids = set()
+        self._sources = []
+        self._badges = []
         self._total_records = 0
         self._processed_count = 0
         self._in_flight = 0

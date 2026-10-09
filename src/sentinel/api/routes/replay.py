@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from sentinel.api.events import broadcaster
 from sentinel.api.routes.stress import stress_engine
+from sentinel.config import settings
 from sentinel.contracts.records import InputRecord
 from sentinel.contracts.signals import RiskSignal
 from sentinel.contracts.stress import StressRunResult
@@ -102,35 +103,71 @@ def get_replay_status() -> ReplayStatus:
     return replay_controller.get_status()
 
 
+def _load_source(name: str) -> List[InputRecord]:
+    rel, kind, _ = settings.replay_sources[name]
+    path = settings.data_dir / rel
+    if not path.exists():
+        return []
+    adapter = NewsAdapter if kind == "news" else SocialAdapter
+    return adapter.load_from_csv(path)
+
+
+@router.get("/sources")
+def list_replay_sources() -> List[dict]:
+    """Registered replay sources with badge and availability (live files appear when recorded)."""
+    out = []
+    for name, (rel, kind, badge) in settings.replay_sources.items():
+        path = settings.data_dir / rel
+        out.append({"source": name, "kind": kind, "badge": badge, "path": f"data/{rel}",
+                    "available": path.exists()})  # fmt: skip
+    return out
+
+
 @router.post("/load", response_model=ReplayStatus)
 def load_replay_scenario(
     req: LoadScenarioRequest,
     db: Session = Depends(get_db),
 ) -> ReplayStatus:
-    """Load scenario records into the bounded replay queue."""
-    repo = ReplayRepository(db)
-    all_records: List[InputRecord] = []
-    base_data_dir = Path("data")
-
-    if "news_demo" in req.sources:
-        news_file = base_data_dir / "news_demo.csv"
-        if news_file.exists():
-            all_records.extend(NewsAdapter.load_from_csv(news_file))
-
-    if "social_demo" in req.sources:
-        social_file = base_data_dir / "social_demo.csv"
-        if social_file.exists():
-            all_records.extend(SocialAdapter.load_from_csv(social_file))
-
-    if not all_records:
+    """Load records from one or more registered sources into the bounded replay queue."""
+    unknown = [s for s in req.sources if s not in settings.replay_sources]
+    if unknown:
         raise HTTPException(
             status_code=400,
-            detail="No records found for specified sources in data/ directory.",
+            detail=f"Unknown sources {unknown}; valid: {sorted(settings.replay_sources)}",
+        )
+    repo = ReplayRepository(db)
+    all_records: List[InputRecord] = []
+    for name in req.sources:
+        all_records.extend(_load_source(name))
+    if not all_records:
+        raise HTTPException(status_code=400, detail="No records found for the requested sources.")
+    if len(all_records) > replay_controller.max_queue_size:
+        raise HTTPException(
+            status_code=400,
+            detail=f"{len(all_records)} records exceed the bounded queue ({replay_controller.max_queue_size}).",
         )
 
-    replay_controller.load_scenario(req.scenario_id, all_records)
+    badges = [settings.replay_sources[n][2] for n in req.sources]
+    replay_controller.load_scenario(
+        req.scenario_id, all_records, sources=req.sources, badges=badges
+    )
     status = replay_controller.get_status()
     repo.upsert_run(status)
+    return status
+
+
+class AppendRequest(BaseModel):
+    source: str
+
+
+@router.post("/append", response_model=ReplayStatus)
+def append_new_records(req: AppendRequest, db: Session = Depends(get_db)) -> ReplayStatus:
+    """Queue records that appeared in a (live capture) source file since the run was loaded."""
+    if req.source not in settings.replay_sources:
+        raise HTTPException(status_code=400, detail=f"Unknown source {req.source}")
+    replay_controller.append_records(_load_source(req.source))
+    status = replay_controller.get_status()
+    ReplayRepository(db).upsert_run(status)
     return status
 
 
