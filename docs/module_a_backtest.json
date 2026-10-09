@@ -1,0 +1,74 @@
+{
+ "description": "Module A back-test on real tweets (2017-2018) and real closes; weights at close t earn the t+1 return; equal-weight benchmark on the same 20 names",
+ "universe": [
+  "AAPL",
+  "ADBE",
+  "CSCO",
+  "INTC",
+  "MSFT",
+  "AMZN",
+  "MCD",
+  "META",
+  "GOOGL",
+  "NFLX",
+  "CMCSA",
+  "DIS",
+  "JPM",
+  "C",
+  "BLK",
+  "MA",
+  "BA",
+  "FDX",
+  "COST",
+  "CVX"
+ ],
+ "tweets_mapped_to_universe": 104147,
+ "tweets_relevant_after_filter": 8375,
+ "ticker_days_with_sentiment": 1251,
+ "period": [
+  "2017-01-31",
+  "2018-10-31"
+ ],
+ "runs": [
+  {
+   "k": 0.5,
+   "trading_days": 443,
+   "tilt_annual_return": 0.2524,
+   "equal_weight_annual_return": 0.2519,
+   "active_annual_return": 0.0005,
+   "tracking_error": 0.0016,
+   "information_ratio": 0.315,
+   "active_return_t_stat": 0.417,
+   "avg_daily_turnover": 0.00178,
+   "max_weight": 0.0594,
+   "mean_abs_tilt_from_equal": 0.00162
+  },
+  {
+   "k": 1.5,
+   "trading_days": 443,
+   "tilt_annual_return": 0.2533,
+   "equal_weight_annual_return": 0.2519,
+   "active_annual_return": 0.0015,
+   "tracking_error": 0.0047,
+   "information_ratio": 0.311,
+   "active_return_t_stat": 0.412,
+   "avg_daily_turnover": 0.00523,
+   "max_weight": 0.0776,
+   "mean_abs_tilt_from_equal": 0.00474
+  },
+  {
+   "k": 5.0,
+   "trading_days": 443,
+   "tilt_annual_return": 0.2561,
+   "equal_weight_annual_return": 0.2519,
+   "active_annual_return": 0.0043,
+   "tracking_error": 0.0147,
+   "information_ratio": 0.29,
+   "active_return_t_stat": 0.384,
+   "avg_daily_turnover": 0.01561,
+   "max_weight": 0.1326,
+   "mean_abs_tilt_from_equal": 0.01438
+  }
+ ],
+ "conclusion": "Positive but statistically insignificant active return (|t| < 2 for every k): the module demonstrates sentiment-driven reweighting, not demonstrated alpha."
+}

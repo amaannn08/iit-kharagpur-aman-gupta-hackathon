@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from sentinel.api.events import broadcaster
+from sentinel.api.routes.index import rebalancer
 from sentinel.api.routes.stress import stress_engine
 from sentinel.config import settings
 from sentinel.contracts.records import InputRecord
@@ -78,6 +79,9 @@ async def emit_signal(
             f.write(sig.model_dump_json() + "\n")
     except Exception as exc:
         logger.warning("Failed writing to signals.jsonl sink: %s", exc)
+
+    # Module A: every signal updates the mock index sentiment (blocked/duplicate ones are ignored)
+    rebalancer.on_signal(sig)
 
     # Module B automated stress test trigger on eligible high-impact signals (PRD 9.3)
     stress_result = None
@@ -217,6 +221,7 @@ def reset_replay(db: Session = Depends(get_db)) -> ReplayStatus:
     """Reset replay controller, clear queue, and assign a clean run ID."""
     replay_controller.reset()
     stress_engine.reset_triggers()
+    rebalancer.reset()
     status = replay_controller.get_status()
     ReplayRepository(db).upsert_run(status)
     return status
