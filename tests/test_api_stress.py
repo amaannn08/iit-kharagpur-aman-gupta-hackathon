@@ -104,3 +104,28 @@ def test_api_historical_scenario_and_ps_custom_shock(client: TestClient):
     ).json()
     eq = next(a for a in ps["asset_class_breakdown"] if a["asset_class"] == "equity")
     assert eq["total_pnl_usd"] < 0 and ps["total_pnl_usd"] < 0 and ps["reconciliation_passed"]
+
+
+def test_manual_stress_rejects_unknown_class_and_resolves_company_names(client: TestClient):
+    bad = client.post(
+        "/api/stress/simulate", json={"event_class": "macro_rates", "impact_score": 8}
+    )
+    assert bad.status_code == 422  # previously ran as a silent zero shock
+    by_name = client.post(
+        "/api/stress/simulate",
+        json={
+            "event_class": "credit",
+            "impact_score": 8,
+            "target_entity": "Apex Industrial Holdings",
+        },
+    ).json()
+    assert by_name["target_entity"] == "APEX" and by_name["total_pnl_usd"] < 0
+    unknown = client.post(
+        "/api/stress/simulate", json={"event_class": "CREDIT", "target_entity": "Nobody Corp"}
+    )
+    assert unknown.status_code == 400
+
+
+def test_metrics_endpoint_serves_generated_metrics(client: TestClient):
+    m = client.get("/api/datasets/metrics").json()
+    assert m["public_real"]["event"]["n"] == 4117
