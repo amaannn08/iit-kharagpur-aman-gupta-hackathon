@@ -2,7 +2,8 @@
 
 The additive rubric (base + scope + explicit severity) always runs and supplies the
 explainable components and evidence spans. When the engine passes the classified event:
-  - company-level signals are scored by the market-calibrated model (impact_model.py):
+  - company-level signals with a classified event are scored by the market-calibrated model
+    (impact_model.py); signals with no event (OTHER / abstained) keep the rubric:
     the decile of the predicted next-day abnormal return, validated out of fold on 2,617 real
     article-company events (Spearman 0.114, CI 0.076-0.152; the rubric alone scored 0.0005);
   - systemic / macro signals keep the rubric; an explicit magnitude ("75 basis points",
@@ -164,7 +165,9 @@ class SeverityRubricEngine:
             return rubric, spans
 
         out = rubric.model_copy()
-        if entity.ticker and self.impact_model.available:
+        # Impact describes an event: with no classified event (OTHER/abstained) keep the rubric
+        is_event = event_class.upper() != "OTHER" and not event.abstained
+        if entity.ticker and self.impact_model.available and is_event:
             feats = impact_features(event, sentiment_score or 0.0, n_entities, text, is_social)
             pred, decile = self.impact_model.score(feats)
             out.score = decile

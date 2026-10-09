@@ -1,6 +1,6 @@
 {
  "model": "event_v2",
- "created_at": "2026-10-09T17:07:57.266782+00:00",
+ "created_at": "2026-10-09T18:53:47.844548+00:00",
  "algorithm": "TF-IDF (1-2 gram, 60k) + isotonic-calibrated logistic regression",
  "classes": [
   "CREDIT",
@@ -29,7 +29,7 @@
  },
  "training_rows": {
   "hf_topic_train": 16990,
-  "hf_topic_train_relabeled_by_ps_mapping": 83,
+  "hf_topic_train_relabeled_by_ps_mapping": 691,
   "sec_8k_train": 563,
   "weak_labeled_real_headlines": {
    "CYBER": 14,
@@ -50,10 +50,10 @@
   "hf_topic_valid": {
    "n": 4117,
    "label_mapping": "ps_aligned (see sentinel.nlp.events.ps_aligned_label)",
-   "macro_f1_8_ps_classes": 0.8433,
-   "macro_f1_8_ps_classes_plain_topic_mapping": 0.8292,
-   "relabeled_rows": 14,
-   "macro_f1_incl_other": 0.8488,
+   "macro_f1_8_ps_classes": 0.8461,
+   "macro_f1_8_ps_classes_plain_topic_mapping": 0.8009,
+   "relabeled_rows": 191,
+   "macro_f1_incl_other": 0.8499,
    "per_class": {
     "CREDIT": {
      "precision": 0.8889,
@@ -62,63 +62,63 @@
      "support": 91.0
     },
     "EARNINGS": {
-     "precision": 0.9565,
-     "recall": 0.9091,
-     "f1-score": 0.9322,
-     "support": 242.0
+     "precision": 0.954,
+     "recall": 0.9403,
+     "f1-score": 0.9471,
+     "support": 419.0
     },
     "GEOPOLITICAL": {
-     "precision": 0.8976,
-     "recall": 0.9157,
-     "f1-score": 0.9066,
+     "precision": 0.8945,
+     "recall": 0.9197,
+     "f1-score": 0.9069,
      "support": 249.0
     },
     "MACRO": {
-     "precision": 0.8421,
-     "recall": 0.8408,
-     "f1-score": 0.8414,
+     "precision": 0.8425,
+     "recall": 0.8519,
+     "f1-score": 0.8472,
      "support": 628.0
     },
     "M_AND_A": {
-     "precision": 0.8235,
-     "recall": 0.7241,
-     "f1-score": 0.7706,
+     "precision": 0.8137,
+     "recall": 0.7155,
+     "f1-score": 0.7615,
      "support": 116.0
     },
     "PRODUCT": {
-     "precision": 0.8453,
-     "recall": 0.8223,
-     "f1-score": 0.8336,
+     "precision": 0.8504,
+     "recall": 0.8282,
+     "f1-score": 0.8391,
      "support": 844.0
     },
     "REGULATORY": {
-     "precision": 0.813,
-     "recall": 0.8547,
-     "f1-score": 0.8333,
+     "precision": 0.825,
+     "recall": 0.8462,
+     "f1-score": 0.8354,
      "support": 117.0
     },
     "OTHER": {
-     "precision": 0.8739,
-     "recall": 0.9016,
-     "f1-score": 0.8876,
-     "support": 1830.0
+     "precision": 0.8656,
+     "recall": 0.8887,
+     "f1-score": 0.877,
+     "support": 1653.0
     }
    },
    "abstention_at_threshold": {
-    "precision": 0.9026,
-    "coverage": 0.8802
+    "precision": 0.9084,
+    "coverage": 0.8815
    }
   },
   "sec_8k_heldout_filings": {
    "n": 141,
    "recall_by_class": {
-    "CREDIT": 0.8723,
-    "CYBER": 1.0,
+    "CREDIT": 0.9149,
+    "CYBER": 0.875,
     "EARNINGS": 1.0,
-    "OTHER": 0.8375
+    "OTHER": 0.8
    },
-   "routine_filings_false_stress_rate": 0.1163
+   "routine_filings_false_stress_rate": 0.1395
   }
  },
- "model_sha256": "70d34e76278192569e7de6ff5527829d8fb4df56a1ab1dd8f871327c98cc9566"
+ "model_sha256": "63a9550432938f44f5d0ebabcb4f4f6b4c759487bbb2809a0e1e0bf751913a6e"
 }

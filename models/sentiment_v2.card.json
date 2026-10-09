@@ -1,6 +1,6 @@
 {
  "model": "sentiment_v2",
- "created_at": "2026-10-09T17:08:09.574150+00:00",
+ "created_at": "2026-10-09T18:54:00.562913+00:00",
  "algorithm": "TF-IDF word (1-2) + char_wb (3-5) n-grams + balanced logistic regression",
  "score_definition": "P(positive) - P(negative), in [-1, 1]",
  "classes": [
@@ -51,5 +51,5 @@
    "note": "silver labels are the publisher's LLM output, skewed positive; domain shift from tweets to news"
   }
  },
- "model_sha256": "7d1eb7e4a2108be3cd28a0f4097ccee019f0bde0d5cc219253d97f817500b3da"
+ "model_sha256": "21996db9390e450b87d51b4c617ae2e3a3ec72a4dc49a31488c4970fc89f5d0f"
 }

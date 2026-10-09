@@ -85,15 +85,15 @@ def test_market_calibration_card_beats_rubric_out_of_fold():
     m = json.loads((settings.base_dir / "models" / "impact_v2.card.json").read_text())["metrics"]
     assert m["events"] >= 2000
     assert m["learned_oof_spearman_ci95"][0] > 0  # CI excludes zero
-    assert (
-        m["rubric_v1_spearman_ci95"][0] < 0 < m["rubric_v1_spearman_ci95"][1]
-    )  # rubric: no signal
+    # the learned model must beat the explainable rubric out of fold (the rubric itself gained
+    # signal once earnings news stopped being classified OTHER)
+    assert m["learned_oof_spearman"] > m["rubric_v1_spearman"]
     assert m["large_move_rate_decile_10"] >= 3 * m["large_move_rate_decile_1"]
 
 
 def test_company_signal_is_market_calibrated_with_audit_fields():
-    s = _signal("Ford shares slide after the automaker cuts its full-year profit guidance")
-    assert s.entity.ticker == "F"
+    s = _signal("Ford quarterly earnings miss estimates as profit falls 30%")
+    assert s.entity.ticker == "F" and s.event.label == "EARNINGS"
     assert s.impact.method == "market_calibrated"
     cal = s.impact.market_calibration
     assert cal["decile"] == s.impact.score and cal["predicted_abs_abnormal_z"] > 0
@@ -114,3 +114,10 @@ def test_catastrophic_credit_language_sets_floor():
     s = _signal("Apex Industrial files emergency Chapter 11 bankruptcy petition after debt default")
     assert s.event.label == "CREDIT"
     assert s.impact.score >= 8
+
+
+def test_company_signal_without_an_event_keeps_the_rubric():
+    """Impact describes an event: an opinion piece classified OTHER is not market-calibrated."""
+    s = _signal("Better Buy: ExxonMobil or Chevron? Both have strong balance sheets")
+    assert s.event.label == "OTHER"
+    assert s.impact.method == "rubric" and s.impact.score <= 3

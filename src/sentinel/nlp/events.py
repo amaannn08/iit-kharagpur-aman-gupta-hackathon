@@ -90,16 +90,35 @@ CREDIT_DISTRESS = re.compile(
 )
 
 
+# Earnings language. The topic dataset files earnings-driven price reactions under "Stock
+# Movement" / "Analyst Update" (-> OTHER), so "cuts its full-year profit guidance" was learned
+# as a non-event. Only refines labels that would otherwise be OTHER.
+EARNINGS_LANGUAGE = re.compile(
+    r"\b(earnings|eps|quarterly (results|profit|loss|revenue|sales)|"
+    r"q[1-4] (results|earnings|revenue|profit|sales)|"
+    r"(raises|raised|cuts|cut|lowers|lowered|slashes|withdraws|reaffirms|beats|beat|misses|missed|"
+    r"tops|topped) (its |their )?(full[- ]year |annual |quarterly |sales |revenue |profit )?"
+    r"(guidance|forecast|outlook|estimates|expectations)|"
+    r"profit (warning|falls|fell|drops|dropped|rises|rose|jumps|jumped|plunges|surges)|"
+    r"revenue (beats|misses|falls|fell|rises|rose|tops|jumps))\b",
+    re.I,
+)
+
+
 def ps_aligned_label(topic_label: int, text: str) -> str:
     """Map a twitter-financial-news topic label onto the PS event taxonomy.
 
-    Deterministic and shared by training and evaluation. The only refinement of the topic
-    taxonomy is credit-distress language -> CREDIT (a bankruptcy is a PS Credit Event even when
-    the dataset files it under company news). Evidence gates are applied at inference only.
+    Deterministic and shared by training and evaluation. Two refinements of the topic taxonomy:
+    credit-distress language -> CREDIT (a bankruptcy is a PS Credit Event even when the dataset
+    files it under company news), and explicit earnings language on an otherwise-OTHER topic ->
+    EARNINGS. Evidence gates are applied at inference only.
     """
     if CREDIT_DISTRESS.search(text):
         return "CREDIT"
-    return TOPIC_TO_PS_CLASS.get(int(topic_label), "OTHER")
+    label = TOPIC_TO_PS_CLASS.get(int(topic_label), "OTHER")
+    if label == "OTHER" and EARNINGS_LANGUAGE.search(text):
+        return "EARNINGS"
+    return label
 
 
 def clean_for_classifier(text: str) -> str:
