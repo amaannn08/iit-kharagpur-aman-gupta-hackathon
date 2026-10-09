@@ -1,0 +1,59 @@
+{
+ "model": "impact_v2",
+ "created_at": "2026-10-09T14:59:15.280482+00:00",
+ "target": "|standardized abnormal return| on the reaction day (beta 120d, sigma 30d, vs SPY)",
+ "mapping": "impact 1-10 = decile of the out-of-fold prediction (decile_edges)",
+ "algorithm": "HistGradientBoostingRegressor(max_depth=3, lr=0.05, 300 iters, min leaf 30)",
+ "features": [
+  "p_CREDIT",
+  "p_CYBER",
+  "p_EARNINGS",
+  "p_GEOPOLITICAL",
+  "p_MACRO",
+  "p_M_AND_A",
+  "p_OTHER",
+  "p_PRODUCT",
+  "p_REGULATORY",
+  "p_SUPPLY_CHAIN",
+  "sentiment",
+  "abs_sentiment",
+  "n_entities",
+  "log_length",
+  "is_social",
+  "catastrophic_language",
+  "material_language"
+ ],
+ "labels_sha256": "81db1b0387aa5e6bd6439c396902001be94f2785f12d667a31d5a51247cfc4fa",
+ "metrics": {
+  "events": 2617,
+  "articles": 1961,
+  "tickers": 445,
+  "rubric_v1_spearman": 0.0005,
+  "rubric_v1_spearman_ci95": [
+   -0.0374,
+   0.0392
+  ],
+  "learned_oof_spearman": 0.1137,
+  "learned_oof_spearman_ci95": [
+   0.0755,
+   0.1516
+  ],
+  "mean_abs_z_by_decile": {
+   "1": 0.748,
+   "2": 0.745,
+   "3": 0.658,
+   "4": 0.751,
+   "5": 0.69,
+   "6": 0.861,
+   "7": 0.7,
+   "8": 0.907,
+   "9": 1.132,
+   "10": 1.75
+  },
+  "large_move_rate_decile_10": 0.2672,
+  "large_move_rate_decile_1": 0.0575,
+  "large_move_definition": "|abnormal z| > 2",
+  "cv": "5-fold GroupKFold by reaction month (out-of-fold predictions)"
+ },
+ "model_sha256": "1643d1ef4ae3b8573be29e1a74873e6ec309a2bdd3909fc3ac825017337a94d7"
+}

@@ -1,16 +1,38 @@
-"""Additive impact severity rubric engine conforming to PRD Section 7.4."""
+"""Impact severity scoring conforming to PRD Section 7.4.
+
+The additive rubric (base + scope + explicit severity) always runs and supplies the
+explainable components and evidence spans. When the engine passes the classified event:
+  - company-level signals are scored by the market-calibrated model (impact_model.py):
+    the decile of the predicted next-day abnormal return, validated out of fold on 2,617 real
+    article-company events (Spearman 0.114, CI 0.076-0.152; the rubric alone scored 0.0005);
+  - systemic / macro signals keep the rubric; an explicit magnitude ("75 basis points",
+    "emergency", "plunge") adds a point, and without one the score is capped at 7;
+  - explicit catastrophic language (default, Chapter 11, ransomware ...) on a stress event
+    class sets a floor of 8, so unambiguous credit events always reach Module B.
+"""
 
 import re
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from sentinel.contracts.signals import (
     EntityReference,
+    EventOutput,
     EvidenceSpan,
     ImpactComponents,
     ImpactOutput,
 )
+from sentinel.nlp.impact_model import CATASTROPHIC, LearnedImpactModel, impact_features
 
-RUBRIC_VERSION = "1.0"
+RUBRIC_VERSION = "2.0"
+STRESS_CLASSES = {"CREDIT", "MACRO", "GEOPOLITICAL", "SUPPLY_CHAIN", "CYBER"}
+SYSTEMIC_CAP = 7
+CATASTROPHIC_FLOOR = 8
+EXPLICIT_MAGNITUDE = re.compile(
+    r"\b(\d+(\.\d+)?\s?(bps|basis points?|%|percent|points)|emergency|surprise[sd]?|unexpected(ly)?|"
+    r"shock|crash(es|ed)?|plunge[sd]?|soar(s|ed)?|spik(e|es|ed|ing)|record (high|low)|"
+    r"full-scale|invasion|war|default(s|ed)?|collapse[sd]?)\b",
+    re.I,
+)
 
 # Versioned Event Base Scores (1 to 6 scale)
 EVENT_BASE_SCORES: Dict[str, int] = {
@@ -115,16 +137,68 @@ MATERIAL_SEVERITY_KEYWORDS = {
 class SeverityRubricEngine:
     """Calculates auditable impact score (1-10) using additive components."""
 
-    def __init__(self, rubric_version: str = RUBRIC_VERSION) -> None:
+    def __init__(
+        self,
+        rubric_version: str = RUBRIC_VERSION,
+        impact_model: Optional[LearnedImpactModel] = None,
+    ) -> None:
         self.rubric_version = rubric_version
+        self.impact_model = impact_model or LearnedImpactModel()
 
     def evaluate(
         self,
         event_class: str,
         text: str,
         entity: EntityReference,
+        event: Optional[EventOutput] = None,
+        sentiment_score: Optional[float] = None,
+        n_entities: int = 1,
+        is_social: bool = False,
     ) -> Tuple[ImpactOutput, List[EvidenceSpan]]:
-        """Calculate impact score with component breakdown and triggering evidence spans."""
+        """Impact score with rubric components and evidence spans.
+
+        Without ``event`` this is the pure additive rubric (backwards compatible).
+        """
+        rubric, spans = self._rubric(event_class, text, entity)
+        if event is None:
+            return rubric, spans
+
+        out = rubric.model_copy()
+        if entity.ticker and self.impact_model.available:
+            feats = impact_features(event, sentiment_score or 0.0, n_entities, text, is_social)
+            pred, decile = self.impact_model.score(feats)
+            out.score = decile
+            out.method = "market_calibrated"
+            out.market_calibration = {
+                "model": self.impact_model.version,
+                "predicted_abs_abnormal_z": round(pred, 4),
+                "decile": decile,
+                "rubric_score": rubric.score,
+            }
+        else:
+            # Systemic: an explicit magnitude ("75 basis points", "emergency") adds a point and
+            # is required to exceed the action threshold.
+            if m := EXPLICIT_MAGNITUDE.search(text):
+                out.score = min(10, out.score + 1)
+                spans.append(EvidenceSpan(start=m.start(), end=m.end(), text=m.group()))
+            else:
+                out.score = min(out.score, SYSTEMIC_CAP)
+
+        if event_class.upper() in STRESS_CLASSES and (m := CATASTROPHIC.search(text)):
+            if out.score < CATASTROPHIC_FLOOR:
+                out.score = CATASTROPHIC_FLOOR
+                out.method = "floor"
+            if not any(s.start == m.start() for s in spans):
+                spans.append(EvidenceSpan(start=m.start(), end=m.end(), text=m.group()))
+        return out, spans
+
+    def _rubric(
+        self,
+        event_class: str,
+        text: str,
+        entity: EntityReference,
+    ) -> Tuple[ImpactOutput, List[EvidenceSpan]]:
+        """Additive rubric: base + scope + explicit severity - mitigation, clamped to 1-10."""
         lower_text = text.lower()
         evidence_spans: List[EvidenceSpan] = []
 

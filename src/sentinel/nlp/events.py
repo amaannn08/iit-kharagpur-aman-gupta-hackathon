@@ -197,11 +197,22 @@ class EventClassifier:
         best = int(probs.argmax())
         top_label = str(self.pipeline.classes_[best])
         top_conf = round(float(probs[best]), 4)
+        dist = {str(c): round(float(p), 4) for c, p in zip(self.pipeline.classes_, probs)}
 
         if top_conf < self.confidence_threshold or top_label == "OTHER":
-            return EventOutput(label="OTHER", confidence=top_conf, abstained=True)
+            return EventOutput(
+                label="OTHER", confidence=top_conf, abstained=True, probabilities=dist
+            )
 
         gated_label, evidence = apply_gate(top_label, text)
         if gated_label == "OTHER":
-            return EventOutput(label="OTHER", confidence=top_conf, abstained=True)
-        return EventOutput(label=top_label, confidence=top_conf, abstained=False, evidence=evidence)
+            return EventOutput(
+                label="OTHER", confidence=top_conf, abstained=True, probabilities=dist
+            )
+        return EventOutput(
+            label=top_label,
+            confidence=top_conf,
+            abstained=False,
+            evidence=evidence,
+            probabilities=dist,
+        )

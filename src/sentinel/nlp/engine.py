@@ -95,12 +95,14 @@ class NLPEngine:
             if m := apply_macro_polarity(sentiment, record.text):
                 event.evidence.append(EvidenceSpan(start=m.start(), end=m.end(), text=m.group()))
 
+        n_companies = sum(1 for ref, _ in entities if ref.ticker)
         return [
             self._build_signal(
-                record, run_id, dedup_decision, entity_ref, entity_spans, sentiment, event
+                record, run_id, dedup_decision, entity_ref, entity_spans, sentiment, event,
+                n_companies,
             )
             for entity_ref, entity_spans in entities
-        ]
+        ]  # fmt: skip
 
     def _build_signal(
         self,
@@ -111,12 +113,17 @@ class NLPEngine:
         entity_spans: List[EvidenceSpan],
         sentiment: SentimentOutput,
         event: EventOutput,
+        n_companies: int = 1,
     ) -> RiskSignal:
         # 4. Severity Rubric Scoring
         impact, severity_spans = self.severity_engine.evaluate(
             event_class=event.label,
             text=record.text,
             entity=entity_ref,
+            event=event,
+            sentiment_score=sentiment.score,
+            n_entities=n_companies,
+            is_social=record.source_type == SourceType.SOCIAL,
         )
 
         # Combine unique evidence spans
@@ -186,5 +193,6 @@ class NLPEngine:
                 "sentiment": self.sentiment_analyzer.model_version,
                 "event": self.event_classifier.model_version,
                 "rubric": self.severity_engine.rubric_version,
+                "impact": self.severity_engine.impact_model.version,
             },
         )

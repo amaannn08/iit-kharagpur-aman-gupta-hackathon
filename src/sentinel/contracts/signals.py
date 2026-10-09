@@ -49,6 +49,9 @@ class EventOutput(BaseModel):
     evidence: List[EvidenceSpan] = Field(
         default_factory=list, description="Spans that satisfied the event-class evidence gate"
     )
+    probabilities: Dict[str, float] = Field(
+        default_factory=dict, description="Calibrated class probabilities from the classifier"
+    )
 
 
 class ImpactComponents(BaseModel):
@@ -61,6 +64,13 @@ class ImpactOutput(BaseModel):
     score: int = Field(..., ge=1, le=10, description="Overall severity score on 1-10 scale")
     rubric_version: str = Field(default="1.0")
     components: ImpactComponents
+    method: str = Field(
+        default="rubric",
+        description="rubric | market_calibrated (decile of predicted abnormal return) | floor",
+    )
+    market_calibration: Optional[Dict[str, Any]] = Field(
+        default=None, description="Model version, predicted |abnormal z| and decile when used"
+    )
 
 
 class RiskSignal(BaseModel):

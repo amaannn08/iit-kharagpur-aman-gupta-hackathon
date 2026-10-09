@@ -66,3 +66,51 @@ def test_score_clamped_bounds():
 
     output, _ = engine.evaluate("CREDIT", text, entity)
     assert 1 <= output.score <= 10
+
+
+def _signal(text):
+    from sentinel.contracts.records import InputRecord, SourceType
+    from sentinel.nlp.engine import NLPEngine
+
+    rec = InputRecord(record_id="imp", source_id="t", source_type=SourceType.NEWS, text=text)
+    return NLPEngine().process_record(rec, "run-impact")
+
+
+def test_market_calibration_card_beats_rubric_out_of_fold():
+    """CI gate: the learned impact model must stay significantly related to real reactions."""
+    import json
+
+    from sentinel.config import settings
+
+    m = json.loads((settings.base_dir / "models" / "impact_v2.card.json").read_text())["metrics"]
+    assert m["events"] >= 2000
+    assert m["learned_oof_spearman_ci95"][0] > 0  # CI excludes zero
+    assert (
+        m["rubric_v1_spearman_ci95"][0] < 0 < m["rubric_v1_spearman_ci95"][1]
+    )  # rubric: no signal
+    assert m["large_move_rate_decile_10"] >= 3 * m["large_move_rate_decile_1"]
+
+
+def test_company_signal_is_market_calibrated_with_audit_fields():
+    s = _signal("Ford shares slide after the automaker cuts its full-year profit guidance")
+    assert s.entity.ticker == "F"
+    assert s.impact.method == "market_calibrated"
+    cal = s.impact.market_calibration
+    assert cal["decile"] == s.impact.score and cal["predicted_abs_abnormal_z"] > 0
+    assert cal["model"].startswith("impact_v2:")
+
+
+def test_systemic_scores_need_explicit_magnitude_to_exceed_threshold():
+    assert (
+        _signal("4 Low-Beta Utility Stocks to Buy Ahead of Fed's Likely Rate Hike").impact.score
+        <= 7
+    )
+    hike = _signal("Federal Reserve raises rates by 75 basis points in surprise move")
+    assert hike.impact.score >= 8
+    assert any(e.text == "75 basis points" for e in hike.evidence)
+
+
+def test_catastrophic_credit_language_sets_floor():
+    s = _signal("Apex Industrial files emergency Chapter 11 bankruptcy petition after debt default")
+    assert s.event.label == "CREDIT"
+    assert s.impact.score >= 8
