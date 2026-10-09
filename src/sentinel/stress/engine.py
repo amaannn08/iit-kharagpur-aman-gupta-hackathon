@@ -108,6 +108,8 @@ class StressEngine:
             is_easing=is_easing,
         )
 
+        enable_contagion = scope == "entity" and event_class in {"CREDIT", "SUPPLY_CHAIN"}
+
         result = self.valuation_engine.run_stress_test(
             shock=shock,
             run_id=signal.run_id,
@@ -115,6 +117,7 @@ class StressEngine:
             trigger_signal_id=signal.signal_id,
             event_class=event_class,
             impact_score=impact,
+            enable_contagion=enable_contagion,
         )
 
         self.acted_signal_ids.add(signal.signal_id)
@@ -127,6 +130,7 @@ class StressEngine:
         target_entity: Optional[str] = None,
         target_scope: str = "entity",
         is_easing: bool = False,
+        enable_contagion: bool = False,
         run_id: str = "manual-run",
     ) -> StressRunResult:
         """Execute a user-triggered / sandbox stress simulation with custom shock parameters."""
@@ -145,6 +149,7 @@ class StressEngine:
             trigger_signal_id=None,
             event_class=event_class.upper(),
             impact_score=impact_score,
+            enable_contagion=enable_contagion,
         )
 
     def reset_triggers(self) -> None:

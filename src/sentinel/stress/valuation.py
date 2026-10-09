@@ -3,7 +3,7 @@
 import uuid
 from collections import defaultdict
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from sentinel.contracts.stress import (
     AssetClass,
@@ -16,6 +16,7 @@ from sentinel.contracts.stress import (
     StressRunResult,
     SwapPosition,
 )
+from sentinel.stress.contagion import ContagionGraph
 from sentinel.stress.portfolio import WholesalePortfolio
 from sentinel.stress.shocks import ScaledShock
 
@@ -25,8 +26,13 @@ class ValuationEngine:
 
     MODEL_VERSION = "v1.0.0-multiasset"
 
-    def __init__(self, portfolio: WholesalePortfolio) -> None:
+    def __init__(
+        self,
+        portfolio: WholesalePortfolio,
+        contagion_graph: Optional[ContagionGraph] = None,
+    ) -> None:
         self.portfolio = portfolio
+        self.contagion_graph = contagion_graph or ContagionGraph()
 
     def _is_position_in_scope(
         self,
@@ -59,25 +65,45 @@ class ValuationEngine:
 
         return False
 
-    def value_bond(self, bond: BondPosition, shock: ScaledShock) -> PositionStressDelta:
+    def value_bond(
+        self,
+        bond: BondPosition,
+        shock: ScaledShock,
+        transmission_factor: float = 1.0,
+        is_contagion: bool = False,
+        contagion_hops: int = 0,
+        contagion_source: Optional[str] = None,
+    ) -> PositionStressDelta:
         """Bond valuation: delta = -modified_duration * value * (yield_shift + spread_shift)."""
 
-        in_scope = self._is_position_in_scope(bond.entity_id, bond.sector, AssetClass.BOND, shock)
+        in_scope = is_contagion or self._is_position_in_scope(
+            bond.entity_id, bond.sector, AssetClass.BOND, shock
+        )
 
         baseline_val = bond.market_value
 
         if in_scope:
-            yield_shift = shock.benchmark_yield_shift_bps / 10000.0
-            spread_shift = shock.bond_spread_shift_bps / 10000.0
+            effective_spread_shift = shock.bond_spread_shift_bps * transmission_factor
+            effective_yield_shift = shock.benchmark_yield_shift_bps * (
+                transmission_factor if is_contagion else 1.0
+            )
+            yield_shift = effective_yield_shift / 10000.0
+            spread_shift = effective_spread_shift / 10000.0
             total_shift = yield_shift + spread_shift
             delta_val = -bond.modified_duration * baseline_val * total_shift
             stressed_val = max(0.0, baseline_val + delta_val)
             # Recompute exact delta if clamped at zero
             delta_val = stressed_val - baseline_val
-            shock_summary = (
-                f"Spread {shock.bond_spread_shift_bps:+.1f} bps, "
-                f"Yield {shock.benchmark_yield_shift_bps:+.1f} bps"
-            )
+            if is_contagion:
+                shock_summary = (
+                    f"Contagion from {contagion_source} (hop {contagion_hops}, "
+                    f"factor {transmission_factor:.2f}): Spread {effective_spread_shift:+.1f} bps"
+                )
+            else:
+                shock_summary = (
+                    f"Spread {shock.bond_spread_shift_bps:+.1f} bps, "
+                    f"Yield {shock.benchmark_yield_shift_bps:+.1f} bps"
+                )
         else:
             delta_val = 0.0
             stressed_val = baseline_val
@@ -97,18 +123,34 @@ class ValuationEngine:
             pct_change=round(pct_change, 6),
             market_risk_pnl_usd=round(delta_val, 2),
             applied_shock_summary=shock_summary,
+            is_contagion=is_contagion,
+            contagion_hops=contagion_hops,
+            contagion_source=contagion_source,
+            transmission_factor=round(transmission_factor, 4),
         )
 
-    def value_loan(self, loan: LoanPosition, shock: ScaledShock) -> PositionStressDelta:
+    def value_loan(
+        self,
+        loan: LoanPosition,
+        shock: ScaledShock,
+        transmission_factor: float = 1.0,
+        is_contagion: bool = False,
+        contagion_hops: int = 0,
+        contagion_source: Optional[str] = None,
+    ) -> PositionStressDelta:
         """Loan valuation: Incremental ECL = EAD * (stressed_PD - baseline_PD) * LGD."""
-        in_scope = self._is_position_in_scope(loan.entity_id, loan.sector, AssetClass.LOAN, shock)
+        in_scope = is_contagion or self._is_position_in_scope(
+            loan.entity_id, loan.sector, AssetClass.LOAN, shock
+        )
 
         baseline_val = loan.market_value
         baseline_ecl = loan.ead * loan.baseline_pd * loan.lgd
 
         if in_scope:
-            stressed_pd = min(1.0, max(0.0, loan.baseline_pd + shock.loan_pd_increment))
-            stressed_lgd = min(1.0, max(0.0, loan.lgd + shock.lgd_increment))
+            effective_pd_inc = shock.loan_pd_increment * transmission_factor
+            effective_lgd_inc = shock.lgd_increment * transmission_factor
+            stressed_pd = min(1.0, max(0.0, loan.baseline_pd + effective_pd_inc))
+            stressed_lgd = min(1.0, max(0.0, loan.lgd + effective_lgd_inc))
             stressed_ecl = loan.ead * stressed_pd * stressed_lgd
             incremental_ecl = stressed_ecl - baseline_ecl
 
@@ -116,10 +158,16 @@ class ValuationEngine:
             delta_val = -incremental_ecl
             stressed_val = max(0.0, baseline_val + delta_val)
             delta_val = stressed_val - baseline_val
-            shock_summary = (
-                f"PD {shock.loan_pd_increment * 100:+.2f} pp, "
-                f"LGD {shock.lgd_increment * 100:+.2f} pp"
-            )
+            if is_contagion:
+                shock_summary = (
+                    f"Contagion from {contagion_source} (hop {contagion_hops}, "
+                    f"factor {transmission_factor:.2f}): PD {effective_pd_inc * 100:+.2f} pp"
+                )
+            else:
+                shock_summary = (
+                    f"PD {shock.loan_pd_increment * 100:+.2f} pp, "
+                    f"LGD {shock.lgd_increment * 100:+.2f} pp"
+                )
         else:
             stressed_ecl = baseline_ecl
             incremental_ecl = 0.0
@@ -143,6 +191,10 @@ class ValuationEngine:
             ecl_stressed_usd=round(stressed_ecl, 2),
             incremental_ecl_usd=round(incremental_ecl, 2),
             applied_shock_summary=shock_summary,
+            is_contagion=is_contagion,
+            contagion_hops=contagion_hops,
+            contagion_source=contagion_source,
+            transmission_factor=round(transmission_factor, 4),
         )
 
     def value_swap(self, swap: SwapPosition, shock: ScaledShock) -> PositionStressDelta:
@@ -205,6 +257,9 @@ class ValuationEngine:
         trigger_signal_id: Optional[str] = None,
         event_class: str = "CREDIT",
         impact_score: int = 8,
+        enable_contagion: bool = False,
+        max_hops: int = 2,
+        hop_decay: float = 0.60,
     ) -> StressRunResult:
         """Revalue entire portfolio, compute asset/sector breakdowns, and enforce reconciliation."""
         stress_id = f"stress-{uuid.uuid4().hex[:12]}"
@@ -212,12 +267,52 @@ class ValuationEngine:
 
         position_deltas: List[PositionStressDelta] = []
 
+        # Multi-hop contagion targets
+        contagion_targets: Dict[str, Tuple[float, int]] = {}
+        if (
+            enable_contagion
+            and shock.target_scope == "entity"
+            and shock.target_entity
+            and self.contagion_graph
+        ):
+            contagion_targets = self.contagion_graph.get_contagion_targets(
+                shock.target_entity, max_hops=max_hops, hop_decay=hop_decay
+            )
+
         # Value each asset class independently
         for loan in self.portfolio.loans:
-            position_deltas.append(self.value_loan(loan, shock))
+            ent = loan.entity_id.upper()
+            if ent in contagion_targets and ent != (shock.target_entity or "").upper():
+                factor, hops = contagion_targets[ent]
+                position_deltas.append(
+                    self.value_loan(
+                        loan,
+                        shock,
+                        transmission_factor=factor,
+                        is_contagion=True,
+                        contagion_hops=hops,
+                        contagion_source=shock.target_entity,
+                    )
+                )
+            else:
+                position_deltas.append(self.value_loan(loan, shock))
 
         for bond in self.portfolio.bonds:
-            position_deltas.append(self.value_bond(bond, shock))
+            ent = bond.entity_id.upper()
+            if ent in contagion_targets and ent != (shock.target_entity or "").upper():
+                factor, hops = contagion_targets[ent]
+                position_deltas.append(
+                    self.value_bond(
+                        bond,
+                        shock,
+                        transmission_factor=factor,
+                        is_contagion=True,
+                        contagion_hops=hops,
+                        contagion_source=shock.target_entity,
+                    )
+                )
+            else:
+                position_deltas.append(self.value_bond(bond, shock))
 
         for swap in self.portfolio.swaps:
             position_deltas.append(self.value_swap(swap, shock))
@@ -233,6 +328,9 @@ class ValuationEngine:
 
         credit_ecl_change = sum(p.incremental_ecl_usd for p in position_deltas)
         market_mtm_change = sum(p.market_risk_pnl_usd for p in position_deltas)
+
+        contagion_pnl = sum(p.pnl_usd for p in position_deltas if p.is_contagion)
+        contagion_count = sum(1 for p in position_deltas if p.is_contagion)
 
         # Asset class aggregations
         asset_class_groups: Dict[AssetClass, List[PositionStressDelta]] = defaultdict(list)
@@ -334,6 +432,8 @@ class ValuationEngine:
             total_pnl_pct=round(total_pnl_pct, 6),
             credit_ecl_change_usd=round(credit_ecl_change, 2),
             market_mtm_change_usd=round(market_mtm_change, 2),
+            contagion_pnl_usd=round(contagion_pnl, 2),
+            contagion_positions_count=contagion_count,
             asset_class_breakdown=asset_class_breakdown,
             sector_breakdown=sector_breakdown,
             position_deltas=position_deltas,

@@ -106,6 +106,10 @@ class PositionStressDelta(BaseModel):
     incremental_ecl_usd: float = 0.0
     market_risk_pnl_usd: float = 0.0
     applied_shock_summary: str = "Unimpacted"
+    is_contagion: bool = False
+    contagion_hops: int = 0
+    contagion_source: Optional[str] = None
+    transmission_factor: float = 1.0
 
 
 class AssetClassStressSummary(BaseModel):
@@ -145,6 +149,8 @@ class StressRunResult(BaseModel):
     total_pnl_pct: float
     credit_ecl_change_usd: float
     market_mtm_change_usd: float
+    contagion_pnl_usd: float = 0.0
+    contagion_positions_count: int = 0
     asset_class_breakdown: List[AssetClassStressSummary]
     sector_breakdown: List[SectorStressSummary]
     position_deltas: List[PositionStressDelta]

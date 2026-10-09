@@ -227,3 +227,35 @@ def test_full_portfolio_reconciliation_invariants(engine: ValuationEngine):
     # 6. Sector breakdowns reconcile
     sum_sector_pnl = sum(s.total_pnl_usd for s in result.sector_breakdown)
     assert pytest.approx(sum_sector_pnl, abs=0.05) == result.total_pnl_usd
+
+
+def test_contagion_propagates_to_downstream_counterparties(engine: ValuationEngine):
+    """PRD 9.3 & Bug B6 fix: Verify contagion propagates shocks to connected counterparties."""
+    apex_shock = build_scaled_shock(
+        "CREDIT", impact_score=8, target_entity="APEX", target_scope="entity"
+    )
+    result = engine.run_stress_test(apex_shock, enable_contagion=True)
+
+    assert result.contagion_positions_count > 0
+    assert result.contagion_pnl_usd < 0.0
+
+    contagion_entities = {
+        p.entity_id for p in result.position_deltas if p.is_contagion
+    }
+    # In graph_edges.csv: APEX -> TSTEL (hop 1), APEX -> GLOG (hop 1), TSTEL -> VAUTO (hop 2)
+    assert "TSTEL" in contagion_entities
+    assert "GLOG" in contagion_entities
+    assert "VAUTO" in contagion_entities
+
+    for delta in result.position_deltas:
+        if delta.entity_id == "APEX":
+            assert delta.is_contagion is False
+            assert delta.pnl_usd < 0.0
+        elif delta.entity_id in {"TSTEL", "GLOG", "VAUTO"}:
+            assert delta.is_contagion is True
+            assert delta.contagion_source == "APEX"
+            assert delta.pnl_usd < 0.0
+        else:
+            assert delta.is_contagion is False
+            assert delta.pnl_usd == 0.0
+
