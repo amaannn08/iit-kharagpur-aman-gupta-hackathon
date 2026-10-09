@@ -39,6 +39,7 @@ HF = {
 }
 MARKET_PROXIES = ["SPY", "IEF", "LQD", "HYG", "^TNX", "^IRX", "^VIX"]
 MARKET_START, MARKET_END = "2016-06-01", "2024-03-01"
+SP500_START = "2022-06-01"  # 120-day beta warm-up before the 2023 Polygon news window
 
 
 def get(url: str, ua: str = UA, tries: int = 4) -> bytes:
@@ -156,7 +157,18 @@ def market() -> None:
     )
     px["Close"].to_parquet(d / "close.parquet")
     px["Volume"].to_parquet(d / "volume.parquet")
-    print(f"ok market {px['Close'].shape}")
+    # S&P 500 closes over the Polygon news window, for impact labels on every linked company
+    sp500 = pd.read_csv(RAW / "sec" / "sp500.csv").ticker.tolist()
+    wide = yf.download(
+        sorted(set(sp500) | set(MARKET_PROXIES)),
+        start=SP500_START,
+        end=MARKET_END,
+        auto_adjust=True,
+        progress=False,
+        threads=True,
+    )
+    wide["Close"].to_parquet(d / "close_sp500.parquet")
+    print(f"ok market {px['Close'].shape}, sp500 {wide['Close'].shape}")
 
 
 def gdelt(slices: int = 8) -> None:

@@ -445,7 +445,30 @@
       "byte_size": 7297,
       "sha256": "56f5c233f89bd782aff89ced22bd61a9a6924c47e625132b403313ce050fa4fd",
       "record_count": 77
+    },
+    {
+      "file_path": "data/market/reaction_labels.csv",
+      "format": "csv",
+      "description": "Standardized next-day abnormal return per (Polygon article, S&P 500 company): impact labels",
+      "is_synthetic": false,
+      "license": "Derived statistics from Yahoo Finance closes (yfinance); no raw prices redistributed",
+      "primary_keys": [
+        "record_id"
+      ],
+      "source": "https://finance.yahoo.com via yfinance; data/real/polygon_news",
+      "derived_from": [
+        "data/real/polygon_news/polygon_news.csv"
+      ],
+      "columns": [
+        "record_id",
+        "ticker",
+        "reaction_date",
+        "abnormal_z"
+      ],
+      "byte_size": 103799,
+      "sha256": "81db1b0387aa5e6bd6439c396902001be94f2785f12d667a31d5a51247cfc4fa",
+      "record_count": 2617
     }
   ],
-  "updated_at": "2026-10-09T14:29:04.974246+00:00"
+  "updated_at": "2026-10-09T14:55:20.945668+00:00"
 }
