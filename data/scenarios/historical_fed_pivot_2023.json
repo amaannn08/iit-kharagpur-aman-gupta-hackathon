@@ -1,0 +1,27 @@
+{
+  "scenario_id": "HIST-FED_PIVOT_2023",
+  "name": "Historical: Fed pivot rally (easing) (2023-11-01 to 2023-12-14)",
+  "description": "Replays the measured market move of Fed pivot rally (easing): S&P 500 +11.7%, 10y yield -86 bp, implied HY spread +3 bp.",
+  "event_class": "MACRO",
+  "trigger_impact_score": 8,
+  "target_entity": null,
+  "target_scope": "systemic",
+  "direct_shocks": {
+    "bond_spread_shift_bps": 2.6,
+    "loan_pd_increment": 0.0004,
+    "lgd_increment": 0.0
+  },
+  "macro_shocks": {
+    "benchmark_yield_shift_bps": -85.9
+  },
+  "equity_shocks": {
+    "equity_shock_pct": 0.1168
+  },
+  "contagion": {
+    "enabled": false,
+    "hop_decay": 0.0,
+    "max_hops": 0
+  },
+  "provenance": "data/market/stress_windows.json (real yfinance closes)",
+  "is_synthetic": false
+}

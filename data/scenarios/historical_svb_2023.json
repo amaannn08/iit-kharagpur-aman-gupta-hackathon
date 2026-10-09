@@ -1,0 +1,27 @@
+{
+  "scenario_id": "HIST-SVB_2023",
+  "name": "Historical: Silicon Valley Bank failure (2023-03-08 to 2023-03-17)",
+  "description": "Replays the measured market move of Silicon Valley Bank failure: S&P 500 -1.9%, 10y yield -58 bp, implied HY spread +139 bp.",
+  "event_class": "CREDIT",
+  "trigger_impact_score": 8,
+  "target_entity": null,
+  "target_scope": "systemic",
+  "direct_shocks": {
+    "bond_spread_shift_bps": 139.0,
+    "loan_pd_increment": 0.0232,
+    "lgd_increment": 0.0
+  },
+  "macro_shocks": {
+    "benchmark_yield_shift_bps": -58.1
+  },
+  "equity_shocks": {
+    "equity_shock_pct": -0.0187
+  },
+  "contagion": {
+    "enabled": false,
+    "hop_decay": 0.0,
+    "max_hops": 0
+  },
+  "provenance": "data/market/stress_windows.json (real yfinance closes)",
+  "is_synthetic": false
+}
