@@ -1,0 +1,6 @@
+FinancialPhraseBank v1.0. Malo, P., Sinha, A., Korhonen, P., Wallenius, J. and Takala, P.
+(2014) 'Good debt or bad debt: Detecting semantic orientations in economic texts', JASIST
+65(4). Licensed under Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported
+(bundled License.txt; the Kaggle mirror ankurzing/sentiment-analysis-for-financial-news
+lists CC BY-NC-SA 4.0). This sample stays under that license and is NOT relicensed as MIT.
+FinBERT was fine-tuned on PhraseBank: never report it as an independent benchmark.

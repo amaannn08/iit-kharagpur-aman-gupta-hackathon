@@ -178,7 +178,206 @@
         "gold_severity_score",
         "is_adversarial"
       ]
+    },
+    {
+      "file_path": "data/real/polygon_news/polygon_news.csv",
+      "format": "csv",
+      "description": "Real 2023 Polygon.io financial news (title + description), news replay feed",
+      "is_synthetic": false,
+      "license": "MIT",
+      "primary_keys": [
+        "record_id"
+      ],
+      "source": "https://www.kaggle.com/datasets/rdolphin/financial-news-with-ticker-level-sentiment",
+      "columns": [
+        "record_id",
+        "source_id",
+        "source_type",
+        "headline",
+        "body",
+        "published_at",
+        "timestamp_quality",
+        "simulated_at",
+        "is_synthetic",
+        "primary_entity_id"
+      ],
+      "byte_size": 2411550,
+      "sha256": "3f19ea319b6dbdaa631d3c2af25b91589e6b216039742d803c4aa5318b3f3a01",
+      "record_count": 5548
+    },
+    {
+      "file_path": "data/real/polygon_news/silver_labels.csv",
+      "format": "csv",
+      "description": "Polygon tickers[] and LLM ticker-level sentiment (silver labels, eval only)",
+      "is_synthetic": false,
+      "license": "MIT",
+      "primary_keys": [
+        "record_id"
+      ],
+      "source": "https://www.kaggle.com/datasets/rdolphin/financial-news-with-ticker-level-sentiment",
+      "byte_size": 1166955,
+      "sha256": "a1e0f8c17a7b899ad05033942a0ee1d8cf1f21b5790f48fb3803650ffd1059ed",
+      "record_count": 26778
+    },
+    {
+      "file_path": "data/real/stock_tweets/sample.csv",
+      "format": "csv",
+      "description": "Real 2017-2018 stock tweets, 5000-row sample across 25 companies, social replay feed",
+      "is_synthetic": false,
+      "license": "CC0-1.0",
+      "primary_keys": [
+        "record_id"
+      ],
+      "source": "https://www.kaggle.com/datasets/thedevastator/tweet-sentiment-s-impact-on-stock-returns",
+      "columns": [
+        "record_id",
+        "source_id",
+        "source_type",
+        "text",
+        "author_handle",
+        "published_at",
+        "timestamp_quality",
+        "simulated_at",
+        "is_synthetic",
+        "cashtags",
+        "primary_entity_id"
+      ],
+      "byte_size": 1168857,
+      "sha256": "c3b87d52ab1aaa6b385e10e131dd619fefe2b2977c97e88b04a4b247fda26e1f",
+      "record_count": 5000
+    },
+    {
+      "file_path": "data/real/stock_tweets/outcomes.csv",
+      "format": "csv",
+      "description": "Forward 1/3/7-day returns, volatility and model polarity for the tweet sample",
+      "is_synthetic": false,
+      "license": "CC0-1.0",
+      "primary_keys": [
+        "record_id"
+      ],
+      "source": "https://www.kaggle.com/datasets/thedevastator/tweet-sentiment-s-impact-on-stock-returns",
+      "byte_size": 552891,
+      "sha256": "8f1537ae5c425751e7956d4bc72beb924f764361a69d435c39c9a00595a42efa",
+      "record_count": 5000
+    },
+    {
+      "file_path": "data/real/gdelt/snapshot.csv",
+      "format": "csv",
+      "description": "Real GDELT 2.0 GKG finance-relevant headlines, recorded 2-hour live snapshot",
+      "is_synthetic": false,
+      "license": "GDELT open data (attribution required)",
+      "primary_keys": [
+        "record_id"
+      ],
+      "source": "http://data.gdeltproject.org/gdeltv2/",
+      "columns": [
+        "record_id",
+        "source_id",
+        "source_type",
+        "headline",
+        "body",
+        "published_at",
+        "timestamp_quality",
+        "simulated_at",
+        "is_synthetic",
+        "primary_entity_id",
+        "source_url"
+      ],
+      "byte_size": 690420,
+      "sha256": "9142f84b63a76502d6a006aa6d7bee1cd63369d9dfe3599cc719db6e67edbd3f",
+      "record_count": 2690
+    },
+    {
+      "file_path": "data/train/hf_fin_topic/topic_train.csv",
+      "format": "csv",
+      "description": "zeroshot/twitter-financial-news-topic train split (real labeled financial tweets)",
+      "is_synthetic": false,
+      "license": "MIT",
+      "primary_keys": [
+        "record_id"
+      ],
+      "source": "https://huggingface.co/datasets/zeroshot/twitter-financial-news-topic",
+      "columns": [
+        "text",
+        "label"
+      ],
+      "byte_size": 2385009,
+      "sha256": "63b9ea8183728dd5ddc6a57289341556509ddc0a8d037616519319a316b54490",
+      "record_count": 16990
+    },
+    {
+      "file_path": "data/train/hf_fin_topic/topic_valid.csv",
+      "format": "csv",
+      "description": "zeroshot/twitter-financial-news-topic valid split (real labeled financial tweets)",
+      "is_synthetic": false,
+      "license": "MIT",
+      "primary_keys": [
+        "record_id"
+      ],
+      "source": "https://huggingface.co/datasets/zeroshot/twitter-financial-news-topic",
+      "columns": [
+        "text",
+        "label"
+      ],
+      "byte_size": 580140,
+      "sha256": "67396d6cd4a21c3755de783f20fb5842f12ae8edb9367eed5d2644dd85ca9243",
+      "record_count": 4117
+    },
+    {
+      "file_path": "data/train/hf_fin_sentiment/sent_train.csv",
+      "format": "csv",
+      "description": "zeroshot/twitter-financial-news-sentiment train split (real labeled financial tweets)",
+      "is_synthetic": false,
+      "license": "MIT",
+      "primary_keys": [
+        "record_id"
+      ],
+      "source": "https://huggingface.co/datasets/zeroshot/twitter-financial-news-sentiment",
+      "columns": [
+        "text",
+        "label"
+      ],
+      "byte_size": 858645,
+      "sha256": "71aa99d0d37feced03c999ec23b5b25302c92f39d69b6acb0a37aa076c5420e8",
+      "record_count": 9543
+    },
+    {
+      "file_path": "data/train/hf_fin_sentiment/sent_valid.csv",
+      "format": "csv",
+      "description": "zeroshot/twitter-financial-news-sentiment valid split (real labeled financial tweets)",
+      "is_synthetic": false,
+      "license": "MIT",
+      "primary_keys": [
+        "record_id"
+      ],
+      "source": "https://huggingface.co/datasets/zeroshot/twitter-financial-news-sentiment",
+      "columns": [
+        "text",
+        "label"
+      ],
+      "byte_size": 217378,
+      "sha256": "31ea8274c98b52212daa68f2fb962811bf1913c1efe51b99765c8e2311806de6",
+      "record_count": 2388
+    },
+    {
+      "file_path": "data/train/phrasebank/sample.csv",
+      "format": "csv",
+      "description": "FinancialPhraseBank stratified 600-row sample (sentiment training augmentation only)",
+      "is_synthetic": false,
+      "license": "CC BY-NC-SA 3.0",
+      "primary_keys": [
+        "record_id"
+      ],
+      "source": "https://www.kaggle.com/datasets/ankurzing/sentiment-analysis-for-financial-news",
+      "columns": [
+        "record_id",
+        "label",
+        "text"
+      ],
+      "byte_size": 92190,
+      "sha256": "4e669b93dae4cce2d6ab59dbfbd46cfd430f6d371cabb8d1d46d22ba6c2edb3e",
+      "record_count": 600
     }
   ],
-  "updated_at": "2026-10-09T13:46:15.525054+00:00"
+  "updated_at": "2026-10-09T13:52:57.629861+00:00"
 }

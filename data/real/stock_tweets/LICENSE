@@ -1,0 +1,4 @@
+Tweets with stock returns, published on Kaggle as
+thedevastator/tweet-sentiment-s-impact-on-stock-returns (license: CC0, per the Kaggle API).
+Tweet text originates from X/Twitter and remains subject to its terms; only a sample is
+committed. LSTM/TextBlob polarity columns are model outputs (silver labels).
