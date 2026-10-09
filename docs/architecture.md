@@ -2,108 +2,118 @@
 
 **Project:** S&P Sentinel (S&P Global & CRISIL Campus Hackathon 2026)  
 **Candidate:** Aman Gupta (Indian Institute of Technology Kharagpur)  
-**Status:** Milestone M0/M1 Operational Foundation  
+**Status:** Fully Operational End-to-End Pipeline  
+**Visual Architecture:** [System Architecture Diagram (docs/architecture.png)](architecture.png)
 
 ---
 
-## 1. System Architecture Diagram
+## 1. System Architecture Overview
 
-The diagram below reflects the strict distinction between currently operational foundation components and planned roadmap milestones, conforming to PRD Section 16.
+The system architecture diagram below illustrates the fully implemented, offline-first pipeline of S&P Sentinel across all six core subsystems:
+
+![S&P Sentinel System Architecture](architecture.png)
 
 ```mermaid
 flowchart TD
-    subgraph S1["Operational Data Layer (M0/M1 Active)"]
-        N_CSV["Local News CSV\n(data/news_demo.csv\n25 synthetic rows)"]
-        S_CSV["Local Social CSV\n(data/social_demo.csv\n25 synthetic rows)"]
-        ENT["Entity Universe\n(data/entity_aliases.csv\n23 reference entities)"]
-        PORT["Wholesale Book\n(data/wholesale_positions.json\n$500M synthetic book)"]
-        MAN["Data Manifest\n(data/manifest.json\nSHA-256 audited)"]
+    subgraph S1["1. Multi-Source Ingestion Layer"]
+        N_CSV["News CSVs\n(Curated + Kaggle)"]
+        S_CSV["Social CSVs\n(Cashtags & Chatter)"]
+        ENT["Entity Universe\n(23 Reference Tickers)"]
+        PORT["Wholesale & Retail Sleeves\n($500M Wholesale + $50M Retail)"]
+        MAN["Cryptographic Manifest\n(data/manifest.json)"]
     end
 
-    subgraph S2["Operational API & Ingestion Foundation (M0/M1 Active)"]
-        ADAPT["Ingestion Adapters\n(NewsAdapter, SocialAdapter)"]
-        CONT["Pydantic v2 Contracts\n(InputRecord, RiskSignal, Positions)"]
-        API["FastAPI Core Service\n(/api/health, /api/datasets)"]
-        DB["SQLite DB & Audit Store\n(SQLAlchemy 2.0 Engine)"]
+    subgraph S2["2. Replay & Deduplication Engine"]
+        CLK["Logical Replay Clock\n(1x - 60x Acceleration)"]
+        DEDUP["Rolling Window Deduplication\n(Jaccard >= 0.65, Containment >= 0.80)"]
     end
 
-    subgraph S3["Planned Replay & Analytics Pipeline (Planned M2 - M4)"]
-        CLK["[PLANNED M2]\nReplay Clock Controller\n& Dedup Window"]
-        NLP["[PLANNED M3]\nLocal FinBERT & Event Classifier\n(9-class + 1-10 severity)"]
-        GRAPH["[PLANNED M3]\nContagion Knowledge Graph\n(NetworkX Propagation)"]
-        STRESS["[PLANNED M4 - Module B]\nWholesale Stress Engine\n(Loans ECL, Bond Dur., Swap DV01)"]
+    subgraph S3["3. Hybrid NLP Risk Engine"]
+        LINK["Entity Linker & Exact Offsets\n(Alias & Cashtag Resolution)"]
+        SENT["FinBERT & Lexicon Sentiment\n(Continuous [-1.0, +1.0], P_sum=1.0)"]
+        EV["10-Class Event Classifier\n(Confidence Abstention to OTHER)"]
+        SEV["Additive 1-10 Severity Rubric\n(Base + Scope + Dynamic Multipliers)"]
     end
 
-    subgraph S4["Terminal UI (M0/M1 Active Shell)"]
-        UI["React 18 + TypeScript + Vite Terminal\n(Dark Mode, Offline, Honesty Badge)"]
+    subgraph S4["4. Contagion Propagation Network"]
+        GRAPH["NetworkX Directed Contagion Graph\n(Customer-Supplier & Creditor Links)"]
+        PROP["Multi-Hop Transmission Engine\n(Geometric Dampening 0.50/hop)"]
     end
 
-    N_CSV --> ADAPT
-    S_CSV --> ADAPT
-    ADAPT --> CONT
-    CONT --> API
-    DB --> API
-    MAN --> API
-    PORT --> CONT
+    subgraph S5["5. Wholesale Balance Sheet Stress Engine"]
+        LOANS["Syndicated Loans & Retail Sleeve\n(ECL = EAD x Delta-PD x LGD)"]
+        BONDS["Corporate Fixed Bonds\n(Duration & Convexity MtM)"]
+        SWAPS["SOFR Interest Rate Swaps\n(Signed DV01 Curve Delta)"]
+        MACRO["Systemic Macro Curve Shifts\n(Directional Rate Cuts / Hikes)"]
+    end
+
+    subgraph S6["6. Storage, Audit & Terminal UI"]
+        API["FastAPI Localhost Service\n(Port 8000, CORS Restricted)"]
+        SINK["Append-Only File Sink\n(data/signals.jsonl)"]
+        DB["SQLite Replay & Audit Store\n(sentinel.db / SQLAlchemy 2.0)"]
+        UI["React 18 Terminal UI\n(Dark Mode, Contagion & Waterfall)"]
+    end
+
+    N_CSV --> CLK
+    S_CSV --> CLK
+    CLK --> DEDUP
+    DEDUP --> LINK
+    LINK --> SENT
+    SENT --> EV
+    EV --> SEV
+    SEV --> GRAPH
+    GRAPH --> PROP
+    PROP --> LOANS
+    PROP --> BONDS
+    PROP --> SWAPS
+    MACRO --> LOANS
+    MACRO --> BONDS
+    MACRO --> SWAPS
+    SEV --> API
+    LOANS --> API
+    BONDS --> API
+    SWAPS --> API
+    API --> SINK
+    API --> DB
     API --> UI
 
-    CONT -.-> CLK
-    CLK -.-> NLP
-    NLP -.-> GRAPH
-    GRAPH -.-> STRESS
-    STRESS -.-> DB
-
-    classDef active fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#ecfdf5;
-    classDef planned fill:#1e1b4b,stroke:#6366f1,stroke-width:2px,stroke-dasharray: 5 5,color:#e0e7ff;
-    classDef shell fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#f0f9ff;
-
-    class N_CSV,S_CSV,ENT,PORT,MAN,ADAPT,CONT,API,DB active;
-    class CLK,NLP,GRAPH,STRESS planned;
-    class UI shell;
+    classDef operational fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#f8fafc;
+    class N_CSV,S_CSV,ENT,PORT,MAN,CLK,DEDUP,LINK,SENT,EV,SEV,GRAPH,PROP,LOANS,BONDS,SWAPS,MACRO,API,SINK,DB,UI operational;
 ```
 
 ---
 
-## 2. Operational Foundation Components (M0/M1)
+## 2. Pipeline Subsystems
 
-### 2.1 Pydantic v2 Data Contracts
-- [`src/sentinel/contracts/records.py`](../src/sentinel/contracts/records.py): Strongly-typed `InputRecord` enforcing minimum character length ($\ge 5$), non-empty content validation, source channel enums (`NEWS`, `SOCIAL`, `MANUAL`), and provenance tracking (`timestamp_quality`, `is_synthetic`).
-- [`src/sentinel/contracts/signals.py`](../src/sentinel/contracts/signals.py): Standardized `RiskSignal` bundle containing canonical entity reference, sentiment distribution with strict probability sum validation ($P(\text{pos}) + P(\text{neg}) + P(\text{neu}) \approx 1.0$), 9-class event categorization with confidence score, additive 1–10 impact severity output, and textual evidence spans.
-- [`src/sentinel/contracts/stress.py`](../src/sentinel/contracts/stress.py): Institutional multi-asset wholesale banking models defining positions across corporate syndicated loans, corporate bonds, SOFR interest rate swaps, and cash reserves.
+### 2.1 Multi-Source Ingestion & Data Contracts
+- [`src/sentinel/contracts/records.py`](../src/sentinel/contracts/records.py): Strongly-typed `InputRecord` enforcing length validation, source channel enums (`NEWS`, `SOCIAL`, `MANUAL`), and provenance tracking (`timestamp_quality`, `is_synthetic`).
+- [`src/sentinel/contracts/signals.py`](../src/sentinel/contracts/signals.py): Standardized `RiskSignal` bundle containing canonical entity reference, sentiment distribution with strict probability sum validation ($P(\text{pos}) + P(\text{neg}) + P(\text{neu}) \approx 1.0$), 10-class event taxonomy with confidence score, additive 1–10 impact severity output, and textual evidence spans.
+- [`src/sentinel/contracts/stress.py`](../src/sentinel/contracts/stress.py): Institutional multi-asset wholesale banking models defining syndicated corporate loans, corporate fixed bonds, SOFR interest rate swaps, and cash reserves.
 
-### 2.2 Ingestion Adapters
-- [`src/sentinel/ingestion/adapters.py`](../src/sentinel/ingestion/adapters.py):
-  - `NewsAdapter`: Loads and parses structured financial news CSV records into immutable `InputRecord` contracts.
-  - `SocialAdapter`: Ingests financial social commentary, preserving cashtags (`$APEX`, `$QSEM`, `$TSTEL`) and user handles.
+### 2.2 Replay Controller & Deduplication
+- [`src/sentinel/replay/clock.py`](../src/sentinel/replay/clock.py): Controlled logical replay clock supporting speed multipliers (1x to 60x) and timeline step controls.
+- [`src/sentinel/replay/dedup.py`](../src/sentinel/replay/dedup.py): Dual-mode deduplication enforcing exact canonical key deduplication alongside token Jaccard similarity ($\ge 0.65$) and sub-phrase containment ($\ge 0.80$) within a rolling temporal window.
 
-### 2.3 Localhost FastAPI Application
-- [`src/sentinel/api/app.py`](../src/sentinel/api/app.py): Configured with strict localhost CORS policies (`127.0.0.1`, `localhost`) to prohibit cross-origin leakage.
-- [`src/sentinel/api/routes/health.py`](../src/sentinel/api/routes/health.py): Operational health probe reporting engine status, offline verification (`external_apis: false`), database state, and dataset readiness.
-- [`src/sentinel/api/routes/datasets.py`](../src/sentinel/api/routes/datasets.py): Serves cryptographic manifest metadata and crisis scenario configurations.
+### 2.3 Hybrid NLP Risk Intelligence
+- [`src/sentinel/nlp/entities.py`](../src/sentinel/nlp/entities.py): Case-insensitive alias matching with word-boundary enforcement, true start/end character offsets, and cashtag extraction (`$APEX`, `$TSTEL`).
+- [`src/sentinel/nlp/sentiment.py`](../src/sentinel/nlp/sentiment.py): FinBERT and financial domain lexicon hybrid producing continuous scores in $[-1.0, +1.0]$ and validated three-way probability distributions.
+- [`src/sentinel/nlp/events.py`](../src/sentinel/nlp/events.py): 10-class financial event classifier (`CREDIT`, `MACRO`, `SUPPLY_CHAIN`, `REGULATORY`, `EARNINGS`, `M_AND_A`, `CYBER`, `ESG`, `PRODUCT`, `OTHER`) with confidence thresholding and abstention.
+- [`src/sentinel/nlp/severity.py`](../src/sentinel/nlp/severity.py): Standardized 1–10 impact severity calculation: $\text{Base Severity} + \text{Scope Increment} + \text{Dynamic Multipliers}$.
 
-### 2.4 Cryptographic Provenance
-- [`data/manifest.json`](../data/manifest.json): Machine-readable catalog specifying row counts, file schemas, project-authored MIT licensing, and SHA-256 checksums for all 10 bundled files.
-- [`scripts/verify_hygiene.py`](../scripts/verify_hygiene.py): Automated audit script verifying file integrity against manifest hashes and confirming zero secrets or binaries exist.
+### 2.4 Contagion Propagation Network
+- [`src/sentinel/stress/contagion.py`](../src/sentinel/stress/contagion.py): Directed customer-supplier and creditor transmission linkages modeled in NetworkX from `data/graph_edges.csv`.
+- Bounded 2-hop propagation with exponential distance damping ($0.50^{\text{hop}}$) ensuring second-order shocks transmit realistically without runaway amplification.
 
----
+### 2.5 Wholesale Balance Sheet Stress Valuation (Module B)
+- [`src/sentinel/stress/valuation.py`](../src/sentinel/stress/valuation.py):
+  - **Syndicated Loans:** Expected Credit Loss adjustments: $\Delta \text{ECL} = \text{EAD} \times \Delta\text{PD} \times \text{LGD}$.
+  - **Corporate Bonds:** Modified duration and convexity spread repricing: $\Delta P = -D_{\text{mod}} \times \Delta s + \frac{1}{2} C \times (\Delta s)^2$.
+  - **SOFR Interest Rate Swaps:** Signed DV01 curve sensitivity: $\Delta \text{MtM} = \text{DV01} \times \Delta y_{\text{curve}}$.
+  - **Retail Credit Sleeve:** Aggregated pooled loan tranches derived from Kaggle transaction data.
+  - **Systemic Macro Curve Shifts:** Applies systemic yield curve moves across all positions; handles directional rate cuts vs rate hikes correctly.
 
-## 3. Planned Engine Components (M2 through M5 Roadmap)
-
-The following components represent future engineering milestones and are **not yet operational** in M0/M1:
-
-### 3.1 Logical Replay Clock & Event Deduplication (Planned M2)
-- Simulates historical event arrival based on `simulated_at` logical timestamps.
-- Enforces a 24-hour rolling deduplication window: duplicate mentions of identical events are tagged and suppressed from repeatedly shocking downstream portfolio risk factors.
-
-### 3.2 NLP Risk Engine (Planned M3)
-- **Local FinBERT Sentiment:** CPU-optimized PyTorch inference scoring financial text into $[-1.0, +1.0]$ sentiment scores.
-- **Event Classifier:** Scikit-learn multi-class event classifier mapping text to the 9 PRD taxonomy classes with explicit abstention (`OTHER`).
-- **Impact Severity Scorer:** Additive calculation using Base Score (1–6) + Scope Increment (0–2) + Severity Increment (0–2).
-
-### 3.3 Contagion Knowledge Graph (Planned M3)
-- NetworkX directed graph modeling customer-supplier dependencies and credit counterparty links (`data/graph_edges.csv`).
-- Bounded 2-hop propagation with exponential distance damping ($0.50^{\text{hop}}$).
-
-### 3.4 Wholesale Portfolio Stress Engine (Module B — Planned M4)
-- Primary deliverable for the hackathon: valuation of a synthetic $500M institutional portfolio under crisis scenarios.
-- Expected Credit Loss (ECL) on loans, modified duration price approximation on corporate bonds, and signed DV01 sensitivity on interest rate swaps.
+### 2.6 Localhost API, Storage & Terminal UI
+- [`src/sentinel/api/app.py`](../src/sentinel/api/app.py): FastAPI backend restricted to localhost (`127.0.0.1`, `localhost`).
+- [`src/sentinel/api/routes/signals.py`](../src/sentinel/api/routes/signals.py): Real-time signal streaming endpoint with `?since=` ISO-8601 query parameter filtering and literal file sink append to `data/signals.jsonl`.
+- [`src/sentinel/api/routes/stress.py`](../src/sentinel/api/routes/stress.py): Crisis scenario trigger endpoint computing full portfolio P&L waterfalls.
+- [`frontend/`](../frontend/): React 18 + TypeScript + Vite institutional dark-mode terminal displaying live event streams, entity cards, contagion graph, and stress loss waterfalls.
