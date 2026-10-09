@@ -9,6 +9,8 @@ from sqlalchemy.orm import Session
 from sentinel.api.events import broadcaster
 from sentinel.api.routes.stress import stress_engine
 from sentinel.contracts.records import InputRecord
+from sentinel.contracts.signals import RiskSignal
+from sentinel.contracts.stress import StressRunResult
 from sentinel.ingestion.adapters import NewsAdapter, SocialAdapter
 from sentinel.nlp.engine import NLPEngine
 from sentinel.replay.controller import (
@@ -59,6 +61,41 @@ class PersistedRecordResponse(BaseModel):
     sequence_number: Optional[int]
 
 
+SIGNAL_SINK = Path("data/signals.jsonl")
+
+
+async def emit_signal(
+    repo: ReplayRepository, record: InputRecord, sig: RiskSignal
+) -> Optional[StressRunResult]:
+    """Persist a signal, append it to the JSONL sink, run the Module B trigger, broadcast."""
+    repo.save_signal(sig)
+
+    # PS R3 literal compliance: append emitted signal JSON line to file sink
+    try:
+        SIGNAL_SINK.parent.mkdir(parents=True, exist_ok=True)
+        with open(SIGNAL_SINK, "a", encoding="utf-8") as f:
+            f.write(sig.model_dump_json() + "\n")
+    except Exception as exc:
+        logger.warning("Failed writing to signals.jsonl sink: %s", exc)
+
+    # Module B automated stress test trigger on eligible high-impact signals (PRD 9.3)
+    stress_result = None
+    if stress_engine.should_trigger(sig):
+        stress_result = stress_engine.trigger_from_signal(sig)
+        if stress_result:
+            repo.save_stress_run(stress_result)
+
+    await broadcaster.broadcast(
+        event_type="signal_emitted",
+        data={
+            "signal": sig.model_dump(mode="json"),
+            "record": record.model_dump(mode="json"),
+            "stress_run": stress_result.model_dump(mode="json") if stress_result else None,
+        },
+    )
+    return stress_result
+
+
 @router.get("/status", response_model=ReplayStatus)
 def get_replay_status() -> ReplayStatus:
     """Return live status of the logical replay clock and run queue."""
@@ -104,42 +141,16 @@ async def step_replay(
     """Deterministically advance one record from the replay queue and emit RiskSignal."""
     repo = ReplayRepository(db)
 
-    async def persist_and_process(record: InputRecord, dedup):
+    async def persist_and_process(record: InputRecord, dedup) -> List[RiskSignal]:
         repo.save_record(record, dedup, run_id=replay_controller.run_id)
-        sig = nlp_engine.process_record(
+        signals = nlp_engine.process_record_multi(
             record,
             run_id=replay_controller.run_id,
             dedup_decision=dedup,
         )
-        repo.save_signal(sig)
-
-        # PS R3 literal compliance: append emitted signal JSON line to file sink
-        try:
-            sink_path = Path("data/signals.jsonl")
-            sink_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(sink_path, "a", encoding="utf-8") as f:
-                f.write(sig.model_dump_json() + "\n")
-        except Exception as exc:
-            logger.warning("Failed writing to signals.jsonl sink: %s", exc)
-
-        # Module B automated stress test trigger on eligible high-impact signals (PRD 9.3)
-        stress_result = None
-        if stress_engine.should_trigger(sig):
-            stress_result = stress_engine.trigger_from_signal(sig)
-            if stress_result:
-                repo.save_stress_run(stress_result)
-
-        # Broadcast live event to SSE subscribers
-        await broadcaster.broadcast(
-            event_type="signal_emitted",
-            data={
-                "signal": sig.model_dump(mode="json"),
-                "record": record.model_dump(mode="json"),
-                "stress_run": (stress_result.model_dump(mode="json") if stress_result else None),
-            },
-        )
-
-        return sig
+        for sig in signals:
+            await emit_signal(repo, record, sig)
+        return signals
 
     step_result = await replay_controller.step(processor=persist_and_process)
     repo.upsert_run(replay_controller.get_status())

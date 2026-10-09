@@ -6,7 +6,13 @@ from uuid import uuid4
 
 from sentinel.config import settings
 from sentinel.contracts.records import InputRecord
-from sentinel.contracts.signals import EvidenceSpan, RiskSignal
+from sentinel.contracts.signals import (
+    EntityReference,
+    EventOutput,
+    EvidenceSpan,
+    RiskSignal,
+    SentimentOutput,
+)
 from sentinel.nlp.entities import EntityLinker
 from sentinel.nlp.events import EventClassifier
 from sentinel.nlp.sentiment import FinBERTSentimentAnalyzer
@@ -51,11 +57,24 @@ class NLPEngine:
         run_id: str,
         dedup_decision: Optional[DedupDecision] = None,
     ) -> RiskSignal:
-        """Process an input record and emit an auditable RiskSignal contract."""
+        """Process a record and return the signal for its primary (first-mentioned) entity."""
+        return self.process_record_multi(record, run_id, dedup_decision)[0]
+
+    def process_record_multi(
+        self,
+        record: InputRecord,
+        run_id: str,
+        dedup_decision: Optional[DedupDecision] = None,
+    ) -> List[RiskSignal]:
+        """Emit one auditable RiskSignal per resolved entity (PRD Section 6.2).
+
+        Sentiment and event classification are computed once per record; impact and action
+        eligibility are computed per entity because scope (company vs macro) changes them.
+        """
         lower_text = record.text.lower()
 
-        # 1. Entity Resolution
-        entity_ref, entity_spans = self.entity_linker.resolve(
+        # 1. Entity Resolution (every company mentioned, or macro / unresolved fallback)
+        entities = self.entity_linker.resolve_all(
             record.text,
             hint_entity_id=record.primary_entity_id,
         )
@@ -99,6 +118,23 @@ class NLPEngine:
             else:
                 event.macro_direction = "none"
 
+        return [
+            self._build_signal(
+                record, run_id, dedup_decision, entity_ref, entity_spans, sentiment, event
+            )
+            for entity_ref, entity_spans in entities
+        ]
+
+    def _build_signal(
+        self,
+        record: InputRecord,
+        run_id: str,
+        dedup_decision: Optional[DedupDecision],
+        entity_ref: EntityReference,
+        entity_spans: List[EvidenceSpan],
+        sentiment: SentimentOutput,
+        event: EventOutput,
+    ) -> RiskSignal:
         # 4. Severity Rubric Scoring
         impact, severity_spans = self.severity_engine.evaluate(
             event_class=event.label,
@@ -158,8 +194,8 @@ class NLPEngine:
             simulated_at=record.simulated_at,
             processed_at=datetime.utcnow(),
             entity=entity_ref,
-            sentiment=sentiment,
-            event=event,
+            sentiment=sentiment.model_copy(deep=True),
+            event=event.model_copy(deep=True),
             impact=impact,
             evidence=all_spans,
             duplicate_group_id=duplicate_group_id,

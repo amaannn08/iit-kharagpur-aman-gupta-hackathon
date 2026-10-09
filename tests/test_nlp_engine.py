@@ -74,3 +74,21 @@ def test_nlp_engine_routine_text_blocks_action():
         "EVENT_CLASSIFICATION_OTHER" in signal.action_block_reasons
         or "IMPACT_BELOW_ACTION_THRESHOLD" in signal.action_block_reasons
     )
+
+
+def test_one_signal_per_resolved_entity():
+    from sentinel.contracts.records import InputRecord, SourceType
+    from sentinel.nlp.engine import NLPEngine
+
+    text = "Moody's downgrades Ford and General Motors to junk on weakening auto credit"
+    record = InputRecord(record_id="multi-1", source_id="t", source_type=SourceType.NEWS, text=text)
+    signals = NLPEngine().process_record_multi(record, run_id="run-multi")
+
+    assert [s.entity.ticker for s in signals] == ["F", "GM"]
+    assert len({s.signal_id for s in signals}) == 2
+    assert len({s.event.label for s in signals}) == 1  # one classification per record
+    for s in signals:
+        assert any(
+            text[e.start : e.end] == e.text and e.text in ("Ford", "General Motors")
+            for e in s.evidence
+        )

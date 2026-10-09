@@ -3,10 +3,10 @@
 import asyncio
 from datetime import datetime
 from enum import Enum
-from typing import Callable, Coroutine, List, Optional
+from typing import Callable, Coroutine, List, Optional, Union
 from uuid import uuid4
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from sentinel.contracts.records import InputRecord
 from sentinel.contracts.signals import RiskSignal
@@ -45,7 +45,8 @@ class ReplayStepResult(BaseModel):
 
     record: InputRecord
     dedup: DedupDecision
-    signal: Optional[RiskSignal] = None
+    signal: Optional[RiskSignal] = None  # primary entity signal (backwards compatible)
+    signals: List[RiskSignal] = Field(default_factory=list)  # one per resolved entity
     simulated_at: Optional[datetime] = None
     success: bool = True
     error_message: Optional[str] = None
@@ -53,7 +54,7 @@ class ReplayStepResult(BaseModel):
 
 RecordProcessor = Callable[
     [InputRecord, DedupDecision],
-    Coroutine[None, None, Optional[RiskSignal]],
+    Coroutine[None, None, Union[RiskSignal, List[RiskSignal], None]],
 ]
 
 
@@ -182,9 +183,8 @@ class ReplayController:
             dedup_decision = self._dedup.process(record.record_id, record.text)
 
             # Invoke downstream processor if provided
-            sig = None
-            if processor:
-                sig = await processor(record, dedup_decision)
+            produced = await processor(record, dedup_decision) if processor else None
+            signals = produced if isinstance(produced, list) else [produced] if produced else []
 
             self._processed_count += 1
             if not self._queue and self._state == RunState.RUNNING:
@@ -193,7 +193,8 @@ class ReplayController:
             return ReplayStepResult(
                 record=record,
                 dedup=dedup_decision,
-                signal=sig,
+                signal=signals[0] if signals else None,
+                signals=signals,
                 simulated_at=sim_time,
                 success=True,
             )
