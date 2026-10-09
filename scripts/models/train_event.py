@@ -182,6 +182,17 @@ def main() -> None:
                 c: round(float((sec_pred[sec_test.y.values == c] == c).mean()), 4)
                 for c in sorted(sec_test.y.unique())
             },
+            # routine filings (results, officer changes, Reg FD, other events, new debt) that the
+            # model would wrongly send to the credit/cyber stress path
+            "routine_filings_false_stress_rate": round(
+                float(
+                    np.isin(
+                        sec_pred[np.isin(sec_test.y.values, ["OTHER", "EARNINGS"])],
+                        ["CREDIT", "CYBER"],
+                    ).mean()
+                ),
+                4,
+            ),
         },
     }
     card = {
