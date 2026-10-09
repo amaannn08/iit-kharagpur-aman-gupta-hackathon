@@ -1,0 +1,9 @@
+position_id,asset_class,entity_id,counterparty_name,sector,currency,market_value,ead,baseline_pd,lgd,rating,maturity_date
+RTL-LOAN-001,loan,RTL_COMM_BB,Pooled Retail & SME Commercial Services (BB Tranche),Commercial Services,USD,6712962.96,6712962.96,0.04,0.8,BB,2027-12-31
+RTL-LOAN-002,loan,RTL_CONS_AA,Pooled Retail & SME Consumer Staples (AA Tranche),Consumer Staples,USD,2777777.78,2777777.78,0.005,0.8,AA,2027-12-31
+RTL-LOAN-003,loan,RTL_ENER_BB,Pooled Retail & SME Energy (BB Tranche),Energy,USD,8796296.3,8796296.3,0.04,0.8,BB,2027-12-31
+RTL-LOAN-004,loan,RTL_HEAL_AA,Pooled Retail & SME Healthcare (AA Tranche),Healthcare,USD,1851851.85,1851851.85,0.005,0.8,AA,2027-12-31
+RTL-LOAN-005,loan,RTL_INDU_B-,Pooled Retail & SME Industrials (B- Tranche),Industrials,USD,11111111.11,11111111.11,0.1,0.8,B-,2027-12-31
+RTL-LOAN-006,loan,RTL_REAL_B-,Pooled Retail & SME Real Estate (B- Tranche),Real Estate,USD,9722222.22,9722222.22,0.1,0.8,B-,2027-12-31
+RTL-LOAN-007,loan,RTL_TECH_BBB,Pooled Retail & SME Technology (BBB Tranche),Technology,USD,3472222.22,3472222.22,0.015,0.8,BBB,2027-12-31
+RTL-LOAN-008,loan,RTL_TELE_BBB,Pooled Retail & SME Telecommunications (BBB Tranche),Telecommunications,USD,5555555.56,5555555.56,0.015,0.8,BBB,2027-12-31

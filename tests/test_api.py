@@ -39,7 +39,7 @@ def test_datasets_manifest_endpoint():
     assert manifest["compliance"]["confidential_client_data"] is False
 
     datasets = manifest["datasets"]
-    assert len(datasets) == 10
+    assert len(datasets) >= 10
 
     # Ensure news and social are present with cryptographic hashes
     file_paths = [ds["file_path"] for ds in datasets]

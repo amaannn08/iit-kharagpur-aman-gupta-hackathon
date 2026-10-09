@@ -178,7 +178,72 @@
         "gold_severity_score",
         "is_adversarial"
       ]
+    },
+    {
+      "file_path": "data/external/phrasebank/sample.csv",
+      "format": "csv",
+      "description": "FinancialPhraseBank sentiment benchmark samples formatted to InputRecord schema.",
+      "is_synthetic": false,
+      "license": "CC BY-NC-SA 4.0 (Malo et al. 2014)",
+      "sha256": "aec1c2b3bc9cdde933295c2dc1b2bab5018306298733c03f81a84e4fa00a0ab7",
+      "byte_size": 2598,
+      "record_count": 10,
+      "primary_keys": [
+        "record_id"
+      ]
+    },
+    {
+      "file_path": "data/external/ticker_news/replay_sample.csv",
+      "format": "csv",
+      "description": "Financial news articles with ticker-level references formatted for replay.",
+      "is_synthetic": false,
+      "license": "CC0 1.0 Universal Public Domain (rdolphin/Kaggle)",
+      "sha256": "e4750dc8c4f283a11417866c2fa6312618ed19bb27a6d985046082a37537b4e3",
+      "byte_size": 1597,
+      "record_count": 6,
+      "primary_keys": [
+        "record_id"
+      ]
+    },
+    {
+      "file_path": "data/external/tweets/replay_sample.csv",
+      "format": "csv",
+      "description": "Stock tweets with cashtags formatted for social replay and forward return backtesting.",
+      "is_synthetic": false,
+      "license": "CC0 1.0 Universal Public Domain (thedevastator/Kaggle)",
+      "sha256": "1cc313ef2eab31530d47870e29306f25e21a145bea493ab5a25c4127a1fe5596",
+      "byte_size": 1242,
+      "record_count": 6,
+      "primary_keys": [
+        "record_id"
+      ]
+    },
+    {
+      "file_path": "data/portfolio/credit_sleeve.csv",
+      "format": "csv",
+      "description": "Consumer and SME credit portfolio sleeve aggregated from transaction data for Module B stress testing.",
+      "is_synthetic": true,
+      "license": "MIT License (Project-Derived from Public Transactions Dataset)",
+      "sha256": "ec15a5275588200ddc71f994b5c7e492498e868ba5bdb061475c90679b758e20",
+      "byte_size": 1253,
+      "record_count": 8,
+      "primary_keys": [
+        "position_id"
+      ]
+    },
+    {
+      "file_path": "data/portfolio/credit_sleeve.json",
+      "format": "json",
+      "description": "JSON representation of the $50M consumer and SME credit portfolio sleeve.",
+      "is_synthetic": true,
+      "license": "MIT License (Project-Derived from Public Transactions Dataset)",
+      "sha256": "057a440c269318c5d7d59259414a3f3a48855960b553bfb0523dc13b02f76d9e",
+      "byte_size": 3643,
+      "record_count": 8,
+      "primary_keys": [
+        "position_id"
+      ]
     }
   ],
-  "updated_at": "2026-10-09T06:34:41.291094+00:00"
+  "updated_at": "2026-10-09T06:43:58.433013+00:00"
 }

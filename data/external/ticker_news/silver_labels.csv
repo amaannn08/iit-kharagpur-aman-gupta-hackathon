@@ -1,0 +1,7 @@
+record_id,ticker,sentiment_label,sentiment_score
+kn-bc951ff1d8,APEX,negative,-0.82
+kn-bfdbc98ccf,TSTEL,positive,0.76
+kn-0dcf86ff3b,QSEM,negative,-0.68
+kn-85193aa002,GLOG,positive,0.58
+kn-2e62b24dc4,VAUTO,negative,-0.61
+kn-5a4b8929c1,SLEN,positive,0.85
