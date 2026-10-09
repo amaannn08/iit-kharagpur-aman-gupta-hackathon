@@ -6,6 +6,12 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field, model_validator
 
 
+class EvidenceSpan(BaseModel):
+    start: int = Field(..., ge=0, description="Character offset start in raw text")
+    end: int = Field(..., ge=0, description="Character offset end in raw text")
+    text: str = Field(..., description="Extracted textual span")
+
+
 class EntityReference(BaseModel):
     name: str = Field(..., description="Canonical entity name")
     ticker: Optional[str] = Field(None, description="Mapped ticker symbol if applicable")
@@ -40,6 +46,9 @@ class EventOutput(BaseModel):
     macro_direction: Optional[str] = Field(
         default=None, description="Macro policy direction: easing, tightening, or none"
     )
+    evidence: List[EvidenceSpan] = Field(
+        default_factory=list, description="Spans that satisfied the event-class evidence gate"
+    )
 
 
 class ImpactComponents(BaseModel):
@@ -52,12 +61,6 @@ class ImpactOutput(BaseModel):
     score: int = Field(..., ge=1, le=10, description="Overall severity score on 1-10 scale")
     rubric_version: str = Field(default="1.0")
     components: ImpactComponents
-
-
-class EvidenceSpan(BaseModel):
-    start: int = Field(..., ge=0, description="Character offset start in raw text")
-    end: int = Field(..., ge=0, description="Character offset end in raw text")
-    text: str = Field(..., description="Extracted textual span")
 
 
 class RiskSignal(BaseModel):

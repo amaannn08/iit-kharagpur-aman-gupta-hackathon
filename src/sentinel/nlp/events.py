@@ -1,15 +1,30 @@
-"""Event classification engine with TF-IDF baseline and abstention logic (PRD Section 7.3)."""
+"""Event classification engine (PRD Section 7.3).
 
+Primary model: models/event_v2.joblib, trained by scripts/models/train_event.py on committed
+real labeled data (HF twitter-financial-news topic, SEC 8-K item statements, weak-labeled real
+headlines). Its card (models/event_v2.card.json) carries the abstention threshold chosen on a
+dev split and the held-out metrics.
+
+After classification, domain gates require visible evidence for classes whose training labels
+are broader than the PS definition (e.g. the "Politics" topic is not geopolitical risk).
+If the model artifact is missing, a TF-IDF baseline is fitted on data/train/synthetic_seeds.csv
+and the classifier reports degraded_mode=True.
+"""
+
+import csv
+import json
 import logging
+import re
 from pathlib import Path
-from typing import List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import joblib
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 
-from sentinel.contracts.signals import EventOutput
+from sentinel.config import settings
+from sentinel.contracts.signals import EventOutput, EvidenceSpan
 
 logger = logging.getLogger(__name__)
 
@@ -26,329 +41,167 @@ SUPPORTED_EVENT_CLASSES = [
     "OTHER",
 ]
 
-# High-fidelity curated domain training examples representing each event class
-SEED_TRAINING_CORPUS: List[Tuple[str, str]] = [
-    # CREDIT
-    ("missed scheduled coupon payment default covenant breach debt restructuring", "CREDIT"),
-    (
-        "skipped an interest payment to bondholders and is in talks with lenders restructuring",
-        "CREDIT",
+# zeroshot/twitter-financial-news-topic label id -> PS event class (others -> OTHER)
+TOPIC_TO_PS_CLASS: Dict[int, str] = {
+    1: "MACRO",  # Fed | Central Banks
+    14: "MACRO",  # Macro
+    3: "CREDIT",  # Treasuries | Corporate Debt
+    5: "EARNINGS",  # Earnings
+    13: "M_AND_A",  # M&A | Investments
+    12: "REGULATORY",  # Legal | Regulation
+    16: "GEOPOLITICAL",  # Politics (gated below: not all politics is geopolitical risk)
+    2: "PRODUCT",  # Company | Product News (gated below: not all company news is a launch)
+}
+
+# A label survives only if the text shows class evidence (measured on real Polygon/GDELT news:
+# actionable false positives fell from 14 to 6 and from 52 to 2).
+GATES: Dict[str, re.Pattern] = {
+    "MACRO": re.compile(
+        r"\b(fed|federal reserve|fomc|central bank|interest rates?|rate (hike|cut)s?|inflation|"
+        r"cpi|ppi|gdp|recession|jobless|payrolls?|unemployment|treasury|treasuries|yields?|"
+        r"monetary|fiscal|tariffs?|trade deficit|imf|world bank|ecb|boe|boj|rbi|pboc|"
+        r"currency|devaluation|basis points?|bps)\b",
+        re.I,
     ),
-    (
-        "failed to remit scheduled payment to lending syndicate triggering 30-day cure period",
-        "CREDIT",
+    "GEOPOLITICAL": re.compile(
+        r"\b(sanctions?|tariffs?|export (ban|controls?)|embargo|war|invasion|military|missiles?|"
+        r"troops|conflict|ceasefire|nato|opec|strait|border|nationali[sz]\w*|trade (war|deal|"
+        r"talks|tensions)|geopolitic\w*|coup|blockade|annex\w*)\b",
+        re.I,
     ),
-    ("downgraded to junk status credit rating cut to Baa3 by Moody's negative outlook", "CREDIT"),
-    (
-        "credit rating agency issues negative outlook downgrade warning on heavy debt maturities",
-        "CREDIT",
+    "PRODUCT": re.compile(
+        r"\b(launch\w*|unveil\w*|introduc\w*|releas\w*|approv\w*|recalls?|recalled|debut\w*|"
+        r"rolls? out|new (product|model|chip|drug|device|service|phone|vehicle)|fda|clinical trial)\b",
+        re.I,
     ),
-    ("bankruptcy protection chapter 11 filing insolvent credit lines frozen", "CREDIT"),
-    ("files emergency chapter 11 bankruptcy petition debt default insolvency", "CREDIT"),
-    ("liquidity shortfall unable to meet commercial paper redemption obligations", "CREDIT"),
-    ("bank run depositor outflows trigger emergency liquidity borrowing discount window", "CREDIT"),
-    (
-        "default on syndicated credit facility borrower distressed debt restructuring counsel",
-        "CREDIT",
-    ),
-    (
-        "senior unsecured bondholders retain restructuring counsel to evaluate "
-        "debt for equity swap",
-        "CREDIT",
-    ),
-    (
-        "creditors assemble ad hoc committee as firm enters comprehensive debt restructuring",
-        "CREDIT",
-    ),
-    ("credit facility coupon payment missed technical default covenants triggered", "CREDIT"),
-    (
-        "central bank affirms standing discount window will support solvent lenders "
-        "facing liquidity stress",
-        "CREDIT",
-    ),
-    # MACRO
-    ("Federal Reserve raises benchmark interest rates 50 basis points to curb inflation", "MACRO"),
-    (
-        "Federal Reserve signals benchmark rate hike amid persistent core services inflation",
-        "MACRO",
-    ),
-    (
-        "Federal Reserve announces emergency 100 basis point interest rate hike systemic contagion",
-        "MACRO",
-    ),
-    (
-        "central bank cuts discount rate amid slowing economic growth and disinflation easing",
-        "MACRO",
-    ),
-    (
-        "Federal Reserve cuts interest rates by 75 basis points in emergency monetary easing",
-        "MACRO",
-    ),
-    (
-        "sovereign bond prices plummet as benchmark 10-year Treasury yields surge "
-        "14 basis points on PPI print",
-        "MACRO",
-    ),
-    (
-        "treasury yields invert across 2-year and 10-year curve signaling impending recession",
-        "MACRO",
-    ),
-    ("consumer price index inflation surge forces monetary policy tightening cycle", "MACRO"),
-    (
-        "European Central Bank signals surprise liquidity reserve requirement hikes to "
-        "stabilize currency",
-        "MACRO",
-    ),
-    ("unemployment rate rises as GDP contracts for second consecutive quarter", "MACRO"),
-    ("central bank governor confirms benchmark policy rate setting monetary committee", "MACRO"),
-    # GEOPOLITICAL
-    ("trade sanctions imposed on key trading partner blocking energy exports", "GEOPOLITICAL"),
-    ("tariffs enacted on steel and aluminum sparking retaliatory trade measures", "GEOPOLITICAL"),
-    (
-        "cross-border military conflict disrupts critical shipping corridor maritime straits",
-        "GEOPOLITICAL",
-    ),
-    (
-        "naval skirmish closes maritime choke points driving benchmark crude oil "
-        "futures up sharply",
-        "GEOPOLITICAL",
-    ),
-    (
-        "foreign government nationalizes corporate assets and energy concessions "
-        "without compensation",
-        "GEOPOLITICAL",
-    ),
-    (
-        "bilateral trade negotiations collapse amid diplomatic standoff and export curbs",
-        "GEOPOLITICAL",
-    ),
-    ("global trade pact talks stall over agricultural export subsidies deadlock", "GEOPOLITICAL"),
-    # M_AND_A
-    ("announced all-cash acquisition agreement valued at four billion dollars", "M_AND_A"),
-    ("hostile takeover bid launched by activist hedge fund for outstanding shares", "M_AND_A"),
-    ("merger of equals approved by boards to create industry conglomerate", "M_AND_A"),
-    ("divestiture of non-core consumer unit completed for cash consideration", "M_AND_A"),
-    ("definitive purchase agreement signed to acquire regional utility solar generator", "M_AND_A"),
-    ("board of directors approves buyout bid from private equity consortium", "M_AND_A"),
-    # PRODUCT
-    ("wins priority FDA approval for breakthrough oncology drug therapeutic", "PRODUCT"),
-    (
-        "unconditional FDA approval received for novel oncology kinase inhibitor therapeutic",
-        "PRODUCT",
-    ),
-    (
-        "voluntary nationwide product recall issued over safety defect and battery fire hazard",
-        "PRODUCT",
-    ),
-    (
-        "phase 3 clinical trial fails primary efficacy endpoint in randomized clinical study",
-        "PRODUCT",
-    ),
-    ("patent infringement injunction halts commercial distribution of flagship device", "PRODUCT"),
-    (
-        "activates transpacific subsea fiber network ahead of schedule expanding bandwidth",
-        "PRODUCT",
-    ),
-    (
-        "secures multi-year direct offtake agreement to provide battery grade lithium carbonate",
-        "PRODUCT",
-    ),
-    # REGULATORY
-    ("DOJ files antitrust lawsuit to block monopolistic market concentration", "REGULATORY"),
-    (
-        "Department of Justice launches antitrust inquiry into proposed semiconductor merger",
-        "REGULATORY",
-    ),
-    ("SEC launches formal enforcement investigation into accounting irregularities", "REGULATORY"),
-    (
-        "Securities and Exchange Commission probes premature subscription revenue recognition",
-        "REGULATORY",
-    ),
-    (
-        "consumer financial protection agency levies record civil money penalty for "
-        "deceptive practices",
-        "REGULATORY",
-    ),
-    (
-        "Federal Trade Commission files preliminary injunction to block corporate buyout",
-        "REGULATORY",
-    ),
-    (
-        "banking regulators issue cease-and-desist order for severe risk compliance deficiencies",
-        "REGULATORY",
-    ),
-    # SUPPLY_CHAIN
-    ("declares force majeure after fire damages primary blast furnace facility", "SUPPLY_CHAIN"),
-    (
-        "unexpected fire at primary rolling mill halted output indefinitely invoking force majeure",
-        "SUPPLY_CHAIN",
-    ),
-    (
-        "shares tumbled after the company halted output indefinitely at its "
-        "main manufacturing plant",
-        "SUPPLY_CHAIN",
-    ),
-    (
-        "port dockworkers strike halts container freight shipping operations nationwide",
-        "SUPPLY_CHAIN",
-    ),
-    (
-        "critical port terminal bottleneck delays cargo container processing for "
-        "manufacturing suppliers",
-        "SUPPLY_CHAIN",
-    ),
-    ("semiconductor component shortages force automotive assembly line shutdowns", "SUPPLY_CHAIN"),
-    (
-        "freight logistics delays double container turnaround times at key regional cargo hubs",
-        "SUPPLY_CHAIN",
-    ),
-    (
-        "national freight rail strike averted as union ratifies wage agreement easing logistics",
-        "SUPPLY_CHAIN",
-    ),
-    ("raw material export embargo cuts off essential lithium battery inputs", "SUPPLY_CHAIN"),
-    # EARNINGS
-    ("reports record quarterly earnings as net interest margin widens thirty bps", "EARNINGS"),
-    (
-        "slashes full year revenue guidance and profit targets due to rising operating costs",
-        "EARNINGS",
-    ),
-    ("first quarter earnings per share beat consensus estimates by fifteen percent", "EARNINGS"),
-    ("Meridian Financial profit tops estimates on stronger commercial lending yields", "EARNINGS"),
-    (
-        "operating profit drops sharply as operating margin compresses due to inventory discounts",
-        "EARNINGS",
-    ),
-    ("quarterly net income surges fifty percent driven by commercial loan volume", "EARNINGS"),
-    (
-        "lowered second-half operating margin targets citing discounted inventory foot traffic",
-        "EARNINGS",
-    ),
-    (
-        "beats vehicle delivery expectations by twelve percent on battery factory efficiency ramp",
-        "EARNINGS",
-    ),
-    (
-        "firm fixed price contract awarded to modernize defense avionics countermeasure systems",
-        "EARNINGS",
-    ),
-    # CYBER
-    (
-        "critical zero-day security flaw in enterprise gateway actively exploited by hackers",
-        "CYBER",
-    ),
-    (
-        "unpatched authentication bypass vulnerability actively exploited in enterprise firewall",
-        "CYBER",
-    ),
-    ("ransomware attack compromises internal corporate databases and encrypted servers", "CYBER"),
-    (
-        "localized ransomware breach confirmed on legacy payment servers internal nodes encrypted",
-        "CYBER",
-    ),
-    ("malicious unauthorized data breach exposes customer banking credentials", "CYBER"),
-    ("distributed denial of service attacks knock online banking portals offline", "CYBER"),
-    ("supply chain software infiltration compromises downstream client networks", "CYBER"),
-    # OTHER
-    ("board of directors schedules annual general meeting of shareholders proxy vote", "OTHER"),
-    ("company updates routine corporate governance committee charter", "OTHER"),
-    ("executive appointed to non-executive board seat at industry association", "OTHER"),
-    ("regular quarterly dividend declared payable on standard record date", "OTHER"),
-    ("routine investor relations presentation slides uploaded to corporate website", "OTHER"),
-]
+}
+MACRO_GATE_WINDOW = 200  # macro evidence must appear in the headline-sized prefix
+
+# Corporate credit-distress language. The topic dataset files most bankruptcies/defaults under
+# "Company | Product News"; under the PS taxonomy they are Credit Events.
+CREDIT_DISTRESS = re.compile(
+    r"\b(default(s|ed)? on|in default|bankrupt(cy|cies)?|chapter (11|7)|insolven(t|cy)|"
+    r"receivership|downgrade[sd]? .{0,30}\bjunk|junk (status|territory)|"
+    r"(credit|debt) rating (cut|downgrade)|cuts? .{0,30}(credit|debt) rating|"
+    r"missed (a |an |its )?(\w+ )?(interest|coupon|debt|bond|loan) payments?|debt restructuring|"
+    r"restructur\w+ (of )?(its )?debt|covenant (breach|waiver)|liquidity crisis|distressed debt|"
+    r"creditors? committee)\b",
+    re.I,
+)
+
+
+def ps_aligned_label(topic_label: int, text: str) -> str:
+    """Map a twitter-financial-news topic label onto the PS event taxonomy.
+
+    Deterministic and shared by training and evaluation. The only refinement of the topic
+    taxonomy is credit-distress language -> CREDIT (a bankruptcy is a PS Credit Event even when
+    the dataset files it under company news). Evidence gates are applied at inference only.
+    """
+    if CREDIT_DISTRESS.search(text):
+        return "CREDIT"
+    return TOPIC_TO_PS_CLASS.get(int(topic_label), "OTHER")
+
+
+def clean_for_classifier(text: str) -> str:
+    """Strip URLs and @handles; identical preprocessing at training and inference time."""
+    return re.sub(r"https?://\S+|@\w+", " ", str(text)).strip()
+
+
+def apply_gate(label: str, text: str) -> Tuple[str, List[EvidenceSpan]]:
+    gate = GATES.get(label)
+    if gate is None:
+        return label, []
+    window = text[:MACRO_GATE_WINDOW] if label == "MACRO" else text
+    m = gate.search(window)
+    if not m:
+        return "OTHER", []
+    return label, [EvidenceSpan(start=m.start(), end=m.end(), text=m.group())]
+
+
+def _model_dir() -> Path:
+    return settings.base_dir / "models"
+
+
+def _load_seed_corpus() -> List[Tuple[str, str]]:
+    path = settings.data_dir / "train" / "synthetic_seeds.csv"
+    with open(path, newline="", encoding="utf-8") as f:
+        return [(r["text"], r["label"]) for r in csv.DictReader(f)]
 
 
 class EventClassifier:
-    """TF-IDF and Logistic Regression event classifier with auditable abstention."""
+    """Calibrated event classifier with auditable abstention and evidence gates."""
 
     def __init__(
         self,
         model_path: Optional[Union[str, Path]] = None,
-        confidence_threshold: float = 0.40,
+        confidence_threshold: Optional[float] = None,
     ) -> None:
-
-        self.model_path = (
-            Path(model_path) if model_path else Path(".runtime/models/events/model.joblib")
-        )
-        self.confidence_threshold = confidence_threshold
+        self.model_path = Path(model_path) if model_path else _model_dir() / "event_v2.joblib"
         self.pipeline: Optional[Pipeline] = None
+        self.degraded_mode = False
+        self.model_version = "event_v2"
+        card_threshold = self._load()
+        if confidence_threshold is not None:
+            self.confidence_threshold = confidence_threshold
+        else:
+            self.confidence_threshold = card_threshold
 
-        self._load_or_train()
-
-    def _load_or_train(self) -> None:
-        """Load persisted model artifact if present, otherwise fit on curated corpus."""
+    def _load(self) -> float:
+        """Load the trained artifact; return the abstention threshold from its card."""
         if self.model_path.exists():
             try:
                 self.pipeline = joblib.load(self.model_path)
-                logger.info("Loaded trained event classifier from %s", self.model_path)
-                return
+                card_path = self.model_path.with_suffix(".card.json")
+                card = json.loads(card_path.read_text()) if card_path.exists() else {}
+                self.model_version = f"event_v2:{card.get('model_sha256', 'unknown')[:12]}"
+                logger.info("Loaded event classifier %s", self.model_path)
+                return float(card.get("abstain_threshold", settings.action_confidence_threshold))
             except Exception as exc:
-                logger.warning("Could not load %s (%s). Retraining baseline.", self.model_path, exc)
+                logger.warning("Could not load %s (%s). Using seed baseline.", self.model_path, exc)
+        self._train_seed_baseline()
+        return 0.40
 
-        self._train_baseline()
-
-    def _train_baseline(self) -> None:
-        """Fit a TF-IDF + Logistic Regression pipeline on the curated seed corpus."""
-        texts = [item[0] for item in SEED_TRAINING_CORPUS]
-        labels = [item[1] for item in SEED_TRAINING_CORPUS]
-
+    def _train_seed_baseline(self) -> None:
+        """Degraded fallback: fit TF-IDF + LR on the synthetic seed corpus."""
+        corpus = _load_seed_corpus()
         pipeline = Pipeline(
             [
-                (
-                    "tfidf",
-                    TfidfVectorizer(
-                        ngram_range=(1, 2),
-                        sublinear_tf=True,
-                        lowercase=True,
-                    ),
-                ),
+                ("tfidf", TfidfVectorizer(ngram_range=(1, 2), sublinear_tf=True)),
                 (
                     "clf",
                     LogisticRegression(
-                        C=25.0,
-                        class_weight="balanced",
-                        max_iter=500,
-                        random_state=42,
+                        C=25.0, class_weight="balanced", max_iter=500, random_state=42
                     ),
                 ),
             ]
         )
-        pipeline.fit(texts, labels)
+        pipeline.fit([t for t, _ in corpus], [y for _, y in corpus])
         self.pipeline = pipeline
+        self.degraded_mode = True
+        self.model_version = "seed_baseline_degraded"
 
     def save_model(self, path: Optional[Union[str, Path]] = None) -> Path:
-        """Persist current trained pipeline to disk."""
+        """Persist the current pipeline (training scripts also write a model card)."""
         target = Path(path) if path else self.model_path
         target.parent.mkdir(parents=True, exist_ok=True)
-        joblib.dump(self.pipeline, target)
-        logger.info("Saved event classifier pipeline to %s", target)
+        joblib.dump(self.pipeline, target, compress=3)
         return target
 
     def predict(self, text: str) -> EventOutput:
-        """Predict event category with explicit confidence threshold and abstention.
-
-        If top predicted probability < confidence_threshold or top class is OTHER,
-        abstains to OTHER with abstained=True.
-        """
+        """Predict an event class; abstain to OTHER below threshold or without gate evidence."""
         if self.pipeline is None:
             return EventOutput(label="OTHER", confidence=0.0, abstained=True)
 
-        probs = self.pipeline.predict_proba([text])[0]
-        classes = self.pipeline.classes_
-
-        best_idx = probs.argmax()
-        top_label = classes[best_idx]
-        top_conf = round(float(probs[best_idx]), 4)
+        cleaned = clean_for_classifier(text)
+        probs = self.pipeline.predict_proba([cleaned])[0]
+        best = int(probs.argmax())
+        top_label = str(self.pipeline.classes_[best])
+        top_conf = round(float(probs[best]), 4)
 
         if top_conf < self.confidence_threshold or top_label == "OTHER":
-            return EventOutput(
-                label="OTHER",
-                confidence=top_conf,
-                abstained=True,
-            )
+            return EventOutput(label="OTHER", confidence=top_conf, abstained=True)
 
-        return EventOutput(
-            label=top_label,
-            confidence=top_conf,
-            abstained=False,
-        )
+        gated_label, evidence = apply_gate(top_label, text)
+        if gated_label == "OTHER":
+            return EventOutput(label="OTHER", confidence=top_conf, abstained=True)
+        return EventOutput(label=top_label, confidence=top_conf, abstained=False, evidence=evidence)

@@ -46,9 +46,8 @@ class NLPEngine:
 
         self.entity_linker = entity_linker or EntityLinker()
         self.sentiment_analyzer = sentiment_analyzer or FinBERTSentimentAnalyzer()
-        self.event_classifier = event_classifier or EventClassifier(
-            confidence_threshold=self.action_confidence_threshold
-        )
+        # Abstention threshold comes from the trained model's card (chosen on a dev split)
+        self.event_classifier = event_classifier or EventClassifier()
         self.severity_engine = severity_engine or SeverityRubricEngine()
 
     def process_record(
@@ -145,7 +144,7 @@ class NLPEngine:
         # Combine unique evidence spans
         all_spans: List[EvidenceSpan] = []
         seen_spans = set()
-        for span in entity_spans + severity_spans:
+        for span in entity_spans + event.evidence + severity_spans:
             key = (span.start, span.end, span.text)
             if key not in seen_spans:
                 seen_spans.add(key)
@@ -203,7 +202,7 @@ class NLPEngine:
             action_block_reasons=block_reasons,
             model_versions={
                 "sentiment": self.sentiment_analyzer.model_version,
-                "event": "tfidf_logreg_v1.0",
+                "event": self.event_classifier.model_version,
                 "rubric": self.severity_engine.rubric_version,
             },
         )
