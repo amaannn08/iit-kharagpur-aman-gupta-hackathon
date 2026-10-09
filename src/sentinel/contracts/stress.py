@@ -26,6 +26,7 @@ class LoanPosition(BaseModel):
     baseline_pd: float = Field(..., ge=0.0, le=1.0, description="Probability of default")
     lgd: float = Field(..., ge=0.0, le=1.0, description="Loss given default")
     rating: str
+    sleeve: str = Field(default="wholesale", description="wholesale | retail_sme | equity")
     maturity_date: date
 
 
@@ -45,6 +46,7 @@ class BondPosition(BaseModel):
     spread_bps: float = Field(..., ge=0.0)
     modified_duration: float = Field(..., ge=0.0, description="Effective duration in years")
     rating: str
+    sleeve: str = Field(default="wholesale", description="wholesale | retail_sme | equity")
     maturity_date: date
 
 
@@ -62,6 +64,7 @@ class SwapPosition(BaseModel):
     floating_benchmark: str = "SOFR"
     signed_dv01: float = Field(..., description="Dollar value of 1 basis point shift")
     maturity_years: float = Field(..., ge=0.0)
+    sleeve: str = Field(default="wholesale", description="wholesale | retail_sme | equity")
     maturity_date: date
 
 
@@ -79,6 +82,7 @@ class CashPosition(BaseModel):
     yield_val: float = Field(..., alias="yield", ge=0.0)
     modified_duration: float = 0.0
     rating: str = "AAA"
+    sleeve: str = Field(default="wholesale", description="wholesale | retail_sme | equity")
     maturity_date: date
 
 
@@ -110,6 +114,15 @@ class PositionStressDelta(BaseModel):
     contagion_hops: int = 0
     contagion_source: Optional[str] = None
     transmission_factor: float = 1.0
+    sleeve: str = "wholesale"
+
+
+class SleeveStressSummary(BaseModel):
+    sleeve: str
+    baseline_value_usd: float
+    stressed_value_usd: float
+    total_pnl_usd: float
+    pct_change: float
 
 
 class AssetClassStressSummary(BaseModel):
@@ -155,3 +168,9 @@ class StressRunResult(BaseModel):
     sector_breakdown: List[SectorStressSummary]
     position_deltas: List[PositionStressDelta]
     reconciliation_passed: bool
+    sleeve_breakdown: List[SleeveStressSummary] = Field(default_factory=list)
+    # PRD 9.1: funded balance-sheet value and derivative MTM are reported separately.
+    funded_baseline_value_usd: float = 0.0
+    funded_stressed_value_usd: float = 0.0
+    derivative_mtm_change_usd: float = 0.0
+    status: str = Field(default="COMPLETED", description="COMPLETED | NO_EXPOSURE")

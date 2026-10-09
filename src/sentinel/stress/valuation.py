@@ -13,6 +13,7 @@ from sentinel.contracts.stress import (
     LoanPosition,
     PositionStressDelta,
     SectorStressSummary,
+    SleeveStressSummary,
     StressRunResult,
     SwapPosition,
 )
@@ -127,6 +128,7 @@ class ValuationEngine:
             contagion_hops=contagion_hops,
             contagion_source=contagion_source,
             transmission_factor=round(transmission_factor, 4),
+            sleeve=bond.sleeve,
         )
 
     def value_loan(
@@ -195,6 +197,7 @@ class ValuationEngine:
             contagion_hops=contagion_hops,
             contagion_source=contagion_source,
             transmission_factor=round(transmission_factor, 4),
+            sleeve=loan.sleeve,
         )
 
     def value_swap(self, swap: SwapPosition, shock: ScaledShock) -> PositionStressDelta:
@@ -231,6 +234,7 @@ class ValuationEngine:
             pct_change=round(pct_change, 6),
             market_risk_pnl_usd=round(delta_val, 2),
             applied_shock_summary=shock_summary,
+            sleeve=swap.sleeve,
         )
 
     def value_cash(self, cash: CashPosition, shock: ScaledShock) -> PositionStressDelta:
@@ -247,6 +251,7 @@ class ValuationEngine:
             pnl_usd=0.0,
             pct_change=0.0,
             applied_shock_summary="Unimpacted (Risk-free cash)",
+            sleeve=cash.sleeve,
         )
 
     def run_stress_test(
@@ -404,6 +409,28 @@ class ValuationEngine:
 
         total_pnl_pct = (total_pnl / baseline_funded) if baseline_funded > 0 else 0.0
 
+        # PRD 9.1: funded balance-sheet value vs derivative MTM, and per-sleeve subtotals
+        derivative_mtm = sum(p.pnl_usd for p in position_deltas if p.asset_class == AssetClass.SWAP)
+        funded_pnl = total_pnl - derivative_mtm
+        sleeve_breakdown = []
+        for sleeve in sorted({p.sleeve for p in position_deltas}):
+            funded = [
+                p
+                for p in position_deltas
+                if p.sleeve == sleeve and p.asset_class != AssetClass.SWAP
+            ]
+            base_v = sum(p.baseline_value_usd for p in funded)
+            pnl_v = sum(p.pnl_usd for p in funded)
+            sleeve_breakdown.append(
+                SleeveStressSummary(
+                    sleeve=sleeve,
+                    baseline_value_usd=round(base_v, 2),
+                    stressed_value_usd=round(base_v + pnl_v, 2),
+                    total_pnl_usd=round(pnl_v, 2),
+                    pct_change=round(pnl_v / base_v, 6) if base_v > 0 else 0.0,
+                )
+            )
+
         shock_params_dict = {
             "bond_spread_shift_bps": shock.bond_spread_shift_bps,
             "loan_pd_increment": shock.loan_pd_increment,
@@ -438,4 +465,8 @@ class ValuationEngine:
             sector_breakdown=sector_breakdown,
             position_deltas=position_deltas,
             reconciliation_passed=reconciliation_passed,
+            sleeve_breakdown=sleeve_breakdown,
+            funded_baseline_value_usd=round(baseline_funded, 2),
+            funded_stressed_value_usd=round(baseline_funded + funded_pnl, 2),
+            derivative_mtm_change_usd=round(derivative_mtm, 2),
         )

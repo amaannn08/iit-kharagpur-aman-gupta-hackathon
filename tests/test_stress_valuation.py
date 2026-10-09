@@ -239,9 +239,7 @@ def test_contagion_propagates_to_downstream_counterparties(engine: ValuationEngi
     assert result.contagion_positions_count > 0
     assert result.contagion_pnl_usd < 0.0
 
-    contagion_entities = {
-        p.entity_id for p in result.position_deltas if p.is_contagion
-    }
+    contagion_entities = {p.entity_id for p in result.position_deltas if p.is_contagion}
     # In graph_edges.csv: APEX -> TSTEL (hop 1), APEX -> GLOG (hop 1), TSTEL -> VAUTO (hop 2)
     assert "TSTEL" in contagion_entities
     assert "GLOG" in contagion_entities
@@ -259,3 +257,25 @@ def test_contagion_propagates_to_downstream_counterparties(engine: ValuationEngi
             assert delta.is_contagion is False
             assert delta.pnl_usd == 0.0
 
+
+def test_combined_portfolio_reports_sleeves_and_separates_derivative_mtm():
+    from sentinel.config import settings
+
+    combined = WholesalePortfolio.load_many(
+        [settings.data_dir / f for f in settings.portfolio_files]
+    )
+    totals = combined.sleeve_totals()
+    assert totals["wholesale"] == 500_000_000.0
+    assert abs(totals["retail_sme"] - 50_000_000.0) < 0.01
+    assert combined.summary.total_book_value_usd == combined.total_funded_exposure
+
+    engine = ValuationEngine(combined)
+    shock = build_scaled_shock("MACRO", impact_score=8, target_scope="systemic")
+    result = engine.run_stress_test(shock)
+    assert result.reconciliation_passed
+    sleeve_pnl = sum(s.total_pnl_usd for s in result.sleeve_breakdown)
+    assert abs(sleeve_pnl + result.derivative_mtm_change_usd - result.total_pnl_usd) < 0.05
+    assert (
+        abs(result.funded_stressed_value_usd - (result.funded_baseline_value_usd + sleeve_pnl))
+        < 0.05
+    )

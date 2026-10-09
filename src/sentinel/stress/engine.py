@@ -22,7 +22,11 @@ class StressEngine:
         confidence_threshold: Optional[float] = None,
         impact_threshold: Optional[int] = None,
     ) -> None:
-        self.portfolio = WholesalePortfolio.load_from_json(portfolio_path)
+        if portfolio_path is not None:  # a single explicit file (tests, sandbox)
+            self.portfolio = WholesalePortfolio.load_from_json(portfolio_path)
+        else:
+            files = [settings.data_dir / f for f in settings.portfolio_files]
+            self.portfolio = WholesalePortfolio.load_many([f for f in files if f.exists()])
         self.valuation_engine = ValuationEngine(self.portfolio)
         self.confidence_threshold = (
             confidence_threshold

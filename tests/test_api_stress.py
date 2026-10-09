@@ -29,11 +29,18 @@ def test_api_get_portfolio(client: TestClient):
     data = resp.json()
     assert data["portfolio_name"] == "Synthetic Wholesale Institutional Credit & Rates Portfolio"
     assert "summary" in data
-    assert data["summary"]["total_book_value_usd"] == 500_000_000.0
-    assert len(data["loans"]) == 5
+    # Funded book = $500M synthetic wholesale + $50M retail/SME sleeve from real transactions
+    assert data["funded_value_by_sleeve_usd"]["wholesale"] == 500_000_000.0
+    assert abs(data["funded_value_by_sleeve_usd"]["retail_sme"] - 50_000_000.0) < 0.01
+    assert abs(data["summary"]["total_book_value_usd"] - 550_000_000.0) < 0.01
+    wholesale_loans = [p for p in data["loans"] if p["sleeve"] == "wholesale"]
+    assert len(wholesale_loans) == 5
+    assert len(data["loans"]) > 5  # retail tranches
     assert len(data["bonds"]) == 5
     assert len(data["swaps"]) == 2
     assert len(data["cash"]) == 1
+    # derivative notional is metadata, never part of funded book value (PRD 9.1)
+    assert data["summary"]["interest_rate_swaps_gross_notional_usd"] == 150_000_000.0
 
 
 def test_api_simulate_manual_stress(client: TestClient):
@@ -56,7 +63,12 @@ def test_api_simulate_manual_stress(client: TestClient):
     assert result["target_entity"] == "APEX"
     assert result["total_pnl_usd"] < 0.0
     assert result["reconciliation_passed"] is True
-    assert len(result["position_deltas"]) == 13
+    deltas = result["position_deltas"]
+    assert len([d for d in deltas if d["sleeve"] == "wholesale"]) == 13
+    portfolio = client.get("/api/stress/portfolio").json()
+    n_positions = sum(len(portfolio[k]) for k in ("loans", "bonds", "swaps", "cash"))
+    assert len(deltas) == n_positions  # every position is revalued
+    assert {s["sleeve"] for s in result["sleeve_breakdown"]} == {"wholesale", "retail_sme"}
 
     # Now verify it appears in /api/stress/runs
     list_resp = client.get("/api/stress/runs")

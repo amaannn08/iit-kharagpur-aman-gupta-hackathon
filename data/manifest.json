@@ -468,7 +468,19 @@
       "byte_size": 103799,
       "sha256": "81db1b0387aa5e6bd6439c396902001be94f2785f12d667a31d5a51247cfc4fa",
       "record_count": 2617
+    },
+    {
+      "file_path": "data/portfolio/credit_sleeve.json",
+      "format": "json",
+      "description": "Module B retail/SME credit sleeve: 15 sector x rating tranches aggregated from 2000 real borrowers and 13,305,915 real card transactions",
+      "is_synthetic": false,
+      "license": "Apache-2.0 (derived aggregates of computingvictor/transactions-fraud-datasets)",
+      "primary_keys": [],
+      "source": "https://www.kaggle.com/datasets/computingvictor/transactions-fraud-datasets",
+      "byte_size": 7752,
+      "sha256": "296289622faf31cf5754d2da7298ac69d31bb591312c4eaa7afa263e924be1a8",
+      "record_count": 15
     }
   ],
-  "updated_at": "2026-10-09T14:55:20.945668+00:00"
+  "updated_at": "2026-10-09T15:05:49.530703+00:00"
 }

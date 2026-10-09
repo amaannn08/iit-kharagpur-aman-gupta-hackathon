@@ -1,6 +1,7 @@
 """Application configuration and settings."""
 
 from pathlib import Path
+from typing import List
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -32,6 +33,12 @@ class Settings(BaseSettings):
     # Replay parameters
     default_replay_speed: str = "1x"
     max_queue_size: int = 1000
+
+    # Module B portfolio: wholesale book first, then sleeves (relative to data_dir)
+    portfolio_files: List[str] = [
+        "wholesale_positions.json",
+        "portfolio/credit_sleeve.json",
+    ]
 
     # Decision gating thresholds
     action_impact_threshold: int = 7  # signals with score > 7 trigger portfolio action
