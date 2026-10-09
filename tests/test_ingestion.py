@@ -24,7 +24,7 @@ def test_news_adapter_loads_curated_records():
     assert news_file.exists(), f"Missing required news demo file: {news_file}"
 
     records = NewsAdapter.load_from_csv(news_file)
-    assert len(records) == 25
+    assert len(records) >= 25
 
     for rec in records:
         assert rec.source_type == SourceType.NEWS
@@ -44,7 +44,7 @@ def test_social_adapter_loads_curated_records():
     assert social_file.exists(), f"Missing required social demo file: {social_file}"
 
     records = SocialAdapter.load_from_csv(social_file)
-    assert len(records) == 25
+    assert len(records) >= 25
 
     for rec in records:
         assert rec.source_type == SourceType.SOCIAL

@@ -33,5 +33,9 @@ class Settings(BaseSettings):
     default_replay_speed: str = "1x"
     max_queue_size: int = 1000
 
+    # Decision gating thresholds
+    action_impact_threshold: int = 7  # signals with score > 7 trigger portfolio action
+    action_confidence_threshold: float = 0.50  # minimum model confidence for action eligibility
+
 
 settings = Settings()
