@@ -15,7 +15,11 @@ from sentinel.contracts.signals import (
 )
 from sentinel.nlp.entities import EntityLinker
 from sentinel.nlp.events import EventClassifier
-from sentinel.nlp.sentiment import FinBERTSentimentAnalyzer
+from sentinel.nlp.sentiment import (
+    FinBERTSentimentAnalyzer,
+    apply_macro_polarity,
+    policy_direction,
+)
 from sentinel.nlp.severity import SeverityRubricEngine
 from sentinel.replay.dedup import DedupDecision
 
@@ -70,8 +74,6 @@ class NLPEngine:
         Sentiment and event classification are computed once per record; impact and action
         eligibility are computed per entity because scope (company vs macro) changes them.
         """
-        lower_text = record.text.lower()
-
         # 1. Entity Resolution (every company mentioned, or macro / unresolved fallback)
         entities = self.entity_linker.resolve_all(
             record.text,
@@ -84,38 +86,13 @@ class NLPEngine:
         # 3. Event Classification
         event = self.event_classifier.predict(record.text)
 
-        # Directional macro policy tagging (Bug B2 fix)
+        # Directional macro policy tagging (PRD 9.2: a cut and a hike map to opposite shocks)
         if event.label.upper() == "MACRO":
-            if any(
-                w in lower_text
-                for w in (
-                    "rate cut",
-                    "cuts rate",
-                    "cutting rate",
-                    "easing",
-                    "lower rate",
-                    "lowers rate",
-                    "rate reduction",
-                    "monetary stimulus",
-                )
-            ):
-                event.macro_direction = "easing"
-            elif any(
-                w in lower_text
-                for w in (
-                    "rate hike",
-                    "hikes rate",
-                    "hiking rate",
-                    "tightening",
-                    "raise rate",
-                    "raises rate",
-                    "rate increase",
-                    "inflation surge",
-                )
-            ):
-                event.macro_direction = "tightening"
-            else:
-                event.macro_direction = "none"
+            event.macro_direction, _ = policy_direction(record.text)
+            # Policy/indicator direction for a credit and rates book: a rate cut or "inflation
+            # cooled" is good news, "jobless claims rose sharply" is bad news.
+            if m := apply_macro_polarity(sentiment, record.text):
+                event.evidence.append(EvidenceSpan(start=m.start(), end=m.end(), text=m.group()))
 
         return [
             self._build_signal(

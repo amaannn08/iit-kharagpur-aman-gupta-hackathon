@@ -1,9 +1,23 @@
-"""Sentiment analysis engine with local FinBERT loader and fallback (PRD Section 7.2)."""
+"""Sentiment analysis engine (PRD Section 7.2).
 
+Backends, in priority order:
+  1. Local FinBERT weights in .runtime/models/finbert (optional tier 2, `nlp` extra)
+  2. models/sentiment_v2.joblib: TF-IDF + logistic regression trained on real labeled financial
+     tweets (scripts/models/train_sentiment.py); 0.77 macro-F1 on 2,388 held-out tweets
+  3. Finance lexicon (degraded mode, reported via degraded_mode / model_version)
+
+Score = P(positive) - P(negative), bounded to [-1, 1]; probabilities sum to 1.
+"""
+
+import json
 import logging
+import re
 from pathlib import Path
-from typing import Dict, Optional, Union
+from typing import Dict, Optional, Tuple, Union
 
+import joblib
+
+from sentinel.config import settings
 from sentinel.contracts.signals import SentimentOutput, SentimentProbabilities
 
 logger = logging.getLogger(__name__)
@@ -114,15 +128,41 @@ FIN_POSITIVE_WORDS = {
 class FinBERTSentimentAnalyzer:
     """Financial sentiment analyzer that loads local FinBERT or transparently falls back."""
 
-    def __init__(self, model_dir: Optional[Union[str, Path]] = None) -> None:
+    def __init__(
+        self,
+        model_dir: Optional[Union[str, Path]] = None,
+        tfidf_path: Optional[Union[str, Path]] = None,
+    ) -> None:
         self.model_dir = Path(model_dir) if model_dir else Path(".runtime/models/finbert")
+        self.tfidf_path = (
+            Path(tfidf_path) if tfidf_path else settings.base_dir / "models" / "sentiment_v2.joblib"
+        )
         self.degraded_mode: bool = True
         self.model_version: str = "lexicon_fallback_v1"
+        self.backend: str = "lexicon"
         self._model = None
         self._tokenizer = None
+        self._tfidf = None
         self._id2label: Dict[int, str] = {}
 
         self._try_load_local_finbert()
+        if self.backend == "lexicon":
+            self._try_load_tfidf()
+
+    def _try_load_tfidf(self) -> None:
+        """Tier 1: committed TF-IDF model trained on real labeled data."""
+        if not self.tfidf_path.exists():
+            logger.info("No %s; sentiment runs in degraded lexicon mode.", self.tfidf_path)
+            return
+        try:
+            self._tfidf = joblib.load(self.tfidf_path)
+            card_path = self.tfidf_path.with_suffix(".card.json")
+            card = json.loads(card_path.read_text()) if card_path.exists() else {}
+            self.model_version = f"sentiment_v2:{card.get('model_sha256', 'unknown')[:12]}"
+            self.backend = "tfidf"
+            self.degraded_mode = False
+        except Exception as exc:
+            logger.warning("Failed loading %s (%s); using lexicon.", self.tfidf_path, exc)
 
     def _try_load_local_finbert(self) -> None:
         """Attempt to load local checkpoint with local_files_only=True."""
@@ -156,6 +196,7 @@ class FinBERTSentimentAnalyzer:
                 self._id2label = {0: "positive", 1: "negative", 2: "neutral"}
 
             self.degraded_mode = False
+            self.backend = "finbert"
             self.model_version = f"ProsusAI/finbert-local-{self._model.config.transformers_version}"
             logger.info("Successfully loaded offline FinBERT from %s", self.model_dir)
         except Exception as exc:
@@ -169,9 +210,26 @@ class FinBERTSentimentAnalyzer:
         Score = P(positive) - P(negative) bounded to [-1.0, 1.0].
         Probabilities sum to 1.0.
         """
-        if not self.degraded_mode and self._model is not None and self._tokenizer is not None:
+        if self.backend == "finbert":
             return self._analyze_finbert(text)
+        if self.backend == "tfidf":
+            return self._analyze_tfidf(text)
         return self._analyze_lexicon(text)
+
+    def _analyze_tfidf(self, text: str) -> SentimentOutput:
+        cleaned = re.sub(r"https?://\S+|@\w+", " ", text).strip()
+        probs = dict(zip(self._tfidf.classes_, self._tfidf.predict_proba([cleaned])[0]))
+        p_pos = round(float(probs.get("positive", 0.0)), 4)
+        p_neg = round(float(probs.get("negative", 0.0)), 4)
+        p_neu = round(1.0 - p_pos - p_neg, 4)
+        label = max(
+            ("positive", p_pos), ("negative", p_neg), ("neutral", p_neu), key=lambda x: x[1]
+        )[0]
+        return SentimentOutput(
+            score=max(-1.0, min(1.0, round(p_pos - p_neg, 4))),
+            label=label,
+            probabilities=SentimentProbabilities(positive=p_pos, negative=p_neg, neutral=p_neu),
+        )
 
     def _analyze_finbert(self, text: str) -> SentimentOutput:
         import torch
@@ -326,3 +384,74 @@ class FinBERTSentimentAnalyzer:
                 neutral=round(neu_weight, 4),
             ),
         )
+
+
+# Macro indicators whose *rise* is bad news (and fall good news) for credit and rates books.
+# Text models trained on stock chatter read "claims rose sharply" as positive momentum.
+_BAD_WHEN_UP = r"(jobless claims|unemployment( rate)?|inflation|cpi|ppi|core prices|bond yields?|"
+_BAD_WHEN_UP += r"treasury yields?|default rates?|delinquenc\w+|layoffs?|jobless)"
+_UP = r"(ris\w*|rose|jump\w*|surg\w*|climb\w*|soar\w*|spik\w*|accelerat\w*|increas\w*|higher)"
+_DOWN = r"(fall\w*|fell|drop\w*|declin\w*|eas\w*|cool\w*|slow\w*|decreas\w*|lower|retreat\w*)"
+_GAP = r"\W+(?:[\w.%-]+\W+){0,4}"
+MACRO_UP = re.compile(rf"\b{_BAD_WHEN_UP}{_GAP}{_UP}\b", re.I)
+MACRO_DOWN = re.compile(rf"\b{_BAD_WHEN_UP}{_GAP}{_DOWN}\b", re.I)
+
+
+_RATES = r"(?:interest |policy |benchmark |key |repo |federal funds |fed funds )?rates?"
+EASING = re.compile(
+    rf"\b(?:(?:cut|cuts|cutting|lower|lowers|lowered|lowering|reduce[sd]?|reducing|slash\w*)\W+"
+    rf"(?:\w+\W+){{0,3}}{_RATES}|rate cuts?|monetary easing|policy easing|quantitative easing)\b",
+    re.I,
+)
+TIGHTENING = re.compile(
+    rf"\b(?:(?:raise[sd]?|raising|hike[sd]?|hiking|increase[sd]?|increasing|lift\w*)\W+"
+    rf"(?:\w+\W+){{0,3}}{_RATES}|rate hikes?|rate increases?|monetary tightening|policy tightening)\b",
+    re.I,
+)
+
+
+def policy_direction(text: str) -> Tuple[str, Optional[re.Match]]:
+    """'easing' / 'tightening' / 'none' for central-bank policy-rate moves, with evidence."""
+    for label, pattern in (("easing", EASING), ("tightening", TIGHTENING)):
+        m = pattern.search(text)
+        if m:
+            return label, m
+    return "none", None
+
+
+def macro_polarity(text: str) -> Optional[Tuple[float, re.Match]]:
+    """Direction of a MACRO headline for a credit/rates book, with the evidence match.
+
+    Policy easing and falling bad-when-up indicators are +1; tightening and rising ones -1.
+    """
+    direction, m = policy_direction(text)
+    if m:
+        return (1.0 if direction == "easing" else -1.0), m
+    for pattern, sign in ((MACRO_UP, -1.0), (MACRO_DOWN, 1.0)):
+        m = pattern.search(text)
+        if m:
+            return sign, m
+    return None
+
+
+def apply_macro_polarity(sentiment: SentimentOutput, text: str) -> Optional[re.Match]:
+    """Blend a MACRO signal's probabilities 50/50 toward the indicator direction.
+
+    Keeps the contract score = P(positive) - P(negative); returns the evidence match.
+    """
+    hit = macro_polarity(text)
+    if hit is None:
+        return None
+    sign, m = hit
+    p = sentiment.probabilities
+    pos = 0.5 * p.positive + (0.5 if sign > 0 else 0.0)
+    neg = 0.5 * p.negative + (0.5 if sign < 0 else 0.0)
+    neu = 1.0 - pos - neg
+    sentiment.probabilities = SentimentProbabilities(
+        positive=round(pos, 4), negative=round(neg, 4), neutral=round(neu, 4)
+    )
+    sentiment.score = max(-1.0, min(1.0, round(pos - neg, 4)))
+    sentiment.label = max(
+        (("positive", pos), ("negative", neg), ("neutral", neu)), key=lambda x: x[1]
+    )[0]
+    return m
