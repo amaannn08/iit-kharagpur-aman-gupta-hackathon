@@ -1,0 +1,351 @@
+{
+ "public_real": {
+  "event": {
+   "dataset": "zeroshot/twitter-financial-news-topic valid (real, held out)",
+   "n": 4117,
+   "sha256": "67396d6cd4a21c3755de783f20fb5842f12ae8edb9367eed5d2644dd85ca9243",
+   "classes_scored": [
+    "CREDIT",
+    "EARNINGS",
+    "GEOPOLITICAL",
+    "MACRO",
+    "M_AND_A",
+    "PRODUCT",
+    "REGULATORY"
+   ],
+   "macro_f1_model": 0.8433,
+   "macro_f1_runtime_with_gates_and_abstention": 0.5869,
+   "precision_when_fired": 0.9267,
+   "fired_rate": 0.212,
+   "baseline_keyword_macro_f1": 0.2455,
+   "baseline_seed_classifier_macro_f1": 0.0564,
+   "per_class_f1_model": {
+    "CREDIT": 0.7853,
+    "EARNINGS": 0.9322,
+    "GEOPOLITICAL": 0.9066,
+    "MACRO": 0.8414,
+    "M_AND_A": 0.7706,
+    "PRODUCT": 0.8336,
+    "REGULATORY": 0.8333
+   },
+   "confusion_matrix_model": {
+    "labels": [
+     "CREDIT",
+     "EARNINGS",
+     "GEOPOLITICAL",
+     "MACRO",
+     "M_AND_A",
+     "PRODUCT",
+     "REGULATORY",
+     "OTHER"
+    ],
+    "matrix": [
+     [
+      64,
+      0,
+      0,
+      5,
+      2,
+      4,
+      0,
+      16
+     ],
+     [
+      0,
+      220,
+      0,
+      0,
+      0,
+      3,
+      0,
+      19
+     ],
+     [
+      0,
+      0,
+      228,
+      7,
+      1,
+      0,
+      0,
+      13
+     ],
+     [
+      1,
+      0,
+      9,
+      528,
+      0,
+      21,
+      5,
+      64
+     ],
+     [
+      0,
+      0,
+      0,
+      1,
+      84,
+      17,
+      1,
+      13
+     ],
+     [
+      6,
+      2,
+      1,
+      19,
+      9,
+      694,
+      6,
+      107
+     ],
+     [
+      0,
+      0,
+      3,
+      2,
+      0,
+      6,
+      100,
+      6
+     ],
+     [
+      1,
+      8,
+      13,
+      65,
+      6,
+      76,
+      11,
+      1650
+     ]
+    ]
+   }
+  },
+  "sentiment": {
+   "dataset": "zeroshot/twitter-financial-news-sentiment valid (real, held out)",
+   "n": 2388,
+   "sha256": "31ea8274c98b52212daa68f2fb962811bf1913c1efe51b99765c8e2311806de6",
+   "backend": "tfidf",
+   "macro_f1": 0.7779,
+   "baseline_lexicon_macro_f1": 0.4686,
+   "polygon_news_vs_llm_silver_macro_f1": 0.4672
+  }
+ },
+ "entity_polygon": {
+  "dataset": "Polygon 2023 news (real), gold = article tickers[] within the S&P 500 universe",
+  "articles": 2518,
+  "precision": 0.97,
+  "recall": 0.5852
+ },
+ "market_impact": {
+  "events": 2617,
+  "articles": 1961,
+  "tickers": 445,
+  "rubric_v1_spearman": -0.0044,
+  "rubric_v1_spearman_ci95": [
+   -0.0433,
+   0.0321
+  ],
+  "learned_oof_spearman": 0.1241,
+  "learned_oof_spearman_ci95": [
+   0.0872,
+   0.1645
+  ],
+  "mean_abs_z_by_decile": {
+   "1": 0.625,
+   "2": 0.66,
+   "3": 0.605,
+   "4": 0.769,
+   "5": 0.807,
+   "6": 0.698,
+   "7": 0.816,
+   "8": 0.944,
+   "9": 1.33,
+   "10": 1.69
+  },
+  "large_move_rate_decile_10": 0.2634,
+  "large_move_rate_decile_1": 0.0305,
+  "large_move_definition": "|abnormal z| > 2",
+  "cv": "5-fold GroupKFold by reaction month (out-of-fold predictions)"
+ },
+ "sec_8k": {
+  "n": 141,
+  "recall_by_class": {
+   "CREDIT": 0.8723,
+   "CYBER": 1.0,
+   "EARNINGS": 1.0,
+   "OTHER": 0.8375
+  },
+  "routine_filings_false_stress_rate": 0.1163
+ },
+ "stress": {
+  "funded_book_usd": 610000000.0,
+  "funded_by_sleeve_usd": {
+   "wholesale": 500000000.0,
+   "retail_sme": 49999999.99999999,
+   "equity": 60000000.0
+  },
+  "scenarios": {
+   "HIST-COVID_2020": {
+    "total_pnl_usd": -96738688.2,
+    "pnl_pct_of_funded": -0.1586,
+    "by_sleeve_usd": {
+     "equity": -18446863.2,
+     "retail_sme": -5096000.0,
+     "wholesale": -73074925.0
+    },
+    "reconciled": true
+   },
+   "HIST-FED_JUN_2022": {
+    "total_pnl_usd": -14720635.19,
+    "pnl_pct_of_funded": -0.0241,
+    "by_sleeve_usd": {
+     "equity": -4743010.2,
+     "retail_sme": -455999.99,
+     "wholesale": -9561075.0
+    },
+    "reconciled": true
+   },
+   "HIST-FED_PIVOT_2023": {
+    "total_pnl_usd": 13761055.81,
+    "pnl_pct_of_funded": 0.0226,
+    "by_sleeve_usd": {
+     "equity": 6389660.8,
+     "retail_sme": -15999.99,
+     "wholesale": 7516245.0
+    },
+    "reconciled": true
+   },
+   "HIST-RUSSIA_2022": {
+    "total_pnl_usd": -5891791.0,
+    "pnl_pct_of_funded": -0.0097,
+    "by_sleeve_usd": {
+     "equity": -738531.0,
+     "retail_sme": -364000.0,
+     "wholesale": -4773510.0
+    },
+    "reconciled": true
+   },
+   "HIST-SVB_2023": {
+    "total_pnl_usd": -11395937.2,
+    "pnl_pct_of_funded": -0.0187,
+    "by_sleeve_usd": {
+     "equity": -1023002.2,
+     "retail_sme": -928000.0,
+     "wholesale": -9357785.0
+    },
+    "reconciled": true
+   }
+  },
+  "ps_example_equities_-10pct_rates_+200bp": {
+   "total_pnl_usd": -23300600.0,
+   "by_sleeve_usd": {
+    "equity": -5470600.0,
+    "retail_sme": 0.0,
+    "wholesale": -18130000.0
+   },
+   "derivative_mtm_change_usd": 300000.0,
+   "reconciled": true
+  }
+ },
+ "module_a": {
+  "description": "Module A back-test on real tweets (2017-2018) and real closes; weights at close t earn the t+1 return; equal-weight benchmark on the same 20 names",
+  "universe": [
+   "AAPL",
+   "ADBE",
+   "CSCO",
+   "INTC",
+   "MSFT",
+   "AMZN",
+   "MCD",
+   "META",
+   "GOOGL",
+   "NFLX",
+   "CMCSA",
+   "DIS",
+   "JPM",
+   "C",
+   "BLK",
+   "MA",
+   "BA",
+   "FDX",
+   "COST",
+   "CVX"
+  ],
+  "tweets_mapped_to_universe": 104147,
+  "tweets_relevant_after_filter": 8375,
+  "ticker_days_with_sentiment": 1251,
+  "period": [
+   "2017-01-31",
+   "2018-10-31"
+  ],
+  "runs": [
+   {
+    "k": 0.5,
+    "trading_days": 443,
+    "tilt_annual_return": 0.2524,
+    "equal_weight_annual_return": 0.2519,
+    "active_annual_return": 0.0005,
+    "tracking_error": 0.0016,
+    "information_ratio": 0.315,
+    "active_return_t_stat": 0.417,
+    "avg_daily_turnover": 0.00178,
+    "max_weight": 0.0594,
+    "mean_abs_tilt_from_equal": 0.00162
+   },
+   {
+    "k": 1.5,
+    "trading_days": 443,
+    "tilt_annual_return": 0.2533,
+    "equal_weight_annual_return": 0.2519,
+    "active_annual_return": 0.0015,
+    "tracking_error": 0.0047,
+    "information_ratio": 0.311,
+    "active_return_t_stat": 0.412,
+    "avg_daily_turnover": 0.00523,
+    "max_weight": 0.0776,
+    "mean_abs_tilt_from_equal": 0.00474
+   },
+   {
+    "k": 5.0,
+    "trading_days": 443,
+    "tilt_annual_return": 0.2561,
+    "equal_weight_annual_return": 0.2519,
+    "active_annual_return": 0.0043,
+    "tracking_error": 0.0147,
+    "information_ratio": 0.29,
+    "active_return_t_stat": 0.384,
+    "avg_daily_turnover": 0.01561,
+    "max_weight": 0.1326,
+    "mean_abs_tilt_from_equal": 0.01438
+   }
+  ],
+  "conclusion": "Positive but statistically insignificant active return (|t| < 2 for every k): the module demonstrates sentiment-driven reweighting, not demonstrated alpha."
+ },
+ "perf": {
+  "records": 2000,
+  "records_per_s": 80.2,
+  "latency_p50_s": 0.0104,
+  "latency_p95_s": 0.0196,
+  "peak_rss_gb": 0.294,
+  "note": "single process, CPU, full pipeline (linking, sentiment, event, impact)"
+ },
+ "synthetic_regression": {
+  "warning": "author-written synthetic set (same fictional universe as the demo); regression check only, never a quality claim",
+  "n": 105,
+  "event_macro_f1": 0.426,
+  "sentiment_macro_f1": 0.3477,
+  "severity_mae": 3.171
+ },
+ "generated_at": "2026-10-09T17:15:07+00:00",
+ "targets": {
+  "event_macro_f1": 0.7,
+  "sentiment_macro_f1": 0.75,
+  "entity_precision": 0.9,
+  "severity_mae": 1.5,
+  "p95_latency_s": 2.0,
+  "peak_rss_gb": 4.0
+ }
+}

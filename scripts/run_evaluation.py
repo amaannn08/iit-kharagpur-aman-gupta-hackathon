@@ -1,610 +1,356 @@
 #!/usr/bin/env python3
-"""Offline NLP Benchmark Evaluation Runner (PRD Section 2.3, 8, 13.1 & 14).
+"""S&P Sentinel evaluation suites: every reported number comes from here.
 
-Evaluates Entity Disambiguation, FinBERT/Lexicon Sentiment, Event Classification,
-and Severity Rubric against cryptographically verified holdout datasets.
-Includes confusion matrix generation, per-class support metrics, and
-baseline comparison on the identical holdout rows.
-Writes docs/evaluation_report.md.
+Suites (default: all):
+  public_real          held-out REAL labeled data (HF twitter-financial-news topic/sentiment
+                       valid splits), full runtime path, plus baselines on identical rows
+  entity_polygon       entity linking on 5,548 real Polygon articles vs their tickers[]
+  market_impact        impact validation vs real abnormal returns (models/impact_v2.card.json)
+  sec_8k               held-out real 8-K filings (models/event_v2.card.json)
+  stress               Module B: historical scenarios and the PS example shock
+  module_a             Module A back-test summary (docs/module_a_backtest.json)
+  perf                 throughput, per-record latency, peak memory
+  synthetic_regression the 105-row author-written set (synthetic: regression check only)
+
+Writes docs/metrics.json and docs/evaluation_report.md; --write-readme injects the headline
+table into README.md between <!-- METRICS:START --> and <!-- METRICS:END -->.
+Usage: uv run python scripts/run_evaluation.py [--suite public_real,perf] [--write-readme]
 """
 
 import argparse
 import csv
 import hashlib
+import json
+import resource
+import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List
 
-from sentinel.contracts.records import InputRecord
-from sentinel.nlp.engine import NLPEngine
+import numpy as np
+import pandas as pd
+from sklearn.metrics import confusion_matrix, f1_score
 
+REPO_ROOT = Path(__file__).resolve().parent.parent
+DATA = REPO_ROOT / "data"
+DOCS = REPO_ROOT / "docs"
+MODELS = REPO_ROOT / "models"
+sys.path.insert(0, str(REPO_ROOT / "src"))
 
-def compute_macro_f1(
-    y_true: List[str], y_pred: List[str]
-) -> Tuple[float, Dict[str, Dict[str, Any]]]:
-    """Compute Macro-F1 and per-class precision/recall/f1 with support count."""
-    classes = sorted(list(set(y_true) | set(y_pred)))
-    metrics_per_class: Dict[str, Dict[str, Any]] = {}
-    f1_scores = []
+from sentinel.contracts.records import InputRecord, SourceType  # noqa: E402
+from sentinel.nlp.engine import NLPEngine  # noqa: E402
+from sentinel.nlp.entities import EntityLinker  # noqa: E402
+from sentinel.nlp.events import (  # noqa: E402
+    EventClassifier,
+    clean_for_classifier,
+    ps_aligned_label,
+)
+from sentinel.nlp.sentiment import FinBERTSentimentAnalyzer  # noqa: E402
 
-    for c in classes:
-        tp = sum(1 for yt, yp in zip(y_true, y_pred) if yt == c and yp == c)
-        fp = sum(1 for yt, yp in zip(y_true, y_pred) if yt != c and yp == c)
-        fn = sum(1 for yt, yp in zip(y_true, y_pred) if yt == c and yp != c)
-        support = sum(1 for yt in y_true if yt == c)
+PS_CLASSES = ["CREDIT", "EARNINGS", "GEOPOLITICAL", "MACRO", "M_AND_A", "PRODUCT", "REGULATORY"]
+PS_CLASSES_WITH_LABELS = PS_CLASSES  # plus OTHER; CYBER/SUPPLY_CHAIN have no labels in this split
+TARGETS = {
+    "event_macro_f1": 0.70,
+    "sentiment_macro_f1": 0.75,
+    "entity_precision": 0.90,
+    "severity_mae": 1.5,
+    "p95_latency_s": 2.0,
+    "peak_rss_gb": 4.0,
+}
 
-        precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
-        recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
-        f1 = (2 * precision * recall) / (precision + recall) if (precision + recall) > 0 else 0.0
-
-        metrics_per_class[c] = {
-            "precision": precision,
-            "recall": recall,
-            "f1": f1,
-            "support": support,
-        }
-        if support > 0 or (tp + fp) > 0:
-            f1_scores.append(f1)
-
-    macro_f1 = sum(f1_scores) / len(f1_scores) if f1_scores else 0.0
-    return macro_f1, metrics_per_class
-
-
-def compute_confusion_matrix(
-    y_true: List[str], y_pred: List[str], labels: Optional[List[str]] = None
-) -> Tuple[List[str], List[List[int]]]:
-    """Compute confusion matrix as (labels, 2D count matrix)."""
-    if labels is None:
-        labels = sorted(list(set(y_true) | set(y_pred)))
-    label_to_idx = {lbl: i for i, lbl in enumerate(labels)}
-    matrix = [[0 for _ in range(len(labels))] for _ in range(len(labels))]
-    for yt, yp in zip(y_true, y_pred):
-        if yt in label_to_idx and yp in label_to_idx:
-            matrix[label_to_idx[yt]][label_to_idx[yp]] += 1
-    return labels, matrix
+BASELINE_KEYWORDS = [
+    ("CREDIT", ("downgrade", "covenant", "default", "restructuring", "coupon payment", "bankruptcy")),
+    ("MACRO", ("federal reserve", "treasury yield", "central bank", "inflation", "gdp", "interest rate")),
+    ("GEOPOLITICAL", ("sanction", "tariff", "naval", "nationalize", "treaty", "war ")),
+    ("SUPPLY_CHAIN", ("strike", "shortage", "force majeure", "cargo", "supply chain")),
+    ("EARNINGS", ("net income", "revenue", "quarterly earnings", "operating profit", "ebitda", "eps")),
+    ("M_AND_A", ("acquire", "acquisition", "merger", "takeover", "tender offer", "buyout")),
+    ("REGULATORY", ("antitrust", "regulator", "consent order", "penalty", "lawsuit", "sec ")),
+    ("CYBER", ("zero-day", "ransomware", "ddos", "breach", "cyber", "hack")),
+    ("PRODUCT", ("fda", "recall", "clinical trial", "launch", "unveil")),
+]  # fmt: skip
 
 
-def baseline_event_classify(text: str) -> str:
-    """Simple keyword-matching baseline for event classification (PRD 13.1)."""
+def baseline_event(text: str) -> str:
     t = text.lower()
-    if any(
-        k in t
-        for k in (
-            "downgrade",
-            "covenant",
-            "default",
-            "restructuring",
-            "coupon payment",
-            "lending syndicate",
-            "bankruptcy",
-        )
-    ):
-        return "CREDIT"
-    if any(
-        k in t
-        for k in (
-            "federal reserve",
-            "treasury yield",
-            "central bank",
-            "inflation",
-            "gdp",
-            "interest rate",
-            "yield curve",
-        )
-    ):
-        return "MACRO"
-    if any(
-        k in t for k in ("sanction", "tariff", "naval", "nationalize", "treaty", "maritime strait")
-    ):
-        return "GEOPOLITICAL"
-    if any(
-        k in t
-        for k in (
-            "blast furnace",
-            "strike",
-            "shortage",
-            "force majeure",
-            "cargo",
-            "port terminal",
-            "supply chain",
-        )
-    ):
-        return "SUPPLY_CHAIN"
-    if any(
-        k in t
-        for k in (
-            "net income",
-            "revenue",
-            "quarterly earnings",
-            "operating profit",
-            "ebitda",
-            "sales dropped",
-            "sales decline",
-        )
-    ):
-        return "EARNINGS"
-    if any(
-        k in t for k in ("acquire", "acquisition", "merger", "takeover", "tender offer", "buyout")
-    ):
-        return "M_AND_A"
-    if any(
-        k in t
-        for k in (
-            "antitrust",
-            "sec initiates",
-            "regulatory",
-            "consent order",
-            "penalty",
-            "doj files",
-        )
-    ):
-        return "REGULATORY"
-    if any(
-        k in t for k in ("zero-day", "ransomware", "ddos", "spear-phishing", "firewall", "cyber")
-    ):
-        return "CYBER"
-    if any(
-        k in t
-        for k in ("fda approval", "recall", "clinical trial", "flagship", "software maintenance")
-    ):
-        return "PRODUCT"
-    return "OTHER"
+    return next((cls for cls, kws in BASELINE_KEYWORDS if any(k in t for k in kws)), "OTHER")
 
 
-def run_evaluation(dataset_path: Path, verbose: bool = False) -> Dict[str, Any]:
-    """Run full NLP pipeline and baseline evaluation against holdout dataset."""
-    if not dataset_path.exists():
-        raise FileNotFoundError(f"Holdout dataset not found at {dataset_path}")
+def sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
-    with open(dataset_path, "rb") as f:
-        file_sha256 = hashlib.sha256(f.read()).hexdigest()
 
-    nlp_engine = NLPEngine()
-
-    records: List[Dict[str, Any]] = []
-    with open(dataset_path, "r", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            records.append(row)
-
-    total_samples = len(records)
-    if total_samples == 0:
-        raise ValueError("Holdout dataset is empty.")
-
-    gold_entities, pred_entities = [], []
-    gold_sent_labels, pred_sent_labels, base_sent_labels = [], [], []
-    gold_sent_scores, pred_sent_scores = [], []
-    gold_events, pred_events, base_events = [], [], []
-    gold_severities, pred_severities = [], []
-
-    sample_results = []
-
-    for idx, r in enumerate(records):
-        text = r["text"]
-        gold_ent = r["gold_entity"].strip()
-        gold_s_label = r["gold_sentiment_label"].strip().lower()
-        gold_s_score = float(r["gold_sentiment_score"])
-        gold_ev = r["gold_event_class"].strip().upper()
-        gold_sev = int(r["gold_severity_score"])
-        is_adv = r.get("is_adversarial", "false").lower() == "true"
-
-        input_rec = InputRecord(
-            record_id=r.get("eval_id", f"eval-{idx:03d}"),
-            source_id="eval_runner",
-            source_type="news",
-            text=text,
-            is_synthetic=True,
-            timestamp_quality="original",
-        )
-
-        signal = nlp_engine.process_record(input_rec, run_id="eval_run")
-
-        pred_ent_val = signal.entity.ticker or (
-            "MACRO" if signal.entity.scope == "macro" else signal.entity.name
-        )
-        if signal.entity.ticker:
-            pred_ent_val = signal.entity.ticker.lstrip("$")
-
-        pred_ev_val = signal.event.label.upper()
-
-        # Baseline evaluation on identical sentence
-        b_sent = nlp_engine.sentiment_analyzer._analyze_lexicon(text).label.lower()
-        b_event = baseline_event_classify(text)
-
-        pred_entities.append(pred_ent_val)
-        gold_entities.append(gold_ent)
-
-        pred_sent_labels.append(signal.sentiment.label.lower())
-        gold_sent_labels.append(gold_s_label)
-        base_sent_labels.append(b_sent)
-
-        pred_sent_scores.append(signal.sentiment.score)
-        gold_sent_scores.append(gold_s_score)
-
-        pred_events.append(pred_ev_val)
-        gold_events.append(gold_ev)
-        base_events.append(b_event)
-
-        pred_severities.append(signal.impact.score)
-        gold_severities.append(gold_sev)
-
-        sample_results.append(
-            {
-                "eval_id": r.get("eval_id", ""),
-                "text": text,
-                "gold_entity": gold_ent,
-                "pred_entity": pred_ent_val,
-                "entity_match": (pred_ent_val == gold_ent),
-                "gold_sentiment_label": gold_s_label,
-                "pred_sentiment_label": signal.sentiment.label.lower(),
-                "sentiment_label_match": (signal.sentiment.label.lower() == gold_s_label),
-                "gold_sentiment_score": gold_s_score,
-                "pred_sentiment_score": signal.sentiment.score,
-                "sentiment_score_error": abs(signal.sentiment.score - gold_s_score),
-                "gold_event": gold_ev,
-                "pred_event": pred_ev_val,
-                "event_match": (pred_ev_val == gold_ev),
-                "gold_severity": gold_sev,
-                "pred_severity": signal.impact.score,
-                "severity_error": abs(signal.impact.score - gold_sev),
-                "is_adversarial": is_adv,
-            }
-        )
-
-    entity_correct = sum(1 for ge, pe in zip(gold_entities, pred_entities) if ge == pe)
-    entity_precision = entity_correct / total_samples
-
-    # Model metrics
-    sent_acc = (
-        sum(1 for gs, ps in zip(gold_sent_labels, pred_sent_labels) if gs == ps) / total_samples
-    )
-    sent_macro_f1, sent_class_metrics = compute_macro_f1(gold_sent_labels, pred_sent_labels)
-    sent_mae = (
-        sum(abs(gs - ps) for gs, ps in zip(gold_sent_scores, pred_sent_scores)) / total_samples
+def macro_f1(y_true, y_pred, labels) -> float:
+    return round(
+        float(f1_score(y_true, y_pred, labels=labels, average="macro", zero_division=0)), 4
     )
 
-    event_acc = sum(1 for ge, pe in zip(gold_events, pred_events) if ge == pe) / total_samples
-    event_macro_f1, event_class_metrics = compute_macro_f1(gold_events, pred_events)
 
-    sev_mae = sum(abs(gs - ps) for gs, ps in zip(gold_severities, pred_severities)) / total_samples
-    sev_within_one = (
-        sum(1 for gs, ps in zip(gold_severities, pred_severities) if abs(gs - ps) <= 1)
-        / total_samples
+def suite_public_real() -> Dict[str, Any]:
+    topic = DATA / "train" / "hf_fin_topic" / "topic_valid.csv"
+    sent = DATA / "train" / "hf_fin_sentiment" / "sent_valid.csv"
+    tv = pd.read_csv(topic)
+    gold = [ps_aligned_label(lab, clean_for_classifier(t)) for lab, t in zip(tv.label, tv.text)]
+    clf = EventClassifier()
+    pred = [clf.predict(t).label for t in tv.text]  # runtime path: threshold + gates
+    model_only = list(clf.pipeline.predict([clean_for_classifier(t) for t in tv.text]))
+    seed = EventClassifier(model_path=MODELS / "__none__.joblib")  # old seed baseline
+    seed_pred = [seed.predict(t).label for t in tv.text]
+    kw_pred = [baseline_event(t) for t in tv.text]
+    labels = PS_CLASSES_WITH_LABELS
+    fired = np.array([p != "OTHER" for p in pred])
+    correct = np.array([p == g for p, g in zip(pred, gold)])
+    event = {
+        "dataset": "zeroshot/twitter-financial-news-topic valid (real, held out)",
+        "n": int(len(tv)),
+        "sha256": sha256(topic),
+        "classes_scored": labels,
+        "macro_f1_model": macro_f1(gold, model_only, labels),
+        "macro_f1_runtime_with_gates_and_abstention": macro_f1(gold, pred, labels),
+        "precision_when_fired": round(float(correct[fired].mean()), 4),
+        "fired_rate": round(float(fired.mean()), 4),
+        "baseline_keyword_macro_f1": macro_f1(gold, kw_pred, labels),
+        "baseline_seed_classifier_macro_f1": macro_f1(gold, seed_pred, labels),
+        "per_class_f1_model": {
+            c: round(
+                float(f1_score(gold, model_only, labels=[c], average="macro", zero_division=0)), 4
+            )
+            for c in labels
+        },
+        "confusion_matrix_model": {
+            "labels": labels + ["OTHER"],
+            "matrix": confusion_matrix(gold, model_only, labels=labels + ["OTHER"]).tolist(),
+        },
+    }
+    sv = pd.read_csv(sent)
+    sgold = sv.label.map({0: "negative", 1: "positive", 2: "neutral"})
+    analyzer = FinBERTSentimentAnalyzer()
+    lexicon = FinBERTSentimentAnalyzer(
+        model_dir=MODELS / "__none__", tfidf_path=MODELS / "__none__"
     )
-    sev_exact = (
-        sum(1 for gs, ps in zip(gold_severities, pred_severities) if gs == ps) / total_samples
+    spred = [analyzer.analyze(t).label for t in sv.text]
+    slex = [lexicon.analyze(t).label for t in sv.text]
+    sentiment = {
+        "dataset": "zeroshot/twitter-financial-news-sentiment valid (real, held out)",
+        "n": int(len(sv)),
+        "sha256": sha256(sent),
+        "backend": analyzer.backend,
+        "macro_f1": macro_f1(sgold, spred, ["negative", "neutral", "positive"]),
+        "baseline_lexicon_macro_f1": macro_f1(sgold, slex, ["negative", "neutral", "positive"]),
+    }
+    card = json.loads((MODELS / "sentiment_v2.card.json").read_text())
+    sentiment["polygon_news_vs_llm_silver_macro_f1"] = card["metrics"][
+        "polygon_news_vs_llm_silver"
+    ]["macro_f1"]
+    return {"event": event, "sentiment": sentiment}
+
+
+def suite_entity_polygon() -> Dict[str, Any]:
+    news = pd.read_csv(DATA / "real" / "polygon_news" / "polygon_news.csv")
+    silver = pd.read_csv(DATA / "real" / "polygon_news" / "silver_labels.csv")
+    gold = (
+        silver[silver.label_source == "polygon_tickers"]
+        .groupby("record_id")
+        .ticker.apply(lambda s: {t.replace(".", "-") for t in s})
     )
-
-    # Baseline metrics
-    base_sent_macro_f1, _ = compute_macro_f1(gold_sent_labels, base_sent_labels)
-    base_event_macro_f1, _ = compute_macro_f1(gold_events, base_events)
-
-    # Confusion matrices
-    event_labels, event_cm = compute_confusion_matrix(gold_events, pred_events)
-    sent_labels, sent_cm = compute_confusion_matrix(gold_sent_labels, pred_sent_labels)
-
-    adv_samples = [s for s in sample_results if s["is_adversarial"]]
-    adv_metrics = {}
-    if adv_samples:
-        adv_metrics = {
-            "count": len(adv_samples),
-            "entity_accuracy": sum(1 for s in adv_samples if s["entity_match"]) / len(adv_samples),
-            "sentiment_accuracy": sum(1 for s in adv_samples if s["sentiment_label_match"])
-            / len(adv_samples),
-            "event_accuracy": sum(1 for s in adv_samples if s["event_match"]) / len(adv_samples),
-            "severity_mae": sum(s["severity_error"] for s in adv_samples) / len(adv_samples),
-        }
-
+    linker = EntityLinker()
+    universe = {t for t, e in linker.entities.items() if not e.is_synthetic}
+    tp = fp = fn = n = 0
+    for r in news.itertuples():
+        g = gold.get(r.record_id, set()) & universe
+        if not g:
+            continue
+        n += 1
+        p = {t for t in linker.find_companies(f"{r.headline}. {r.body if isinstance(r.body, str) else ''}")
+             if t in universe}  # fmt: skip
+        tp, fp, fn = tp + len(p & g), fp + len(p - g), fn + len(g - p)
     return {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-        "dataset_path": str(dataset_path),
-        "dataset_sha256": file_sha256,
-        "total_samples": total_samples,
-        "entity_precision": entity_precision,
-        "sentiment_accuracy": sent_acc,
-        "sentiment_macro_f1": sent_macro_f1,
-        "sentiment_baseline_macro_f1": base_sent_macro_f1,
-        "sentiment_mae": sent_mae,
-        "sentiment_class_metrics": sent_class_metrics,
-        "sentiment_labels": sent_labels,
-        "sentiment_confusion_matrix": sent_cm,
-        "event_accuracy": event_acc,
-        "event_macro_f1": event_macro_f1,
-        "event_baseline_macro_f1": base_event_macro_f1,
-        "event_class_metrics": event_class_metrics,
-        "event_labels": event_labels,
-        "event_confusion_matrix": event_cm,
-        "severity_mae": sev_mae,
-        "severity_within_one": sev_within_one,
-        "severity_exact": sev_exact,
-        "adversarial_metrics": adv_metrics,
-        "sample_results": sample_results,
+        "dataset": "Polygon 2023 news (real), gold = article tickers[] within the S&P 500 universe",
+        "articles": n,
+        "precision": round(tp / (tp + fp), 4),
+        "recall": round(tp / (tp + fn), 4),
     }
 
 
-def generate_markdown_report(results: Dict[str, Any], output_path: Path) -> None:
-    """Generate professional, honest Markdown evaluation report with confusion matrices."""
-    output_path.parent.mkdir(parents=True, exist_ok=True)
+def suite_market_impact() -> Dict[str, Any]:
+    return json.loads((MODELS / "impact_v2.card.json").read_text())["metrics"]
 
-    sent_pass = results["sentiment_macro_f1"] >= 0.75
-    event_pass = results["event_macro_f1"] >= 0.70
-    entity_pass = results["entity_precision"] >= 0.90
-    sev_pass = results["severity_mae"] <= 1.5
 
-    sent_status = "✅ PASS" if sent_pass else "❌ FAIL"
-    event_status = "✅ PASS" if event_pass else "❌ FAIL"
-    entity_status = "✅ PASS" if entity_pass else "❌ FAIL"
-    sev_status = "✅ PASS" if sev_pass else "❌ FAIL"
-
-    sent_val = f"{results['sentiment_macro_f1']:.3f}"
-    sent_base = f"{results['sentiment_baseline_macro_f1']:.3f}"
-    event_val = f"{results['event_macro_f1']:.3f}"
-    event_base = f"{results['event_baseline_macro_f1']:.3f}"
-    ent_val = f"{results['entity_precision'] * 100:.1f}%"
-    sev_val = f"{results['severity_mae']:.2f} pts"
-    sev_w1_val = f"{results['severity_within_one'] * 100:.1f}%"
-    sent_mae_val = f"{results['sentiment_mae']:.3f}"
-
-    lines = [
-        "# S&P Sentinel: Offline NLP Benchmark Evaluation Report",
-        "",
-        "**Audited Benchmark Execution Against Frozen Holdout Dataset (105 Samples)**",
-        "*Conforming to S&P Sentinel PRD Section 2.3, 4.2, 8 & 13.1 Release Verification*",
-        "",
-        "---",
-        "",
-        "## 1. Executive Summary & Baseline Comparison",
-        "",
-        "| Evaluation Target | PRD Threshold | Rule Baseline | Sentinel Model | Status |",
-        "|---|---|---|---|---|",
-        (
-            f"| **Event Classification Macro-F1** | $\\ge 0.70$ | "
-            f"{event_base} | **{event_val}** | {event_status} |"
-        ),
-        (
-            f"| **Sentiment Macro-F1** | $\\ge 0.75$ | "
-            f"{sent_base} | **{sent_val}** | {sent_status} |"
-        ),
-        (
-            f"| **Entity Disambiguation Precision** | $\\ge 0.90$ | "
-            f"N/A | **{ent_val}** | {entity_status} |"
-        ),
-        (
-            f"| **Severity Rubric MAE** | $\\le 1.50\\text{{ pts}}$ | "
-            f"N/A | **{sev_val}** | {sev_status} |"
-        ),
-        (
-            f"| **Severity Within $\\pm 1$ pt Rate** | Informational | "
-            f"N/A | **{sev_w1_val}** | ✅ VERIFIED |"
-        ),
-        (
-            f"| **Sentiment Continuous MAE** | Informational | "
-            f"N/A | **{sent_mae_val}** | ✅ VERIFIED |"
-        ),
-        "",
-        "---",
-        "",
-        "## 2. Evaluation Provenance & Cryptographic Audit",
-        "",
-        f"- **Execution Timestamp:** `{results['timestamp']}`",
-        "- **Author / Candidate:** Aman Gupta (IIT Kharagpur)",
-        f"- **Holdout Dataset:** `{results['dataset_path']}`",
-        f"- **Holdout SHA-256:** `{results['dataset_sha256']}`",
-        (
-            f"- **Total Evaluated Samples:** `{results['total_samples']}` "
-            f"(Exceeds PRD §4.2 gate of $\\ge 100$)"
-        ),
-        (
-            "- **Data Leakage Check:** Clean (Held-out samples strictly separated from "
-            "training seeds; no phrase overrides)."
-        ),
-        "- **Offline Execution:** 100% verified (Zero external API keys, zero cloud inference).",
-        "",
-        "---",
-        "",
-        "## 3. Detailed Component Benchmark Analysis",
-        "",
-        "### 3.1 Financial Event Classification",
-        f"- **Overall Accuracy:** {results['event_accuracy'] * 100:.1f}%",
-        (
-            f"- **Macro-F1 Score:** {results['event_macro_f1']:.3f} "
-            f"(PRD Target: $\\ge 0.70$ | Baseline: {event_base})"
-        ),
-        "",
-        "#### Per-Class Event Performance & Support",
-        "| Event Class | Precision | Recall | F1 Score | Support |",
-        "|---|---|---|---|---|",
+def suite_sec_8k() -> Dict[str, Any]:
+    return json.loads((MODELS / "event_v2.card.json").read_text())["metrics"][
+        "sec_8k_heldout_filings"
     ]
 
-    for cls_name, m in results["event_class_metrics"].items():
-        p = f"{m['precision']:.3f}"
-        r = f"{m['recall']:.3f}"
-        f = f"{m['f1']:.3f}"
-        s = m["support"]
-        lines.append(f"| `{cls_name}` | {p} | {r} | {f} | {s} |")
 
-    # Event Confusion Matrix
-    ev_labels = results["event_labels"]
-    ev_matrix = results["event_confusion_matrix"]
-    lines.extend(
-        [
-            "",
-            "#### Event Classification Confusion Matrix (Rows = True, Columns = Predicted)",
-            "",
-            "| True \\ Pred | " + " | ".join(f"`{lbl[:5]}`" for lbl in ev_labels) + " |",
-            "|---|" + "|".join("---" for _ in ev_labels) + "|",
-        ]
-    )
-    for row_idx, row_label in enumerate(ev_labels):
-        row_str = (
-            f"| `{row_label}` | "
-            + " | ".join(str(ev_matrix[row_idx][col_idx]) for col_idx in range(len(ev_labels)))
-            + " |"
-        )
-        lines.append(row_str)
+def suite_stress() -> Dict[str, Any]:
+    from sentinel.stress.engine import StressEngine
 
-    lines.extend(
-        [
-            "",
-            "### 3.2 Sentiment Analysis (FinBERT / Lexicon Hybrid)",
-            f"- **Overall Accuracy:** {results['sentiment_accuracy'] * 100:.1f}%",
-            (
-                f"- **Macro-F1 Score:** {results['sentiment_macro_f1']:.3f} "
-                f"(PRD Target: $\\ge 0.75$ | Baseline: {sent_base})"
-            ),
-            f"- **Continuous Score MAE:** {results['sentiment_mae']:.3f}",
-            "",
-            "#### Per-Class Sentiment Performance & Support",
-            "| Sentiment Class | Precision | Recall | F1 Score | Support |",
-            "|---|---|---|---|---|",
-        ]
-    )
+    engine = StressEngine()
+    out = {"funded_book_usd": round(engine.portfolio.total_funded_exposure, 2),
+           "funded_by_sleeve_usd": engine.portfolio.sleeve_totals(), "scenarios": {}}  # fmt: skip
+    for s in engine.list_scenarios():
+        if not s["scenario_id"].startswith("HIST-"):
+            continue
+        r = engine.run_scenario(s["scenario_id"])
+        out["scenarios"][s["scenario_id"]] = {
+            "total_pnl_usd": r.total_pnl_usd,
+            "pnl_pct_of_funded": round(r.total_pnl_usd / r.funded_baseline_value_usd, 4),
+            "by_sleeve_usd": {x.sleeve: x.total_pnl_usd for x in r.sleeve_breakdown},
+            "reconciled": r.reconciliation_passed,
+        }
+    ps = engine.run_custom_stress(equity_shock_pct=-0.10, benchmark_yield_shift_bps=200)
+    out["ps_example_equities_-10pct_rates_+200bp"] = {
+        "total_pnl_usd": ps.total_pnl_usd,
+        "by_sleeve_usd": {x.sleeve: x.total_pnl_usd for x in ps.sleeve_breakdown},
+        "derivative_mtm_change_usd": ps.derivative_mtm_change_usd,
+        "reconciled": ps.reconciliation_passed,
+    }
+    return out
 
-    for cls_name, m in results["sentiment_class_metrics"].items():
-        p = f"{m['precision']:.3f}"
-        r = f"{m['recall']:.3f}"
-        f = f"{m['f1']:.3f}"
-        s = m["support"]
-        lines.append(f"| `{cls_name}` | {p} | {r} | {f} | {s} |")
 
-    # Sentiment Confusion Matrix
-    sent_lbls = results["sentiment_labels"]
-    sent_mat = results["sentiment_confusion_matrix"]
-    lines.extend(
-        [
-            "",
-            "#### Sentiment Confusion Matrix (Rows = True, Columns = Predicted)",
-            "",
-            "| True \\ Pred | " + " | ".join(f"`{lbl}`" for lbl in sent_lbls) + " |",
-            "|---|" + "|".join("---" for _ in sent_lbls) + "|",
-        ]
-    )
-    for row_idx, row_label in enumerate(sent_lbls):
-        row_str = (
-            f"| `{row_label}` | "
-            + " | ".join(str(sent_mat[row_idx][col_idx]) for col_idx in range(len(sent_lbls)))
-            + " |"
-        )
-        lines.append(row_str)
+def suite_module_a() -> Dict[str, Any]:
+    path = DOCS / "module_a_backtest.json"
+    return json.loads(path.read_text()) if path.exists() else {"status": "not run"}
 
-    adv = results.get("adversarial_metrics", {})
-    if adv:
-        lines.extend(
+
+def suite_perf(n: int = 2000) -> Dict[str, Any]:
+    news = pd.read_csv(DATA / "real" / "polygon_news" / "polygon_news.csv").head(n)
+    engine = NLPEngine()
+    lat: List[float] = []
+    t0 = time.perf_counter()
+    for r in news.itertuples():
+        rec = InputRecord(record_id=r.record_id, source_id="perf", source_type=SourceType.NEWS,
+                          text=f"{r.headline}. {r.body if isinstance(r.body, str) else ''}")  # fmt: skip
+        s = time.perf_counter()
+        engine.process_record_multi(rec, "perf")
+        lat.append(time.perf_counter() - s)
+    total = time.perf_counter() - t0
+    rss_gb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024**2  # Linux: KB
+    return {
+        "records": len(lat),
+        "records_per_s": round(len(lat) / total, 1),
+        "latency_p50_s": round(float(np.percentile(lat, 50)), 4),
+        "latency_p95_s": round(float(np.percentile(lat, 95)), 4),
+        "peak_rss_gb": round(rss_gb, 3),
+        "note": "single process, CPU, full pipeline (linking, sentiment, event, impact)",
+    }
+
+
+def suite_synthetic_regression() -> Dict[str, Any]:
+    path = DATA / "eval" / "synthetic_regression.csv"
+    rows = list(csv.DictReader(open(path, encoding="utf-8")))
+    engine = NLPEngine()
+    ev_t, ev_p, s_t, s_p, sev_err = [], [], [], [], []
+    for i, r in enumerate(rows):
+        rec = InputRecord(record_id=f"syn-{i}", source_id="synthetic", source_type=SourceType.NEWS,
+                          text=r["text"], is_synthetic=True)  # fmt: skip
+        sig = engine.process_record(rec, "synthetic")
+        ev_t.append(r["gold_event_class"].upper())
+        ev_p.append(sig.event.label)
+        s_t.append(r["gold_sentiment_label"].lower())
+        s_p.append(sig.sentiment.label)
+        sev_err.append(abs(sig.impact.score - int(r["gold_severity_score"])))
+    return {
+        "warning": "author-written synthetic set (same fictional universe as the demo); "
+        "regression check only, never a quality claim",
+        "n": len(rows),
+        "event_macro_f1": macro_f1(ev_t, ev_p, sorted(set(ev_t))),
+        "sentiment_macro_f1": macro_f1(s_t, s_p, ["negative", "neutral", "positive"]),
+        "severity_mae": round(float(np.mean(sev_err)), 3),
+    }
+
+
+SUITES = {
+    "public_real": suite_public_real,
+    "entity_polygon": suite_entity_polygon,
+    "market_impact": suite_market_impact,
+    "sec_8k": suite_sec_8k,
+    "stress": suite_stress,
+    "module_a": suite_module_a,
+    "perf": suite_perf,
+    "synthetic_regression": suite_synthetic_regression,
+}
+
+
+def headline_rows(m: Dict[str, Any]) -> List[List[str]]:
+    rows = []
+    if pr := m.get("public_real"):
+        e, s = pr["event"], pr["sentiment"]
+        rows.append([f"Event macro-F1, {e['n']:,} held-out real financial tweets",
+                     f"{e['macro_f1_model']:.3f}", f">= {TARGETS['event_macro_f1']}",
+                     f"keyword {e['baseline_keyword_macro_f1']:.3f} / old seed model {e['baseline_seed_classifier_macro_f1']:.3f}"])  # fmt: skip
+        rows.append(
             [
-                "",
-                "---",
-                "",
-                "## 4. Adversarial & Edge Case Robustness",
-                "",
-                (
-                    "The holdout dataset incorporates designed adversarial test cases "
-                    "(rumor denials, routine filings with buzzwords, in-line guidance)."
-                ),
-                f"- **Adversarial Samples Tested:** {adv.get('count', 0)}",
-                f"- **Entity Precision:** {adv.get('entity_accuracy', 0.0) * 100:.1f}%",
-                f"- **Sentiment Accuracy:** {adv.get('sentiment_accuracy', 0.0) * 100:.1f}%",
-                f"- **Event Classification Accuracy:** {adv.get('event_accuracy', 0.0) * 100:.1f}%",
-                f"- **Severity MAE:** {adv.get('severity_mae', 0.0):.2f} pts",
+                "Event, runtime path (abstention + evidence gates), same rows",
+                f"F1 {e['macro_f1_runtime_with_gates_and_abstention']:.3f}, "
+                f"precision {e['precision_when_fired']:.3f} when it fires",
+                "precision first",
+                f"fires on {e['fired_rate']:.0%} of rows (precision/recall trade-off)",
             ]
         )
+        rows.append([f"Sentiment macro-F1, {s['n']:,} held-out real financial tweets",
+                     f"{s['macro_f1']:.3f}", f">= {TARGETS['sentiment_macro_f1']}",
+                     f"lexicon {s['baseline_lexicon_macro_f1']:.3f}"])  # fmt: skip
+    if ent := m.get("entity_polygon"):
+        rows.append([f"Entity linking, {ent['articles']:,} real news articles",
+                     f"P {ent['precision']:.3f} / R {ent['recall']:.3f}",
+                     f"P >= {TARGETS['entity_precision']}", "old alias table: entity found in 5%"])  # fmt: skip
+    if mi := m.get("market_impact"):
+        lo, hi = mi["learned_oof_spearman_ci95"]
+        rows.append([f"Impact vs next-day abnormal return, {mi['events']:,} real events",
+                     f"Spearman {mi['learned_oof_spearman']:.3f} [{lo:.3f}, {hi:.3f}]", "> 0",
+                     f"rubric {mi['rubric_v1_spearman']:.3f}"])  # fmt: skip
+    if p := m.get("perf"):
+        rows.append(["Latency per record (p95), CPU", f"{p['latency_p95_s']:.3f} s",
+                     f"<= {TARGETS['p95_latency_s']} s", f"{p['records_per_s']:.0f} records/s"])  # fmt: skip
+    return rows
 
-    lines.extend(
-        [
-            "",
-            "---",
-            "",
-            "## 5. Granular Sample-by-Sample Inspection Table",
-            "",
-            (
-                "| Eval ID | Gold Entity | Pred Entity | Gold Event | Pred Event | "
-                "Gold Sent | Pred Sent | Gold Sev | Pred Sev | Adv? |"
-            ),
-            "|---|---|---|---|---|---|---|---|---|---|",
-        ]
-    )
 
-    for s in results["sample_results"]:
-        ent_icon = "✓" if s["entity_match"] else "✗"
-        ev_icon = "✓" if s["event_match"] else "✗"
-        sent_icon = "✓" if s["sentiment_label_match"] else "✗"
-        sev_diff = s["severity_error"]
-        adv_str = "YES" if s["is_adversarial"] else "NO"
-        lines.append(
-            f"| `{s['eval_id']}` | `{s['gold_entity']}` | `{s['pred_entity']}` {ent_icon} "
-            f"| `{s['gold_event']}` | `{s['pred_event']}` {ev_icon} "
-            f"| `{s['gold_sentiment_label']}` | `{s['pred_sentiment_label']}` {sent_icon} "
-            f"| {s['gold_severity']} | {s['pred_severity']} (Δ{sev_diff}) | {adv_str} |"
-        )
+def write_report(m: Dict[str, Any]) -> str:
+    table = ["| Metric | Measured | Target | Comparison |", "|---|---|---|---|"]
+    table += [f"| {' | '.join(r)} |" for r in headline_rows(m)]
+    lines = ["# Evaluation report (generated by scripts/run_evaluation.py)", "",
+             f"Generated: {m['generated_at']}", "", *table, "",
+             "All raw values: [`docs/metrics.json`](metrics.json).", ""]  # fmt: skip
+    for name, body in m.items():
+        if name in ("generated_at", "targets"):
+            continue
+        lines += [f"## {name}", "", "```json", json.dumps(body, indent=1)[:6000], "```", ""]
+    (DOCS / "evaluation_report.md").write_text("\n".join(lines))
+    return "\n".join(table)
 
-    lines.extend(
-        [
-            "",
-            "---",
-            "",
-            "## 6. Reproducibility Notice",
-            "",
-            "To reproduce this evaluation report deterministically from source code:",
-            "```bash",
-            "uv run python scripts/run_evaluation.py",
-            "```",
-            "",
-        ]
-    )
 
-    with open(output_path, "w", encoding="utf-8") as f:
-        f.write("\n".join(lines))
+def inject_readme(table: str) -> None:
+    readme = REPO_ROOT / "README.md"
+    text = readme.read_text()
+    start, end = "<!-- METRICS:START -->", "<!-- METRICS:END -->"
+    if start not in text:
+        print("README has no METRICS markers; skipped")
+        return
+    head, rest = text.split(start, 1)
+    _, tail = rest.split(end, 1)
+    readme.write_text(f"{head}{start}\n{table}\n{end}{tail}")
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="S&P Sentinel Offline NLP Benchmark Runner")
-    parser.add_argument(
-        "--dataset",
-        type=Path,
-        default=Path("data/eval/holdout_seed.csv"),
-        help="Path to holdout dataset CSV",
-    )
-    parser.add_argument(
-        "--output-report",
-        type=Path,
-        default=Path("docs/evaluation_report.md"),
-        help="Path to save markdown evaluation report",
-    )
-    parser.add_argument(
-        "--verbose",
-        action="store_true",
-        help="Print verbose sample evaluation outputs",
-    )
-    args = parser.parse_args()
-
-    print("=" * 70)
-    print(" S&P Sentinel Offline NLP Benchmark Evaluation Runner")
-    print("=" * 70)
-    print(f"[EVAL] Loading holdout dataset: {args.dataset}")
-
-    results = run_evaluation(args.dataset, verbose=args.verbose)
-
-    print(f"[EVAL] Evaluated {results['total_samples']} holdout samples.")
-    print("-" * 70)
-    ent_acc = f"{results['entity_precision'] * 100:.1f}%"
-    print(f"  Entity Linking Precision:       {ent_acc} (PRD Target: >= 90.0%)")
-    sent_f1 = f"{results['sentiment_macro_f1']:.3f}"
-    sent_base = f"{results['sentiment_baseline_macro_f1']:.3f}"
-    print(
-        f"  Sentiment Macro-F1:             {sent_f1} (Baseline: {sent_base} | PRD Target: >= 0.75)"
-    )
-    print(f"  Sentiment Score MAE:            {results['sentiment_mae']:.3f}")
-    ev_f1 = f"{results['event_macro_f1']:.3f}"
-    ev_base = f"{results['event_baseline_macro_f1']:.3f}"
-    print(f"  Event Classification Macro-F1:  {ev_f1} (Baseline: {ev_base} | PRD Target: >= 0.70)")
-    sev_mae_str = f"{results['severity_mae']:.2f} pts"
-    print(f"  Severity Rubric MAE:            {sev_mae_str} (PRD Target: <= 1.50 pts)")
-    within_one = f"{results['severity_within_one'] * 100:.1f}%"
-    print(f"  Severity Within +/-1 Pt Rate:   {within_one}")
-    print("-" * 70)
-
-    generate_markdown_report(results, args.output_report)
-    print(f"[EVAL] Successfully generated report: {args.output_report}")
-    print("=" * 70)
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--suite", default=",".join(SUITES))
+    ap.add_argument("--write-readme", action="store_true")
+    args = ap.parse_args()
+    out_path = DOCS / "metrics.json"
+    metrics: Dict[str, Any] = json.loads(out_path.read_text()) if out_path.exists() else {}
+    for name in args.suite.split(","):
+        t0 = time.time()
+        metrics[name] = SUITES[name]()
+        print(f"[eval] {name}: {time.time() - t0:.1f}s")
+    metrics["generated_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    metrics["targets"] = TARGETS
+    out_path.write_text(json.dumps(metrics, indent=1) + "\n")
+    table = write_report(metrics)
+    if args.write_readme:
+        inject_readme(table)
+    print(table)
 
 
 if __name__ == "__main__":
