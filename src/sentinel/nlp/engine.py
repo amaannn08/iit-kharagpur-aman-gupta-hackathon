@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import List, Optional
 from uuid import uuid4
 
+from sentinel.config import settings
 from sentinel.contracts.records import InputRecord
 from sentinel.contracts.signals import EvidenceSpan, RiskSignal
 from sentinel.nlp.entities import EntityLinker
@@ -22,18 +23,27 @@ class NLPEngine:
         sentiment_analyzer: Optional[FinBERTSentimentAnalyzer] = None,
         event_classifier: Optional[EventClassifier] = None,
         severity_engine: Optional[SeverityRubricEngine] = None,
-        action_impact_threshold: int = 7,
-        action_confidence_threshold: float = 0.40,
+        action_impact_threshold: Optional[int] = None,
+        action_confidence_threshold: Optional[float] = None,
     ) -> None:
+
+        self.action_impact_threshold = (
+            action_impact_threshold
+            if action_impact_threshold is not None
+            else settings.action_impact_threshold
+        )
+        self.action_confidence_threshold = (
+            action_confidence_threshold
+            if action_confidence_threshold is not None
+            else settings.action_confidence_threshold
+        )
 
         self.entity_linker = entity_linker or EntityLinker()
         self.sentiment_analyzer = sentiment_analyzer or FinBERTSentimentAnalyzer()
         self.event_classifier = event_classifier or EventClassifier(
-            confidence_threshold=action_confidence_threshold
+            confidence_threshold=self.action_confidence_threshold
         )
         self.severity_engine = severity_engine or SeverityRubricEngine()
-        self.action_impact_threshold = action_impact_threshold
-        self.action_confidence_threshold = action_confidence_threshold
 
     def process_record(
         self,
@@ -42,6 +52,8 @@ class NLPEngine:
         dedup_decision: Optional[DedupDecision] = None,
     ) -> RiskSignal:
         """Process an input record and emit an auditable RiskSignal contract."""
+        lower_text = record.text.lower()
+
         # 1. Entity Resolution
         entity_ref, entity_spans = self.entity_linker.resolve(
             record.text,
@@ -53,6 +65,39 @@ class NLPEngine:
 
         # 3. Event Classification
         event = self.event_classifier.predict(record.text)
+
+        # Directional macro policy tagging (Bug B2 fix)
+        if event.label.upper() == "MACRO":
+            if any(
+                w in lower_text
+                for w in (
+                    "rate cut",
+                    "cuts rate",
+                    "cutting rate",
+                    "easing",
+                    "lower rate",
+                    "lowers rate",
+                    "rate reduction",
+                    "monetary stimulus",
+                )
+            ):
+                event.macro_direction = "easing"
+            elif any(
+                w in lower_text
+                for w in (
+                    "rate hike",
+                    "hikes rate",
+                    "hiking rate",
+                    "tightening",
+                    "raise rate",
+                    "raises rate",
+                    "rate increase",
+                    "inflation surge",
+                )
+            ):
+                event.macro_direction = "tightening"
+            else:
+                event.macro_direction = "none"
 
         # 4. Severity Rubric Scoring
         impact, severity_spans = self.severity_engine.evaluate(

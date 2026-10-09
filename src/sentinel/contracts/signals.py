@@ -36,6 +36,9 @@ class EventOutput(BaseModel):
     label: str = Field(..., description="Event category e.g. CREDIT, MACRO, SUPPLY_CHAIN")
     confidence: float = Field(..., ge=0.0, le=1.0, description="Model prediction confidence")
     abstained: bool = Field(default=False, description="Whether classifier abstained to OTHER")
+    macro_direction: Optional[str] = Field(
+        default=None, description="Macro policy direction: easing, tightening, or none"
+    )
 
 
 class ImpactComponents(BaseModel):

@@ -85,11 +85,14 @@ def build_scaled_shock(
 
     # Yield shift direction: rate cut/easing shifts yields downwards
     yield_direction = -1.0 if is_easing else 1.0
+    spread_shift = 0.0 if is_easing else baseline.bond_spread_shift_bps * scale
+    pd_inc = 0.0 if is_easing else baseline.loan_pd_increment * scale
+    lgd_inc = 0.0 if is_easing else baseline.lgd_increment * scale
 
     return ScaledShock(
-        bond_spread_shift_bps=round(baseline.bond_spread_shift_bps * scale, 2),
-        loan_pd_increment=round(baseline.loan_pd_increment * scale, 4),
-        lgd_increment=round(baseline.lgd_increment * scale, 4),
+        bond_spread_shift_bps=round(spread_shift, 2),
+        loan_pd_increment=round(pd_inc, 4),
+        lgd_increment=round(lgd_inc, 4),
         benchmark_yield_shift_bps=round(
             baseline.benchmark_yield_shift_bps * scale * yield_direction, 2
         ),

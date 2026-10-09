@@ -34,8 +34,6 @@ FIN_NEGATIVE_WORDS = {
     "slumped",
     "warning",
     "warns",
-    "cut",
-    "cuts",
     "deficit",
     "selloff",
     "collapse",
@@ -223,39 +221,94 @@ class FinBERTSentimentAnalyzer:
         )
 
     def _analyze_lexicon(self, text: str) -> SentimentOutput:
-        """Transparent, deterministic rule-based sentiment fallback."""
+        """Transparent, deterministic rule-based sentiment fallback with negation and context."""
+        import re
+
         lower_raw = text.lower()
+        words = re.findall(r"\b[a-zA-Z]+\b", lower_raw)
 
-        # Contextual denial / reassurance phrase override
-        if "denies bankruptcy" in lower_raw or "remain fully operational" in lower_raw:
-            return SentimentOutput(
-                score=0.65,
-                label="positive",
-                probabilities=SentimentProbabilities(positive=0.75, negative=0.10, neutral=0.15),
-            )
+        # Contextual financial multi-word phrases
+        pos_phrases = (
+            "rate cut",
+            "cuts rate",
+            "cuts rates",
+            "cutting rate",
+            "cutting rates",
+            "rate reduction",
+            "emergency easing",
+            "monetary easing",
+            "policy easing",
+            "denies rumors",
+            "denied rumors",
+            "tops estimates",
+            "beats estimates",
+            "beat estimates",
+            "crushed expectations",
+            "strong lending",
+            "rebounded sharply",
+        )
+        neg_phrases = (
+            "rate hike",
+            "hikes rate",
+            "hikes rates",
+            "hiking rate",
+            "hiking rates",
+            "interest rate hike",
+            "dividend cut",
+            "job cuts",
+            "cuts jobs",
+            "spending cuts",
+            "budget cut",
+            "halted output",
+            "skipped interest",
+            "missed payment",
+            "missed scheduled",
+            "monetary tightening",
+            "credit default",
+            "covenant breach",
+        )
 
-        # Routine non-material administrative / governance phrase override
-        if "shareholder meeting" in lower_raw or "regular quarterly dividend" in lower_raw:
-            return SentimentOutput(
-                score=0.02,
-                label="neutral",
-                probabilities=SentimentProbabilities(positive=0.10, negative=0.05, neutral=0.85),
-            )
+        pos_phrase_hits = sum(1.0 for p in pos_phrases if p in lower_raw)
+        neg_phrase_hits = sum(1.0 for p in neg_phrases if p in lower_raw)
 
-        lower_words = set(text.lower().split())
+        negation_tokens = {
+            "no",
+            "not",
+            "without",
+            "never",
+            "denies",
+            "denied",
+            "rejects",
+            "rejected",
+        }
 
-        neg_hits = sum(1 for w in lower_words if w.strip(".,!?:;\"'()") in FIN_NEGATIVE_WORDS)
-        pos_hits = sum(1 for w in lower_words if w.strip(".,!?:;\"'()") in FIN_POSITIVE_WORDS)
+        pos_hits = pos_phrase_hits
+        neg_hits = neg_phrase_hits
 
-        if neg_hits > pos_hits:
-            neg_weight = min(0.90, 0.50 + 0.10 * (neg_hits - pos_hits))
-            pos_weight = max(0.05, 0.20 - 0.05 * (neg_hits - pos_hits))
+        for i, w in enumerate(words):
+            is_negated = any(words[j] in negation_tokens for j in range(max(0, i - 3), i))
+            if w in FIN_NEGATIVE_WORDS:
+                if is_negated:
+                    pos_hits += 0.5  # Negated negative implies mitigating/positive
+                else:
+                    neg_hits += 1.0
+            elif w in FIN_POSITIVE_WORDS:
+                if is_negated:
+                    neg_hits += 0.5
+                else:
+                    pos_hits += 1.0
+
+        if neg_hits > pos_hits + 0.3:
+            diff = neg_hits - pos_hits
+            neg_weight = min(0.90, 0.45 + 0.10 * diff)
+            pos_weight = max(0.05, 0.15 - 0.05 * diff)
             neu_weight = round(1.0 - neg_weight - pos_weight, 4)
             score = max(-1.0, min(1.0, round(pos_weight - neg_weight, 4)))
             dominant_label = "negative"
-        elif pos_hits > neg_hits:
-            pos_weight = min(0.90, 0.50 + 0.10 * (pos_hits - neg_hits))
-            neg_weight = max(0.05, 0.20 - 0.05 * (pos_hits - neg_hits))
+        elif pos_hits > neg_hits + 0.3:
+            diff = pos_hits - neg_hits
+            pos_weight = min(0.90, 0.45 + 0.10 * diff)
+            neg_weight = max(0.05, 0.15 - 0.05 * diff)
             neu_weight = round(1.0 - pos_weight - neg_weight, 4)
             score = max(-1.0, min(1.0, round(pos_weight - neg_weight, 4)))
             dominant_label = "positive"

@@ -3,6 +3,7 @@
 from pathlib import Path
 from typing import Optional, Set, Union
 
+from sentinel.config import settings
 from sentinel.contracts.signals import RiskSignal
 from sentinel.contracts.stress import StressRunResult
 from sentinel.stress.portfolio import WholesalePortfolio
@@ -18,11 +19,19 @@ class StressEngine:
     def __init__(
         self,
         portfolio_path: Optional[Union[str, Path]] = None,
-        confidence_threshold: float = 0.60,
+        confidence_threshold: Optional[float] = None,
+        impact_threshold: Optional[int] = None,
     ) -> None:
         self.portfolio = WholesalePortfolio.load_from_json(portfolio_path)
         self.valuation_engine = ValuationEngine(self.portfolio)
-        self.confidence_threshold = confidence_threshold
+        self.confidence_threshold = (
+            confidence_threshold
+            if confidence_threshold is not None
+            else settings.action_confidence_threshold
+        )
+        self.impact_threshold = (
+            impact_threshold if impact_threshold is not None else settings.action_impact_threshold
+        )
         self.acted_signal_ids: Set[str] = set()
 
     def should_trigger(self, signal: RiskSignal) -> bool:
@@ -34,7 +43,7 @@ class StressEngine:
         if signal.event.label.upper() not in self.SUPPORTED_EVENT_CLASSES:
             return False
 
-        if signal.impact.score <= 7:
+        if signal.impact.score <= self.impact_threshold:
             return False
 
         if signal.event.confidence < self.confidence_threshold:
@@ -52,23 +61,44 @@ class StressEngine:
 
         event_class = signal.event.label.upper()
         impact = signal.impact.score
-        target_entity = signal.entity.ticker or signal.entity.name
 
-        # Scope assignment
-        if event_class in {"MACRO", "GEOPOLITICAL"} and not target_entity:
+        # Correct Scope assignment (conforming to PRD Section 9.3 & Bug B1 fix):
+        # Systemic macro and geopolitical events must shock the entire benchmark curve
+        # or broad market. Sector events shock sector-specific loans and bonds.
+        # Single entity shocks require a valid ticker.
+        if (
+            event_class in {"MACRO", "GEOPOLITICAL"}
+            or signal.entity.scope == "macro"
+            or not signal.entity.ticker
+        ):
             scope = "systemic"
-        elif target_entity:
-            scope = "entity"
+            target_entity = None
+        elif signal.entity.scope == "sector":
+            scope = "sector"
+            target_entity = signal.entity.name
         else:
-            scope = "systemic"
+            scope = "entity"
+            # Always use ticker symbol (e.g. 'APEX'), never company name string
+            target_entity = signal.entity.ticker
 
-        # Easing detection for macro rate events
-        evidence_text = " ".join(e.text for e in signal.evidence).lower()
-        is_easing = (
-            "rate cut" in evidence_text
-            or "easing" in evidence_text
-            or "lowers rates" in evidence_text
-        )
+        # Easing detection for macro rate events (Bug B2 fix)
+        is_easing = False
+        if getattr(signal.event, "macro_direction", None) == "easing":
+            is_easing = True
+        else:
+            evidence_text = " ".join(e.text for e in signal.evidence).lower()
+            if any(
+                w in evidence_text
+                for w in (
+                    "rate cut",
+                    "cuts rate",
+                    "cutting rate",
+                    "easing",
+                    "lower rate",
+                    "lowers rate",
+                )
+            ):
+                is_easing = True
 
         shock = build_scaled_shock(
             event_class=event_class,
