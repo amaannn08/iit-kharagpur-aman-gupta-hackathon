@@ -15,6 +15,7 @@ import io
 import json
 import shutil
 import time
+import urllib.parse
 import urllib.request
 import zipfile
 from datetime import datetime, timedelta
@@ -180,6 +181,60 @@ def gdelt(slices: int = 8) -> None:
     print(f"ok gdelt ({len(list(d.iterdir()))} files)")
 
 
+# 8-K items whose filing *is* the event: real, labeled text for classes the public tweet
+# datasets lack. Query -> event class (EDGAR full-text search, all filers).
+SEC_8K_QUERIES = {
+    "1.05": ('"Item 1.05" "cybersecurity incident"', "CYBER"),
+    "1.03": ('"Item 1.03" "Bankruptcy or Receivership"', "CREDIT"),
+    "2.04": ('"Item 2.04" "Triggering Events"', "CREDIT"),
+}
+SEC_8K_CAP = 150  # filings per item
+
+
+def sec_8k() -> None:
+    d = RAW / "sec" / "8k"
+    d.mkdir(parents=True, exist_ok=True)
+    index_path = d / "index.json"
+    index = json.loads(index_path.read_text()) if index_path.exists() else {}
+    for item, (query, label) in SEC_8K_QUERIES.items():
+        hits, offset = [], 0
+        while len(hits) < SEC_8K_CAP:
+            url = (
+                "https://efts.sec.gov/LATEST/search-index?forms=8-K&from="
+                f"{offset}&q={urllib.parse.quote(query)}"
+            )
+            page = json.loads(get(url))["hits"]["hits"]
+            if not page:
+                break
+            hits.extend(page)
+            offset += len(page)
+            time.sleep(0.15)
+        for h in hits[:SEC_8K_CAP]:
+            src = h["_source"]
+            adsh, doc = h["_id"].split(":", 1)
+            if adsh in index or item not in src.get("items", []):
+                continue
+            cik = int(src["ciks"][0])
+            doc_url = f"https://www.sec.gov/Archives/edgar/data/{cik}/{adsh.replace('-', '')}/{doc}"
+            try:
+                (d / f"{adsh}.htm").write_bytes(get(doc_url))
+            except Exception as exc:
+                print(f"  skip {adsh}: {exc}")
+                continue
+            index[adsh] = {
+                "item": item,
+                "label": label,
+                "company": src["display_names"][0],
+                "file_date": src["file_date"],
+                "form": src.get("form"),
+                "url": doc_url,
+            }
+            time.sleep(0.15)  # SEC fair access: < 10 requests/second
+        index_path.write_text(json.dumps(index, indent=1))
+    counts = {i: sum(v["item"] == i for v in index.values()) for i in SEC_8K_QUERIES}
+    print(f"ok sec_8k {counts}")
+
+
 def checksums() -> None:
     rows = []
     for p in sorted(RAW.rglob("*")):
@@ -196,7 +251,14 @@ def checksums() -> None:
     print(f"ok checksums ({len(rows)} files)")
 
 
-STEPS = {"kaggle": kaggle, "hf": hf, "sec": sec, "market": market, "gdelt": gdelt}
+STEPS = {
+    "kaggle": kaggle,
+    "hf": hf,
+    "sec": sec,
+    "sec_8k": sec_8k,
+    "market": market,
+    "gdelt": gdelt,
+}
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])

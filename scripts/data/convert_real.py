@@ -77,6 +77,13 @@ LICENSES = {
         "MIT",
         "zeroshot/twitter-financial-news-sentiment (Hugging Face), released under the MIT License.\n",
     ),
+    "sec_8k": (
+        "US public record (SEC EDGAR)",
+        "Item statements extracted from real Form 8-K filings on SEC EDGAR\n"
+        "(https://www.sec.gov/edgar), found via EDGAR full-text search. Labels come from the\n"
+        "8-K item the issuer itself filed under: 1.05 Material Cybersecurity Incidents -> CYBER,\n"
+        "1.03 Bankruptcy or Receivership and 2.04 Triggering Events (debt acceleration) -> CREDIT.\n",
+    ),
     "phrasebank": (
         "CC BY-NC-SA 3.0",
         "FinancialPhraseBank v1.0. Malo, P., Sinha, A., Korhonen, P., Wallenius, J. and Takala, P.\n"
@@ -334,6 +341,82 @@ def phrasebank(n: int) -> int:
     return len(sample)
 
 
+SEC_ITEM_TITLES = {
+    "1.05": r"Material\s+Cybersecurity\s+Incidents?",
+    "1.03": r"Bankruptcy\s+or\s+Receivership",
+    "2.04": r"Triggering\s+Events\s+That\s+Accelerate.{0,160}?Arrangement",
+}
+
+
+def html_to_text(raw: str) -> str:
+    raw = re.sub(r"(?is)<(script|style).*?</\1>", " ", raw)
+    return re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", raw))).strip()
+
+
+def extract_item_statement(text: str, item: str, max_chars: int = 420) -> str:
+    """Opening sentences of an 8-K item section, skipping table-of-contents mentions."""
+    heading = re.compile(
+        rf"Item\s*{re.escape(item)}\s*[:.\-–—]?\s*{SEC_ITEM_TITLES[item]}\.?", re.I | re.S
+    )
+    for m in heading.finditer(text):
+        body = re.split(
+            r"\bItem\s*\d\.\d\d\b|\bSIGNATURES?\b", text[m.end() :], maxsplit=1, flags=re.I
+        )[0]
+        body = body.strip(" .:;-–—\"'")
+        letters = [c for c in body if c.isalpha()]
+        mostly_caps = letters and sum(c.isupper() for c in letters) / len(letters) > 0.5
+        if len(body) < 150 or mostly_caps:  # table of contents / cross-reference, not a statement
+            continue
+        sentences = re.split(r"(?<=[.!?])\s+(?=[A-Z])", body)
+        out = ""
+        for sent in sentences:
+            if out and len(out) + len(sent) > max_chars:
+                break
+            out = f"{out} {sent}".strip()
+        return clean_text(re.sub(r"\s*Table of Contents\s*", " ", out[: max_chars + 200]))
+    return ""
+
+
+def sec_8k_items() -> int:
+    d = RAW / "sec" / "8k"
+    index = json.loads((d / "index.json").read_text())
+    rows = []
+    for adsh, meta in sorted(index.items()):
+        path = d / f"{adsh}.htm"
+        if not path.exists():
+            continue
+        statement = extract_item_statement(
+            html_to_text(path.read_text(errors="ignore")), meta["item"]
+        )
+        if len(statement) < 80:
+            continue
+        rows.append(
+            {
+                "record_id": rid("sec", adsh, meta["item"]),
+                "accession": adsh,
+                "company": re.sub(r"\s*\(CIK.*$", "", meta["company"]).strip(),
+                "file_date": meta["file_date"],
+                "item": meta["item"],
+                "label": meta["label"],
+                "text": statement,
+                "url": meta["url"],
+            }
+        )
+    out_dir = TRAIN / "sec_8k"
+    write_license(out_dir, "sec_8k")
+    path = out_dir / "items.csv"
+    df = pd.DataFrame(rows).drop_duplicates("text")
+    df.to_csv(path, index=False)
+    register(
+        path,
+        "Real 8-K item statements (1.05 cyber, 1.03 bankruptcy, 2.04 debt acceleration) with item-code labels",
+        "sec_8k",
+        "https://efts.sec.gov/LATEST/search-index",
+        list(df.columns),
+    )
+    return len(df)
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--tweets", type=int, default=5000)
@@ -346,3 +429,5 @@ if __name__ == "__main__":
     print("gdelt snapshot:", gdelt())
     print("hf splits rows:", hf_splits())
     print("phrasebank sample:", phrasebank(args.phrasebank))
+    if (RAW / "sec" / "8k" / "index.json").exists():
+        print("sec 8-K items:", sec_8k_items())

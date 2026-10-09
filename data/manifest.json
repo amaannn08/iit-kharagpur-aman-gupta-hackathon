@@ -180,6 +180,32 @@
       ]
     },
     {
+      "file_path": "data/universe/entities.csv",
+      "format": "csv",
+      "description": "Entity universe: real S&P 500 constituents (SEC CIKs) plus the 16 fictional demo issuers, flagged per row in is_synthetic",
+      "is_synthetic": false,
+      "license": "CC BY-SA 4.0 (Wikipedia S&P 500 constituent list) + US public domain (SEC tickers)",
+      "primary_keys": [
+        "record_id"
+      ],
+      "source": "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies; https://www.sec.gov/files/company_tickers.json",
+      "derived_from": [
+        "data/entity_aliases.csv"
+      ],
+      "columns": [
+        "ticker",
+        "canonical_name",
+        "sector",
+        "aliases",
+        "ambiguous_aliases",
+        "is_synthetic",
+        "cik"
+      ],
+      "byte_size": 33012,
+      "sha256": "85392fc3114da9ef9f40b17399a7f628f15e6682be8248274e16f82e3f7d5072",
+      "record_count": 519
+    },
+    {
       "file_path": "data/real/polygon_news/polygon_news.csv",
       "format": "csv",
       "description": "Real 2023 Polygon.io financial news (title + description), news replay feed",
@@ -379,31 +405,47 @@
       "record_count": 600
     },
     {
-      "file_path": "data/universe/entities.csv",
+      "file_path": "data/train/sec_8k/items.csv",
       "format": "csv",
-      "description": "Entity universe: real S&P 500 constituents (SEC CIKs) plus the 16 fictional demo issuers, flagged per row in is_synthetic",
+      "description": "Real 8-K item statements (1.05 cyber, 1.03 bankruptcy, 2.04 debt acceleration) with item-code labels",
       "is_synthetic": false,
-      "license": "CC BY-SA 4.0 (Wikipedia S&P 500 constituent list) + US public domain (SEC tickers)",
+      "license": "US public record (SEC EDGAR)",
       "primary_keys": [
         "record_id"
       ],
-      "source": "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies; https://www.sec.gov/files/company_tickers.json",
-      "derived_from": [
-        "data/entity_aliases.csv"
+      "source": "https://efts.sec.gov/LATEST/search-index",
+      "columns": [
+        "record_id",
+        "accession",
+        "company",
+        "file_date",
+        "item",
+        "label",
+        "text",
+        "url"
+      ],
+      "byte_size": 150278,
+      "sha256": "9c52e9da08b13dec7bd8fcafc2f5ed2cc3d4202cb8a8b37b85e25c9e1eff29a0",
+      "record_count": 275
+    },
+    {
+      "file_path": "data/train/synthetic_seeds.csv",
+      "format": "csv",
+      "description": "Hand-written event seed sentences (formerly hard-coded in events.py); used only to augment CYBER/SUPPLY_CHAIN and as the degraded fallback",
+      "is_synthetic": true,
+      "license": "MIT License (Project-Authored Synthetic Data)",
+      "primary_keys": [
+        "record_id"
       ],
       "columns": [
-        "ticker",
-        "canonical_name",
-        "sector",
-        "aliases",
-        "ambiguous_aliases",
-        "is_synthetic",
-        "cik"
+        "text",
+        "label",
+        "is_synthetic"
       ],
-      "byte_size": 33012,
-      "sha256": "85392fc3114da9ef9f40b17399a7f628f15e6682be8248274e16f82e3f7d5072",
-      "record_count": 519
+      "byte_size": 7297,
+      "sha256": "56f5c233f89bd782aff89ced22bd61a9a6924c47e625132b403313ce050fa4fd",
+      "record_count": 77
     }
   ],
-  "updated_at": "2026-10-09T14:05:49.235768+00:00"
+  "updated_at": "2026-10-09T14:29:04.974246+00:00"
 }
