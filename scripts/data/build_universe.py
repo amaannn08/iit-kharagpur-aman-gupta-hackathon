@@ -135,7 +135,8 @@ def build() -> list:
         for r in csv.DictReader(f):
             t = r["ticker"].strip()
             cleaned = clean_name(r["name"])
-            aliases = {GENERIC_REPLACEMENTS.get(cleaned, cleaned), *BRANDS.get(t, [])}
+            full = re.sub(r"\s*\([^)]*\)", "", r["name"]).strip().rstrip(".")  # "Southern Company"
+            aliases = {GENERIC_REPLACEMENTS.get(cleaned, cleaned), full, *BRANDS.get(t, [])}
             rows[t] = {
                 "ticker": t,
                 "canonical_name": r["name"].strip(),

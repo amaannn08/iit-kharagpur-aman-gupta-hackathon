@@ -80,6 +80,9 @@ PHRASE_EXCLUSIONS = {
     "DD": (None, re.compile(r"^\s+analysis\b", re.I)),  # "DuPont analysis"
 }
 TOKEN = re.compile(r"[A-Za-z0-9][A-Za-z0-9&'’\-.]*")
+NEXT_PROPER = re.compile(
+    r"^\s+(?!Inc\b|Corp\b|Co\b|Group\b|Holdings\b|Shares\b|Stock\b)[A-Z][a-z]+"
+)
 PUNCT = re.compile(r"[.,:;!?'’]*$")
 TRAILING = re.compile(r"(?:'s|’s|\.com)?[.,:;!?'’]*$")
 MACRO_TERMS = [
@@ -188,9 +191,17 @@ class EntityLinker:
                     continue
                 ticker, alias = hit
                 ke = self.entities[ticker]
-                if " " not in alias and not stripped[:1].isupper():
-                    continue  # single-word aliases must be capitalized ("apple" is fruit)
+                if " " not in alias and not (stripped[:1].isupper() or stripped[:1].isdigit()):
+                    continue  # single-word aliases must be capitalized ("apple" is fruit); "3M" ok
                 if alias in ke.ambiguous_aliases and not has_context:
+                    continue
+                # An ambiguous one-word alias followed by another capitalized word is usually part of
+                # a different name ("Southern Copper" is not Southern Company).
+                if (
+                    alias in ke.ambiguous_aliases
+                    and " " not in alias
+                    and NEXT_PROPER.match(text[start + len(stripped) :])
+                ):
                     continue
                 after = text[start + len(stripped) :]
                 before = text[max(0, start - 20) : start]
