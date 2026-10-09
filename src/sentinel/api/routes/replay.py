@@ -1,5 +1,4 @@
-"""Replay control and run inspection API endpoints (PRD Section 8 & 16 M2)."""
-
+import logging
 from pathlib import Path
 from typing import List, Optional
 
@@ -19,6 +18,8 @@ from sentinel.replay.controller import (
 )
 from sentinel.storage.db import get_db
 from sentinel.storage.repository import ReplayRepository
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/replay", tags=["Replay Controller"])
 
@@ -111,6 +112,15 @@ async def step_replay(
             dedup_decision=dedup,
         )
         repo.save_signal(sig)
+
+        # PS R3 literal compliance: append emitted signal JSON line to file sink
+        try:
+            sink_path = Path("data/signals.jsonl")
+            sink_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(sink_path, "a", encoding="utf-8") as f:
+                f.write(sig.model_dump_json() + "\n")
+        except Exception as exc:
+            logger.warning("Failed writing to signals.jsonl sink: %s", exc)
 
         # Module B automated stress test trigger on eligible high-impact signals (PRD 9.3)
         stress_result = None

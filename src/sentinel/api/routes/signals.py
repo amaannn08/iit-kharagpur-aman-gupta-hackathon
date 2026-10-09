@@ -1,7 +1,8 @@
 """Risk signals inspection API endpoints (PRD Section 6.2)."""
 
 import json
-from typing import Any, Dict, List
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
@@ -16,11 +17,19 @@ router = APIRouter(prefix="/signals", tags=["Risk Signals"])
 @router.get("", response_model=List[Dict[str, Any]])
 def list_latest_signals(
     limit: int = Query(default=50, ge=1, le=500),
+    since: Optional[str] = Query(default=None, description="ISO timestamp to filter signals after"),
     db: Session = Depends(get_db),
 ) -> List[Dict[str, Any]]:
-    """Return latest emitted risk signals across replay runs."""
+    """Return latest emitted risk signals across replay runs (filtered optionally by since)."""
     repo = ReplayRepository(db)
-    models = repo.list_signals(limit=limit)
+    since_dt = None
+    if since:
+        try:
+            since_dt = datetime.fromisoformat(since.replace("Z", "+00:00"))
+        except Exception:
+            pass
+
+    models = repo.list_signals(limit=limit, since=since_dt)
     results = []
     for m in models:
         if m.raw_json:

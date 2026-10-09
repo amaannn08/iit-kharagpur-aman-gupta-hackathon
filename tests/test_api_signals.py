@@ -58,3 +58,15 @@ def test_signals_streaming_and_query_endpoints(client):
     run_sigs = run_sigs_resp.json()
     assert len(run_sigs) >= 1
     assert run_sigs[0]["signal_id"] == signal_id
+
+    # 6. Verify since filtering query parameter
+    since_resp = client.get(f"/api/signals?since={sig['processed_at']}")
+    assert since_resp.status_code == 200
+    since_sigs = since_resp.json()
+    assert any(s["signal_id"] == signal_id for s in since_sigs)
+
+    # 7. Verify PS R3 literal file sink (data/signals.jsonl)
+    from pathlib import Path
+    sink_file = Path("data/signals.jsonl")
+    assert sink_file.exists()
+    assert sink_file.stat().st_size > 0

@@ -1,5 +1,6 @@
 """Data access repository for runs, records, signals, and audit lineage."""
 
+from datetime import datetime
 from typing import TYPE_CHECKING, List, Optional
 
 from sqlalchemy.orm import Session
@@ -134,10 +135,16 @@ class ReplayRepository:
     def get_signal(self, signal_id: str) -> Optional[SignalModel]:
         return self.session.query(SignalModel).filter_by(signal_id=signal_id).first()
 
-    def list_signals(self, limit: int = 50) -> List[SignalModel]:
+    def list_signals(
+        self,
+        limit: int = 50,
+        since: Optional[datetime] = None,
+    ) -> List[SignalModel]:
+        q = self.session.query(SignalModel)
+        if since:
+            q = q.filter(SignalModel.processed_at >= since)
         return (
-            self.session.query(SignalModel)
-            .order_by(SignalModel.processed_at.desc())
+            q.order_by(SignalModel.processed_at.desc())
             .limit(limit)
             .all()
         )
