@@ -101,5 +101,5 @@ def test_hf_label_files_have_expected_label_space():
 
 def test_committed_data_files_contain_no_carriage_returns():
     """.gitattributes forces eol=lf; any CR would make clone bytes differ from manifest hashes."""
-    for p in list((DATA / "real").rglob("*.csv")) + list((DATA / "train").rglob("*.csv")):
+    for p in [p for d in ("real", "train", "universe") for p in (DATA / d).rglob("*.csv")]:
         assert b"\r" not in p.read_bytes(), p

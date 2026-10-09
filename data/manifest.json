@@ -377,7 +377,33 @@
       "byte_size": 92190,
       "sha256": "4e669b93dae4cce2d6ab59dbfbd46cfd430f6d371cabb8d1d46d22ba6c2edb3e",
       "record_count": 600
+    },
+    {
+      "file_path": "data/universe/entities.csv",
+      "format": "csv",
+      "description": "Entity universe: real S&P 500 constituents (SEC CIKs) plus the 16 fictional demo issuers, flagged per row in is_synthetic",
+      "is_synthetic": false,
+      "license": "CC BY-SA 4.0 (Wikipedia S&P 500 constituent list) + US public domain (SEC tickers)",
+      "primary_keys": [
+        "record_id"
+      ],
+      "source": "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies; https://www.sec.gov/files/company_tickers.json",
+      "derived_from": [
+        "data/entity_aliases.csv"
+      ],
+      "columns": [
+        "ticker",
+        "canonical_name",
+        "sector",
+        "aliases",
+        "ambiguous_aliases",
+        "is_synthetic",
+        "cik"
+      ],
+      "byte_size": 33012,
+      "sha256": "85392fc3114da9ef9f40b17399a7f628f15e6682be8248274e16f82e3f7d5072",
+      "record_count": 519
     }
   ],
-  "updated_at": "2026-10-09T13:55:21.825095+00:00"
+  "updated_at": "2026-10-09T14:05:49.235768+00:00"
 }

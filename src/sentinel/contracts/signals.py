@@ -11,6 +11,7 @@ class EntityReference(BaseModel):
     ticker: Optional[str] = Field(None, description="Mapped ticker symbol if applicable")
     scope: str = Field(default="company", description="Entity scope e.g. company, sector, macro")
     resolved: bool = Field(default=True, description="Whether entity resolution was confident")
+    sector: Optional[str] = Field(None, description="Sector of the resolved company, if known")
 
 
 class SentimentProbabilities(BaseModel):
