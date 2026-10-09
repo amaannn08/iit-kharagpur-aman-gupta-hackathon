@@ -113,19 +113,6 @@ class EntityLinker:
         - Ambiguous words require finance context keywords before resolving.
         - Unknown entities are marked resolved: False.
         """
-        # If explicit hint provided and valid
-        if hint_entity_id and hint_entity_id.upper() in self.entities:
-            ke = self.entities[hint_entity_id.upper()]
-            return (
-                EntityReference(
-                    name=ke.canonical_name,
-                    ticker=ke.ticker,
-                    scope="company",
-                    resolved=True,
-                ),
-                [EvidenceSpan(start=0, end=min(len(text), 20), text=text[:20])],
-            )
-
         lower_text = text.lower()
         has_fin_context = any(
             re.search(rf"\b{re.escape(kw)}\b", lower_text) for kw in FINANCIAL_CONTEXT_KEYWORDS
@@ -182,20 +169,76 @@ class EntityLinker:
                     [span],
                 )
 
-        # 3. Macro / Systemic / Unresolved fallback
-        macro_terms = ["federal reserve", "central bank", "treasury yield", "macro"]
-        if any(term in lower_text for term in macro_terms):
-            return (
-                EntityReference(
-                    name="Macro / Central Bank",
-                    ticker=None,
-                    scope="macro",
-                    resolved=True,
-                ),
-                [],
-            )
+        # 3. Macro / Systemic resolution
+        macro_terms = [
+            "federal reserve",
+            "central bank",
+            "treasury yield",
+            "treasury yields",
+            "fomc",
+            "european central bank",
+            "ecb",
+            "macro",
+            "sovereign bond",
+        ]
+        for term in macro_terms:
+            m = re.search(rf"\b{re.escape(term)}\b", lower_text)
+            if m:
+                span = EvidenceSpan(
+                    start=m.start(),
+                    end=m.end(),
+                    text=text[m.start() : m.end()],
+                )
+                return (
+                    EntityReference(
+                        name="Macro / Central Bank",
+                        ticker=None,
+                        scope="macro",
+                        resolved=True,
+                    ),
+                    [span],
+                )
 
-        # Unknown entity
+        # 4. Fallback: use hint only if provided and valid, but NEVER fabricate a fake span
+        if hint_entity_id:
+            hint_upper = hint_entity_id.upper()
+            if hint_upper in ("MACRO", "SYSTEMIC"):
+                return (
+                    EntityReference(
+                        name="Macro / Central Bank",
+                        ticker=None,
+                        scope="macro",
+                        resolved=True,
+                    ),
+                    [],
+                )
+            if hint_upper in self.entities:
+                ke = self.entities[hint_upper]
+                # Try finding any alias in the text for evidence
+                spans: List[EvidenceSpan] = []
+                for alias in [ke.ticker] + ke.aliases + [ke.canonical_name]:
+                    m = re.search(rf"\b{re.escape(alias)}\b", text, re.IGNORECASE)
+                    if m:
+                        spans.append(
+                            EvidenceSpan(
+                                start=m.start(),
+                                end=m.end(),
+                                text=text[m.start() : m.end()],
+                            )
+                        )
+                        break
+
+                return (
+                    EntityReference(
+                        name=ke.canonical_name,
+                        ticker=ke.ticker,
+                        scope="company",
+                        resolved=True,
+                    ),
+                    spans,
+                )
+
+        # 5. Unknown entity
         return (
             EntityReference(
                 name="Unknown Entity",

@@ -30,77 +30,231 @@ SUPPORTED_EVENT_CLASSES = [
 SEED_TRAINING_CORPUS: List[Tuple[str, str]] = [
     # CREDIT
     ("missed scheduled coupon payment default covenant breach debt restructuring", "CREDIT"),
-    ("downgraded to junk status credit rating cut to Baa3 by Moody's", "CREDIT"),
+    (
+        "skipped an interest payment to bondholders and is in talks with lenders restructuring",
+        "CREDIT",
+    ),
+    (
+        "failed to remit scheduled payment to lending syndicate triggering 30-day cure period",
+        "CREDIT",
+    ),
+    ("downgraded to junk status credit rating cut to Baa3 by Moody's negative outlook", "CREDIT"),
+    (
+        "credit rating agency issues negative outlook downgrade warning on heavy debt maturities",
+        "CREDIT",
+    ),
     ("bankruptcy protection chapter 11 filing insolvent credit lines frozen", "CREDIT"),
     ("files emergency chapter 11 bankruptcy petition debt default insolvency", "CREDIT"),
     ("liquidity shortfall unable to meet commercial paper redemption obligations", "CREDIT"),
-    ("bank run depositor outflows trigger emergency liquidity borrowing", "CREDIT"),
-    ("default on credit facility borrower distressed restructuring", "CREDIT"),
-    ("credit facility coupon payment missed default covenants triggered", "CREDIT"),
-    ("formally denies bankruptcy rumors confirms credit lines remain fully operational", "CREDIT"),
+    ("bank run depositor outflows trigger emergency liquidity borrowing discount window", "CREDIT"),
+    (
+        "default on syndicated credit facility borrower distressed debt restructuring counsel",
+        "CREDIT",
+    ),
+    (
+        "senior unsecured bondholders retain restructuring counsel to evaluate "
+        "debt for equity swap",
+        "CREDIT",
+    ),
+    (
+        "creditors assemble ad hoc committee as firm enters comprehensive debt restructuring",
+        "CREDIT",
+    ),
+    ("credit facility coupon payment missed technical default covenants triggered", "CREDIT"),
+    (
+        "central bank affirms standing discount window will support solvent lenders "
+        "facing liquidity stress",
+        "CREDIT",
+    ),
     # MACRO
     ("Federal Reserve raises benchmark interest rates 50 basis points to curb inflation", "MACRO"),
-    ("central bank cuts discount rate amid slowing economic growth and disinflation", "MACRO"),
-    ("treasury yields invert across 2-year and 10-year curve signaling recession", "MACRO"),
-    ("consumer price index inflation surge forces monetary policy tightening", "MACRO"),
+    (
+        "Federal Reserve signals benchmark rate hike amid persistent core services inflation",
+        "MACRO",
+    ),
+    (
+        "Federal Reserve announces emergency 100 basis point interest rate hike systemic contagion",
+        "MACRO",
+    ),
+    (
+        "central bank cuts discount rate amid slowing economic growth and disinflation easing",
+        "MACRO",
+    ),
+    (
+        "Federal Reserve cuts interest rates by 75 basis points in emergency monetary easing",
+        "MACRO",
+    ),
+    (
+        "sovereign bond prices plummet as benchmark 10-year Treasury yields surge "
+        "14 basis points on PPI print",
+        "MACRO",
+    ),
+    (
+        "treasury yields invert across 2-year and 10-year curve signaling impending recession",
+        "MACRO",
+    ),
+    ("consumer price index inflation surge forces monetary policy tightening cycle", "MACRO"),
+    (
+        "European Central Bank signals surprise liquidity reserve requirement hikes to "
+        "stabilize currency",
+        "MACRO",
+    ),
     ("unemployment rate rises as GDP contracts for second consecutive quarter", "MACRO"),
-    ("interest rates benchmark hike monetary policy tighten yields", "MACRO"),
-    ("Federal Reserve benchmark interest rates inflation monetary policy", "MACRO"),
-    ("central bank maintains interest rates unchanged as consumer price index stabilizes", "MACRO"),
+    ("central bank governor confirms benchmark policy rate setting monetary committee", "MACRO"),
     # GEOPOLITICAL
     ("trade sanctions imposed on key trading partner blocking energy exports", "GEOPOLITICAL"),
     ("tariffs enacted on steel and aluminum sparking retaliatory trade measures", "GEOPOLITICAL"),
-    ("cross-border military conflict disrupts critical shipping corridor", "GEOPOLITICAL"),
-    ("foreign government nationalizes corporate assets without compensation", "GEOPOLITICAL"),
-    ("bilateral trade negotiations collapse amid diplomatic standoff", "GEOPOLITICAL"),
+    (
+        "cross-border military conflict disrupts critical shipping corridor maritime straits",
+        "GEOPOLITICAL",
+    ),
+    (
+        "naval skirmish closes maritime choke points driving benchmark crude oil "
+        "futures up sharply",
+        "GEOPOLITICAL",
+    ),
+    (
+        "foreign government nationalizes corporate assets and energy concessions "
+        "without compensation",
+        "GEOPOLITICAL",
+    ),
+    (
+        "bilateral trade negotiations collapse amid diplomatic standoff and export curbs",
+        "GEOPOLITICAL",
+    ),
+    ("global trade pact talks stall over agricultural export subsidies deadlock", "GEOPOLITICAL"),
     # M_AND_A
     ("announced all-cash acquisition agreement valued at four billion dollars", "M_AND_A"),
     ("hostile takeover bid launched by activist hedge fund for outstanding shares", "M_AND_A"),
     ("merger of equals approved by boards to create industry conglomerate", "M_AND_A"),
     ("divestiture of non-core consumer unit completed for cash consideration", "M_AND_A"),
-    ("definitive purchase agreement signed to acquire regional competitor", "M_AND_A"),
+    ("definitive purchase agreement signed to acquire regional utility solar generator", "M_AND_A"),
+    ("board of directors approves buyout bid from private equity consortium", "M_AND_A"),
     # PRODUCT
     ("wins priority FDA approval for breakthrough oncology drug therapeutic", "PRODUCT"),
-    ("voluntary nationwide product recall issued over safety defect and hazards", "PRODUCT"),
-    ("phase 3 clinical trial fails primary efficacy endpoint in clinical study", "PRODUCT"),
-    ("patent infringement injunction halts distribution of flagship device", "PRODUCT"),
-    ("next-generation hardware architecture launched commercially worldwide", "PRODUCT"),
+    (
+        "unconditional FDA approval received for novel oncology kinase inhibitor therapeutic",
+        "PRODUCT",
+    ),
+    (
+        "voluntary nationwide product recall issued over safety defect and battery fire hazard",
+        "PRODUCT",
+    ),
+    (
+        "phase 3 clinical trial fails primary efficacy endpoint in randomized clinical study",
+        "PRODUCT",
+    ),
+    ("patent infringement injunction halts commercial distribution of flagship device", "PRODUCT"),
+    (
+        "activates transpacific subsea fiber network ahead of schedule expanding bandwidth",
+        "PRODUCT",
+    ),
+    (
+        "secures multi-year direct offtake agreement to provide battery grade lithium carbonate",
+        "PRODUCT",
+    ),
     # REGULATORY
     ("DOJ files antitrust lawsuit to block monopolistic market concentration", "REGULATORY"),
-    ("SEC launches formal enforcement investigation into accounting irregularities", "REGULATORY"),
-    ("consumer financial protection agency levies record civil money penalty", "REGULATORY"),
-    ("stricter emissions standard enforced with immediate operational curbs", "REGULATORY"),
-    ("banking regulators issue cease-and-desist order for compliance deficiencies", "REGULATORY"),
     (
-        "DOJ initiates formal antitrust monopolization lawsuit against corporate merger",
+        "Department of Justice launches antitrust inquiry into proposed semiconductor merger",
+        "REGULATORY",
+    ),
+    ("SEC launches formal enforcement investigation into accounting irregularities", "REGULATORY"),
+    (
+        "Securities and Exchange Commission probes premature subscription revenue recognition",
+        "REGULATORY",
+    ),
+    (
+        "consumer financial protection agency levies record civil money penalty for "
+        "deceptive practices",
+        "REGULATORY",
+    ),
+    (
+        "Federal Trade Commission files preliminary injunction to block corporate buyout",
+        "REGULATORY",
+    ),
+    (
+        "banking regulators issue cease-and-desist order for severe risk compliance deficiencies",
         "REGULATORY",
     ),
     # SUPPLY_CHAIN
-    ("declares force majeure after fire damages primary blast furnace", "SUPPLY_CHAIN"),
-    ("port dockworkers strike halts container freight operations nationwide", "SUPPLY_CHAIN"),
-    ("semiconductor component shortages force production line shutdowns", "SUPPLY_CHAIN"),
-    ("freight logistics delays double container turnaround times at key hubs", "SUPPLY_CHAIN"),
+    ("declares force majeure after fire damages primary blast furnace facility", "SUPPLY_CHAIN"),
+    (
+        "unexpected fire at primary rolling mill halted output indefinitely invoking force majeure",
+        "SUPPLY_CHAIN",
+    ),
+    (
+        "shares tumbled after the company halted output indefinitely at its "
+        "main manufacturing plant",
+        "SUPPLY_CHAIN",
+    ),
+    (
+        "port dockworkers strike halts container freight shipping operations nationwide",
+        "SUPPLY_CHAIN",
+    ),
+    (
+        "critical port terminal bottleneck delays cargo container processing for "
+        "manufacturing suppliers",
+        "SUPPLY_CHAIN",
+    ),
+    ("semiconductor component shortages force automotive assembly line shutdowns", "SUPPLY_CHAIN"),
+    (
+        "freight logistics delays double container turnaround times at key regional cargo hubs",
+        "SUPPLY_CHAIN",
+    ),
+    (
+        "national freight rail strike averted as union ratifies wage agreement easing logistics",
+        "SUPPLY_CHAIN",
+    ),
     ("raw material export embargo cuts off essential lithium battery inputs", "SUPPLY_CHAIN"),
     # EARNINGS
     ("reports record quarterly earnings as net interest margin widens thirty bps", "EARNINGS"),
-    ("slashes full year revenue guidance and profit targets due to rising costs", "EARNINGS"),
+    (
+        "slashes full year revenue guidance and profit targets due to rising operating costs",
+        "EARNINGS",
+    ),
     ("first quarter earnings per share beat consensus estimates by fifteen percent", "EARNINGS"),
-    ("operating profit drops sharply as operating margin compresses", "EARNINGS"),
-    ("quarterly net income surges fifty percent driven by commercial loan growth", "EARNINGS"),
-    ("heavy machinery sales declined four percent due to regional uncertainty", "EARNINGS"),
+    ("Meridian Financial profit tops estimates on stronger commercial lending yields", "EARNINGS"),
+    (
+        "operating profit drops sharply as operating margin compresses due to inventory discounts",
+        "EARNINGS",
+    ),
+    ("quarterly net income surges fifty percent driven by commercial loan volume", "EARNINGS"),
+    (
+        "lowered second-half operating margin targets citing discounted inventory foot traffic",
+        "EARNINGS",
+    ),
+    (
+        "beats vehicle delivery expectations by twelve percent on battery factory efficiency ramp",
+        "EARNINGS",
+    ),
+    (
+        "firm fixed price contract awarded to modernize defense avionics countermeasure systems",
+        "EARNINGS",
+    ),
     # CYBER
-    ("critical zero-day security flaw in enterprise gateway actively exploited", "CYBER"),
+    (
+        "critical zero-day security flaw in enterprise gateway actively exploited by hackers",
+        "CYBER",
+    ),
+    (
+        "unpatched authentication bypass vulnerability actively exploited in enterprise firewall",
+        "CYBER",
+    ),
     ("ransomware attack compromises internal corporate databases and encrypted servers", "CYBER"),
+    (
+        "localized ransomware breach confirmed on legacy payment servers internal nodes encrypted",
+        "CYBER",
+    ),
     ("malicious unauthorized data breach exposes customer banking credentials", "CYBER"),
-    ("distributed denial of service attacks knock online trading portals offline", "CYBER"),
+    ("distributed denial of service attacks knock online banking portals offline", "CYBER"),
     ("supply chain software infiltration compromises downstream client networks", "CYBER"),
-    ("ransomware zero-day security flaw exploit breach databases", "CYBER"),
     # OTHER
-    ("board of directors schedules annual general meeting of shareholders", "OTHER"),
+    ("board of directors schedules annual general meeting of shareholders proxy vote", "OTHER"),
     ("company updates routine corporate governance committee charter", "OTHER"),
     ("executive appointed to non-executive board seat at industry association", "OTHER"),
     ("regular quarterly dividend declared payable on standard record date", "OTHER"),
-    ("routine investor relations presentation slides uploaded to company website", "OTHER"),
+    ("routine investor relations presentation slides uploaded to corporate website", "OTHER"),
 ]
 
 

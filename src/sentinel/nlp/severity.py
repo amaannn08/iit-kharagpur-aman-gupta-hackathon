@@ -17,8 +17,8 @@ EVENT_BASE_SCORES: Dict[str, int] = {
     "CREDIT": 5,
     "MACRO": 5,
     "GEOPOLITICAL": 5,
-    "CYBER": 4,
-    "SUPPLY_CHAIN": 4,
+    "CYBER": 5,
+    "SUPPLY_CHAIN": 5,
     "REGULATORY": 4,
     "M_AND_A": 4,
     "PRODUCT": 3,
@@ -47,6 +47,21 @@ SECTOR_KEYWORDS = {
     "energy producers",
     "broad industry",
     "supply chain network",
+    "syndicated",
+    "syndicate",
+    "banking sector",
+}
+
+REASSURANCE_KEYWORDS = {
+    "denies",
+    "denied",
+    "unchanged",
+    "reassures",
+    "routine",
+    "in line with expectations",
+    "fully operational",
+    "no default",
+    "stabilizes",
 }
 
 CATASTROPHIC_SEVERITY_KEYWORDS = {
@@ -67,6 +82,7 @@ CATASTROPHIC_SEVERITY_KEYWORDS = {
     "covenant breach",
     "covenants",
     "blast furnace",
+    "halted indefinitely",
 }
 
 MATERIAL_SEVERITY_KEYWORDS = {
@@ -112,38 +128,37 @@ class SeverityRubricEngine:
         lower_text = text.lower()
         evidence_spans: List[EvidenceSpan] = []
 
-        # Contextual override for routine stability reports (PRD Section 8)
-        if any(
-            w in lower_text
-            for w in (
-                "maintains interest rates unchanged",
-                "stabilizes near target",
-                "routine quarterly administrative",
-            )
-        ):
-            return ImpactOutput(
-                score=2,
-                rubric_version=self.rubric_version,
-                components=ImpactComponents(event_base=1, scope=1, explicit_severity=0),
-            ), evidence_spans
-
-        # Contextual override for rumor denial / operational reassurance
-        if "denies bankruptcy" in lower_text or "remain fully operational" in lower_text:
-            return ImpactOutput(
-                score=3,
-                rubric_version=self.rubric_version,
-                components=ImpactComponents(event_base=2, scope=1, explicit_severity=0),
-            ), evidence_spans
-
         # 1. Base Score
         event_base = EVENT_BASE_SCORES.get(event_class.upper(), 1)
 
-        # 2. Scope Increment (0, 1, or 2)
+        # 2. Scope Increment (0, 1, or 2) with Evidence Spans
         scope = 0
         if entity.scope == "macro" or any(kw in lower_text for kw in SYSTEMIC_KEYWORDS):
             scope = 2
+            for kw in sorted(SYSTEMIC_KEYWORDS, key=len, reverse=True):
+                match = re.search(rf"\b{re.escape(kw)}\b", lower_text)
+                if match:
+                    evidence_spans.append(
+                        EvidenceSpan(
+                            start=match.start(),
+                            end=match.end(),
+                            text=text[match.start() : match.end()],
+                        )
+                    )
+                    break
         elif any(kw in lower_text for kw in SECTOR_KEYWORDS):
             scope = 1
+            for kw in sorted(SECTOR_KEYWORDS, key=len, reverse=True):
+                match = re.search(rf"\b{re.escape(kw)}\b", lower_text)
+                if match:
+                    evidence_spans.append(
+                        EvidenceSpan(
+                            start=match.start(),
+                            end=match.end(),
+                            text=text[match.start() : match.end()],
+                        )
+                    )
+                    break
 
         # 3. Explicit Severity Increment (0, 1, or 2)
         explicit_sev = 0
@@ -180,7 +195,22 @@ class SeverityRubricEngine:
                     )
                     break
 
-        total_score = max(1, min(10, event_base + scope + explicit_sev))
+        # 4. Mitigating / Reassurance adjustment (e.g. routine stability, denial of rumors)
+        mitigation = 0
+        for kw in sorted(REASSURANCE_KEYWORDS, key=len, reverse=True):
+            match = re.search(rf"\b{re.escape(kw)}\b", lower_text)
+            if match:
+                mitigation = -2 if kw in ("denies", "denied", "routine", "unchanged") else -1
+                evidence_spans.append(
+                    EvidenceSpan(
+                        start=match.start(),
+                        end=match.end(),
+                        text=text[match.start() : match.end()],
+                    )
+                )
+                break
+
+        total_score = max(1, min(10, event_base + scope + explicit_sev + mitigation))
 
         output = ImpactOutput(
             score=total_score,
@@ -188,7 +218,7 @@ class SeverityRubricEngine:
             components=ImpactComponents(
                 event_base=event_base,
                 scope=scope,
-                explicit_severity=explicit_sev,
+                explicit_severity=max(0, explicit_sev + mitigation),
             ),
         )
         return output, evidence_spans
