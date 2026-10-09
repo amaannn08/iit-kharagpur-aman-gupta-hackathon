@@ -285,41 +285,41 @@
    {
     "k": 0.5,
     "trading_days": 443,
-    "tilt_annual_return": 0.2524,
+    "tilt_annual_return": 0.2523,
     "equal_weight_annual_return": 0.2519,
-    "active_annual_return": 0.0005,
+    "active_annual_return": 0.0004,
     "tracking_error": 0.0016,
-    "information_ratio": 0.315,
-    "active_return_t_stat": 0.417,
-    "avg_daily_turnover": 0.00178,
-    "max_weight": 0.0594,
-    "mean_abs_tilt_from_equal": 0.00162
+    "information_ratio": 0.27,
+    "active_return_t_stat": 0.358,
+    "avg_daily_turnover": 0.00177,
+    "max_weight": 0.0593,
+    "mean_abs_tilt_from_equal": 0.0016
    },
    {
     "k": 1.5,
     "trading_days": 443,
-    "tilt_annual_return": 0.2533,
+    "tilt_annual_return": 0.2531,
     "equal_weight_annual_return": 0.2519,
-    "active_annual_return": 0.0015,
+    "active_annual_return": 0.0012,
     "tracking_error": 0.0047,
-    "information_ratio": 0.311,
-    "active_return_t_stat": 0.412,
-    "avg_daily_turnover": 0.00523,
-    "max_weight": 0.0776,
-    "mean_abs_tilt_from_equal": 0.00474
+    "information_ratio": 0.266,
+    "active_return_t_stat": 0.353,
+    "avg_daily_turnover": 0.0052,
+    "max_weight": 0.0774,
+    "mean_abs_tilt_from_equal": 0.00469
    },
    {
     "k": 5.0,
     "trading_days": 443,
-    "tilt_annual_return": 0.2561,
+    "tilt_annual_return": 0.2556,
     "equal_weight_annual_return": 0.2519,
-    "active_annual_return": 0.0043,
-    "tracking_error": 0.0147,
-    "information_ratio": 0.29,
-    "active_return_t_stat": 0.384,
-    "avg_daily_turnover": 0.01561,
-    "max_weight": 0.1326,
-    "mean_abs_tilt_from_equal": 0.01438
+    "active_annual_return": 0.0037,
+    "tracking_error": 0.0146,
+    "information_ratio": 0.253,
+    "active_return_t_stat": 0.335,
+    "avg_daily_turnover": 0.01554,
+    "max_weight": 0.132,
+    "mean_abs_tilt_from_equal": 0.01425
    }
   ],
   "conclusion": "Positive but statistically insignificant active return (|t| < 2 for every k): the module demonstrates sentiment-driven reweighting, not demonstrated alpha."
@@ -339,7 +339,7 @@
   "sentiment_macro_f1": 0.3477,
   "severity_mae": 2.79
  },
- "generated_at": "2026-10-09T18:57:34+00:00",
+ "generated_at": "2026-10-09T19:03:27+00:00",
  "targets": {
   "event_macro_f1": 0.7,
   "sentiment_macro_f1": 0.75,

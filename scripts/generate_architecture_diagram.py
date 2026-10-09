@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Generate high-resolution system architecture diagram for S&P Sentinel.
 
-Outputs docs/architecture.png with an institutional, dark-themed layout
-illustrating all six pipeline stages conforming to the PRD specification.
+Outputs docs/architecture.png. Metric values shown on the diagram are read from
+docs/metrics.json (scripts/run_evaluation.py), never typed by hand.
 """
 
+import json
 from pathlib import Path
 
 import matplotlib.patches as patches
@@ -12,6 +13,7 @@ import matplotlib.pyplot as plt
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 OUTPUT_PNG = REPO_ROOT / "docs" / "architecture.png"
+METRICS = REPO_ROOT / "docs" / "metrics.json"
 
 
 def create_architecture_diagram() -> None:
@@ -27,182 +29,243 @@ def create_architecture_diagram() -> None:
 
     # Header / Title Bar
     title_box = patches.FancyBboxPatch(
-        (3, 91), 94, 7, boxstyle="round,pad=0.3",
-        fc="#111827", ec="#38bdf8", lw=1.5
+        (3, 91), 94, 7, boxstyle="round,pad=0.3", fc="#111827", ec="#38bdf8", lw=1.5
     )
     ax.add_patch(title_box)
     ax.text(
-        5, 95.5, "S&P SENTINEL — SYSTEM ARCHITECTURE & DATA FLOW",
-        fontsize=16, fontweight="bold", color="#f8fafc", fontfamily="sans-serif"
+        5,
+        95.5,
+        "S&P SENTINEL — SYSTEM ARCHITECTURE & DATA FLOW",
+        fontsize=16,
+        fontweight="bold",
+        color="#f8fafc",
+        fontfamily="sans-serif",
     )
     ax.text(
-        5, 92.5, "Financial-Text Risk Intelligence & Wholesale Balance Sheet Stress Testing Platform | IIT Kharagpur",
-        fontsize=10, color="#94a3b8", fontfamily="sans-serif"
+        5,
+        92.5,
+        "Real-time financial-text risk signals driving index rebalancing and portfolio stress tests | IIT Kharagpur",
+        fontsize=10,
+        color="#94a3b8",
+        fontfamily="sans-serif",
     )
     ax.text(
-        80, 94, "100% OFFLINE LOCALHOST\nSHA-256 AUDITED",
-        fontsize=9, fontweight="bold", color="#10b981", ha="center", va="center"
+        80,
+        94,
+        "OFFLINE APP RUNTIME\nLIVE FEEDS VIA RECORDER",
+        fontsize=9,
+        fontweight="bold",
+        color="#10b981",
+        ha="center",
+        va="center",
     )
 
     # Helper function for drawing module cards
-    def draw_card(x, y, w, h, title, subtitle, items, border_color="#334155", bg_color="#131b2e", header_color="#38bdf8"):
+    def draw_card(
+        x,
+        y,
+        w,
+        h,
+        title,
+        subtitle,
+        items,
+        border_color="#334155",
+        bg_color="#131b2e",
+        header_color="#38bdf8",
+    ):
+        # matplotlib renders text between two "$" as math: escape currency symbols
+        title, subtitle = title.replace("$", r"\$"), (subtitle or "").replace("$", r"\$")
+        items = [i.replace("$", r"\$") for i in items]
         box = patches.FancyBboxPatch(
-            (x, y), w, h, boxstyle="round,pad=0.5",
-            fc=bg_color, ec=border_color, lw=1.5
+            (x, y), w, h, boxstyle="round,pad=0.5", fc=bg_color, ec=border_color, lw=1.5
         )
         ax.add_patch(box)
         # Header banner
-        header_strip = patches.Rectangle(
-            (x, y + h - 4.5), w, 4.5,
-            fc="#1e293b", ec="none"
-        )
+        header_strip = patches.Rectangle((x, y + h - 4.5), w, 4.5, fc="#1e293b", ec="none")
         ax.add_patch(header_strip)
         ax.text(
-            x + 1.5, y + h - 2.8, title,
-            fontsize=11, fontweight="bold", color=header_color, fontfamily="sans-serif"
+            x + 1.5,
+            y + h - 2.8,
+            title,
+            fontsize=11,
+            fontweight="bold",
+            color=header_color,
+            fontfamily="sans-serif",
         )
         if subtitle:
             ax.text(
-                x + 1.5, y + h - 4.0, subtitle,
-                fontsize=8, color="#94a3b8", fontfamily="sans-serif"
+                x + 1.5, y + h - 4.0, subtitle, fontsize=8, color="#94a3b8", fontfamily="sans-serif"
             )
 
         # Content list items
         curr_y = y + h - 7.5
         for item in items:
             ax.text(
-                x + 2, curr_y, f"• {item}",
-                fontsize=8.5, color="#e2e8f0", fontfamily="sans-serif"
+                x + 2, curr_y, f"• {item}", fontsize=8.5, color="#e2e8f0", fontfamily="sans-serif"
             )
             curr_y -= 3.2
 
-    # Column 1: Ingestion & Provenance (X: 3 to 22)
+    m = json.loads(METRICS.read_text()) if METRICS.exists() else {}
+    ev = m.get("public_real", {}).get("event", {})
+    se = m.get("public_real", {}).get("sentiment", {})
+    ent = m.get("entity_polygon", {})
+    imp = m.get("market_impact", {})
+    perf = m.get("perf", {})
+    fmt = lambda v, d=3: f"{v:.{d}f}" if isinstance(v, (int, float)) else "n/a"  # noqa: E731
+
+    # Column 1: real data sources
     draw_card(
-        x=3, y=50, w=21, h=37,
-        title="1. MULTI-SOURCE INGESTION",
-        subtitle="Heterogeneous Offline Contracts",
+        x=3,
+        y=50,
+        w=21,
+        h=37,
+        title="1. REAL DATA SOURCES",
+        subtitle="Downloaded, checksummed, licensed",
         items=[
-            "News CSV (Curated & Kaggle)",
-            "Social Media (Cashtags & Rumors)",
-            "Reference Universe (23 Tickers)",
-            "Kaggle FinancialPhraseBank",
-            "Pydantic v2 InputRecord",
-            "Immutable Timestamp Quality",
-            "SHA-256 Manifest (15 Datasets)"
+            "GDELT 2.0 GKG 15-min (live recorder)",
+            "SEC EDGAR 8-K filings (live recorder)",
+            "Polygon 2023 news: 5,548 articles",
+            "Kaggle stock tweets: 862k (2017-18)",
+            "HF labeled fin. tweets: 21k + 12k",
+            "Kaggle card txns: 13.3M -> Module B",
+            "yfinance closes; SHA-256 manifest",
         ],
-        border_color="#0284c7", bg_color="#0f172a", header_color="#38bdf8"
+        border_color="#0284c7",
+        bg_color="#0f172a",
+        header_color="#38bdf8",
     )
 
-    # Column 1 bottom: Replay Controller
+    # Column 1 bottom: replay, dedup, relevance
     draw_card(
-        x=3, y=10, w=21, h=36,
-        title="2. REPLAY & DEDUPLICATION",
-        subtitle="Temporal Replay & Near-Dup Filter",
+        x=3,
+        y=10,
+        w=21,
+        h=36,
+        title="2. REPLAY, DEDUP & RELEVANCE",
+        subtitle="Badged sources, offline runtime",
         items=[
-            "Logical Replay Clock (1x-60x)",
-            "Rolling Deduplication Window",
-            "Token Jaccard Similarity (≥0.65)",
-            "Sub-phrase Containment (≥0.80)",
-            "Duplicate Echo Suppression",
-            "Burst Chatter Aggregation",
-            "Zero Cloud Key Requirement"
+            "Source registry: synthetic / historical / live",
+            "Logical replay clock, live append",
+            "Exact hash + MinHash-LSH near-dup",
+            "Lead-sentence index (headline reposts)",
+            "24 h window; 100k tweets in 26 s",
+            "Social spam & relevance filter",
+            "No network calls in the app runtime",
         ],
-        border_color="#6366f1", bg_color="#0f172a", header_color="#818cf8"
+        border_color="#6366f1",
+        bg_color="#0f172a",
+        header_color="#818cf8",
     )
 
-    # Column 2: Hybrid NLP Risk Engine (X: 27 to 48)
+    # Column 2: NLP risk engine
     draw_card(
-        x=27, y=10, w=22, h=77,
-        title="3. HYBRID NLP RISK ENGINE",
-        subtitle="Multi-Task Feature Extraction Pipeline",
+        x=27,
+        y=10,
+        w=22,
+        h=77,
+        title="3. NLP RISK ENGINE",
+        subtitle="Trained and validated on real data",
         items=[
-            "Entity Linking & True Character Spans",
-            "Alias & Ambiguity Resolution",
-            "FinBERT & Financial Lexicon Sentiment",
-            "Strict Probability Sum Validation",
-            "Continuous Sentiment [-1.0, +1.0]",
-            "10-Class Financial Event Taxonomy",
-            "CREDIT, MACRO, SUPPLY_CHAIN, etc.",
-            "Confidence Abstention (OTHER Fallback)",
-            "Additive 1-10 Severity Rubric",
-            "Base + Scope + Dynamic Multipliers",
-            "De-Leaked Gold Holdout (105 Rows)",
-            "Rule-Based Baseline Comparison",
-            "Deterministic Grounding Spans"
+            f"Entity linker, S&P 500 universe: P {fmt(ent.get('precision'))}",
+            "One signal per company (multi-entity)",
+            f"Event classifier: macro-F1 {fmt(ev.get('macro_f1_model'))}",
+            "  (4,117 held-out real tweets)",
+            "Calibrated abstention + evidence gates",
+            f"  precision {fmt(ev.get('precision_when_fired'))} when it fires",
+            f"Sentiment: macro-F1 {fmt(se.get('macro_f1'))} (lexicon {fmt(se.get('baseline_lexicon_macro_f1'))})",
+            "Rate cut / hike direction rules",
+            "Impact 1-10: market-calibrated decile",
+            f"  vs abnormal return: rho {fmt(imp.get('learned_oof_spearman'))}",
+            "Rubric components + evidence spans",
+            "8-K cyber / credit / routine filings",
+            f"p95 {fmt(perf.get('latency_p95_s'))} s per record on CPU",
         ],
-        border_color="#10b981", bg_color="#064e3b22", header_color="#34d399"
+        border_color="#10b981",
+        bg_color="#064e3b22",
+        header_color="#34d399",
     )
 
-    # Column 3: Contagion & Shock Mapping (X: 52 to 73)
+    # Column 3: Module A
     draw_card(
-        x=52, y=50, w=21, h=37,
-        title="4. CONTAGION NETWORK",
-        subtitle="NetworkX Multi-Hop Propagation",
+        x=52,
+        y=50,
+        w=21,
+        h=37,
+        title="4. MODULE A: INDEX REBALANCER",
+        subtitle="Sentiment-tilted mock S&P 100 index",
         items=[
-            "Directed Customer-Supplier Graph",
-            "Debtor-Creditor Linkages",
-            "Multi-Hop Transmission Engine",
-            "Bounded Decay (0.50 per hop)",
-            "Second-Order Counterparty Shock",
-            "Cyclic Loop Prevention",
-            "Isolated Node Protection"
+            "20 names, equal base weights",
+            "Time-decayed sentiment EMA per name",
+            "w = base x (1 + k x EMA), long-only",
+            "Caps: 20% per name, 40% per sector",
+            "Weights over time + reasons + turnover",
+            "Back-test on real tweets & prices",
+            "Reported honestly: no proven alpha",
         ],
-        border_color="#f59e0b", bg_color="#0f172a", header_color="#fbbf24"
+        border_color="#f59e0b",
+        bg_color="#0f172a",
+        header_color="#fbbf24",
     )
 
-    # Column 3 bottom: Module B Wholesale Stress Engine
+    # Column 3 bottom: Module B
     draw_card(
-        x=52, y=10, w=21, h=36,
-        title="5. WHOLESALE STRESS ENGINE",
-        subtitle="Multi-Asset Revaluation & Loss P&L",
+        x=52,
+        y=10,
+        w=21,
+        h=36,
+        title="5. MODULE B: STRESS ENGINE",
+        subtitle="$610M funded + $150M swap notional",
         items=[
-            "$500M Wholesale Banking Book",
-            "Corporate Loans: ECL (ΔPD × LGD)",
-            "Corporate Bonds: Duration & Convexity",
-            "SOFR Swaps: Signed DV01 Curve Delta",
-            "$50M Retail Credit Sleeve (Kaggle)",
-            "Systemic Macro Curve Shifts (±bps)",
-            "Stress Waterfall & Portfolio P&L"
+            "Wholesale $500M (synthetic book)",
+            "Retail/SME $50M from real card txns",
+            "Equity $60M, betas from real prices",
+            "ECL, duration, signed DV01, beta",
+            "Shocks from 5 real crisis windows",
+            "Contagion graph; CYBER fraud op-loss",
+            "Reconciled; NO_EXPOSURE flagged",
         ],
-        border_color="#ec4899", bg_color="#0f172a", header_color="#f472b6"
+        border_color="#ec4899",
+        bg_color="#0f172a",
+        header_color="#f472b6",
     )
 
-    # Column 4: Storage, Audit & UI (X: 76 to 97)
+    # Column 4: API, audit, terminal
     draw_card(
-        x=76, y=10, w=21, h=77,
+        x=76,
+        y=10,
+        w=21,
+        h=77,
         title="6. API, AUDIT & TERMINAL UI",
-        subtitle="Localhost FastAPI & React UI",
+        subtitle="Localhost FastAPI + React",
         items=[
-            "FastAPI Core Service (Port 8000)",
-            "GET /api/signals?since= Filtering",
-            "POST /api/analyze (Ad-hoc Text)",
-            "POST /api/stress/run (Crisis Scenarios)",
-            "signals.jsonl Append-Only File Sink",
-            "SQLite Audit Store & Replay Logs",
-            "React 18 + TypeScript + Vite UI",
-            "Institutional High-Contrast Dark Mode",
-            "Live Feed, Contagion Graph & Matrix",
-            "Loss Attribution Waterfall",
-            "Cryptographic Data Hygiene Gate",
-            "Zero External Runtime Calls"
+            "POST /api/analyze, /api/replay/*",
+            "GET /api/signals, SSE event stream",
+            "data/signals.jsonl file sink (PS)",
+            "GET /api/index/* (Module A)",
+            "POST /api/stress/scenario, /custom",
+            "SQLite audit store, JSON/CSV export",
+            "React terminal: live feed + inspector",
+            "Module A weights-over-time chart",
+            "Module B before/after + waterfall",
+            "Real-data metrics panel",
+            "docs/metrics.json: single source",
+            "CI recomputes real-data suites",
         ],
-        border_color="#8b5cf6", bg_color="#0f172a", header_color="#a78bfa"
+        border_color="#8b5cf6",
+        bg_color="#0f172a",
+        header_color="#a78bfa",
     )
 
     # Connector Arrows
-    arrow_props = dict(
-        arrowstyle="-|>", lw=2, color="#38bdf8", mutation_scale=15
-    )
+    arrow_props = dict(arrowstyle="-|>", lw=2, color="#38bdf8", mutation_scale=15)
     # 1 -> 2
     ax.annotate("", xy=(13.5, 46.5), xytext=(13.5, 49.5), arrowprops=arrow_props)
     # 2 -> 3
     ax.annotate("", xy=(26.5, 48.5), xytext=(24.2, 48.5), arrowprops=arrow_props)
-    # 3 -> 4
+    # 3 -> 4 (sentiment to Module A)
     ax.annotate("", xy=(51.5, 68.5), xytext=(49.2, 68.5), arrowprops=arrow_props)
-    # 3 -> 5
+    # 3 -> 5 (event + impact to Module B)
     ax.annotate("", xy=(51.5, 28.5), xytext=(49.2, 28.5), arrowprops=arrow_props)
-    # 4 -> 5
-    ax.annotate("", xy=(62.5, 46.5), xytext=(62.5, 49.5), arrowprops=arrow_props)
     # 5 -> 6
     ax.annotate("", xy=(75.5, 28.5), xytext=(73.2, 28.5), arrowprops=arrow_props)
     # 4 -> 6
@@ -210,8 +273,12 @@ def create_architecture_diagram() -> None:
 
     # Footer Notes
     ax.text(
-        3, 3, "S&P Global & CRISIL Campus Hackathon 2026 | Candidate: Aman Gupta (IIT Kharagpur) | Codebase Status: Verified Green (71 Tests, Zero External Network Calls)",
-        fontsize=8.5, color="#64748b", fontfamily="sans-serif"
+        3,
+        3,
+        "S&P Global & CRISIL Campus Hackathon 2026 | Candidate: Aman Gupta (IIT Kharagpur) | Metrics: docs/metrics.json (scripts/run_evaluation.py)",
+        fontsize=8.5,
+        color="#64748b",
+        fontfamily="sans-serif",
     )
 
     plt.tight_layout()
