@@ -180,7 +180,9 @@ class ReplayController:
             # Advance logical clock
             sim_time = self._clock.advance_record(record)
             # Check deduplication
-            dedup_decision = self._dedup.process(record.record_id, record.text)
+            dedup_decision = self._dedup.process(
+                record.record_id, record.text, timestamp=record.simulated_at or record.published_at
+            )
 
             # Invoke downstream processor if provided
             produced = await processor(record, dedup_decision) if processor else None

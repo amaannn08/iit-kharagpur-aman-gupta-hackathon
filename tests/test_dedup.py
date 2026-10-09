@@ -59,3 +59,54 @@ def test_deduplicator_reset():
     d = dedup.process("rec-2", "Some breaking financial headline")
     assert not d.is_duplicate
     assert d.canonical_record_id == "rec-2"
+
+
+def test_headline_repost_of_long_article_is_near_duplicate():
+    """A tweet re-posting an article headline: Jaccard 0.24 but containment 0.91."""
+    dedup = ExactTextDeduplicator()
+    article = (
+        "Federal Reserve signals benchmark rate hike amid persistent core inflation. The Federal "
+        "Open Market Committee indicated that benchmark rates will likely rise by 50 to 75 basis "
+        "points as core services inflation remains elevated across major districts."
+    )
+    dedup.process("news-1", article)
+    repost = dedup.process(
+        "soc-1",
+        "BREAKING: Federal Reserve signals benchmark rate hike amid persistent core inflation!!",
+    )
+    assert repost.is_duplicate and repost.match_type == "near_duplicate"
+    assert repost.canonical_record_id == "news-1"
+
+
+def test_wire_syndication_variant_is_near_duplicate():
+    dedup = ExactTextDeduplicator()
+    dedup.process(
+        "a", "Apex Industrial missed its scheduled coupon payment, triggering default covenants."
+    )
+    d = dedup.process(
+        "b",
+        "UPDATE: Apex Industrial missed its scheduled coupon payment, triggering default covenants - Reuters",
+    )
+    assert d.is_duplicate and d.duplicate_group_id.startswith("dup-")
+
+
+def test_window_evicts_old_stories_and_short_texts():
+    from datetime import datetime, timedelta
+
+    dedup = ExactTextDeduplicator(window_hours=24)
+    t0 = datetime(2026, 3, 1, 9, 0)
+    dedup.process("old", "Titan Steel declares force majeure at its main blast furnace", t0)
+    dedup.process("short", "Rates up", t0)  # < 4 tokens: exact-only, must evict cleanly
+    same_day = dedup.process(
+        "dup",
+        "Titan Steel declares force majeure at its main blast furnace",
+        t0 + timedelta(hours=3),
+    )
+    assert same_day.is_duplicate
+    later = dedup.process(
+        "new",
+        "Titan Steel declares force majeure at its main blast furnace",
+        t0 + timedelta(days=3),
+    )
+    assert not later.is_duplicate
+    assert dedup.total_seen == 4 and dedup.total_duplicates == 1
