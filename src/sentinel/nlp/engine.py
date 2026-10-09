@@ -181,6 +181,7 @@ class NLPEngine:
             timestamp_quality=record.timestamp_quality.value,
             simulated_at=record.simulated_at,
             processed_at=datetime.utcnow(),
+            text_excerpt=record.text[:280],
             entity=entity_ref,
             sentiment=sentiment.model_copy(deep=True),
             event=event.model_copy(deep=True),

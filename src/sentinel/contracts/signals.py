@@ -87,6 +87,7 @@ class RiskSignal(BaseModel):
     timestamp_quality: str = Field(default="synthetic")
     simulated_at: Optional[datetime] = None
     processed_at: datetime = Field(default_factory=datetime.utcnow)
+    text_excerpt: Optional[str] = Field(None, description="First 280 characters of the source text")
     entity: EntityReference
     sentiment: SentimentOutput
     event: EventOutput

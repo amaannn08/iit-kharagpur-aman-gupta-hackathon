@@ -160,11 +160,30 @@ describe('S&P Sentinel Risk Terminal', () => {
               ]),
           } as Response);
         }
+        // Mirror the real API: /api/stress/runs returns summaries; /api/stress/{id} the full result
         if (url.includes('/api/stress/runs')) {
           return Promise.resolve({
             ok: true,
             json: () =>
               Promise.resolve([
+                {
+                  stress_id: 'str_1',
+                  run_id: 'test_run_1',
+                  scenario_id: null,
+                  trigger_signal_id: null,
+                  baseline_value_usd: 500000000.0,
+                  stressed_value_usd: 488000000.0,
+                  total_loss_usd: 12000000.0,
+                  executed_at: '2026-03-01T10:15:02Z',
+                },
+              ]),
+          } as Response);
+        }
+        if (url.includes('/api/stress/str_1')) {
+          return Promise.resolve({
+            ok: true,
+            json: () =>
+              Promise.resolve(
                 {
                   stress_id: 'str_1',
                   run_id: 'test_run_1',
@@ -214,8 +233,8 @@ describe('S&P Sentinel Risk Terminal', () => {
                     },
                   ],
                   reconciliation_passed: true,
-                },
-              ]),
+                }
+              ),
           } as Response);
         }
         return Promise.reject(new Error(`Unhandled URL: ${url}`));

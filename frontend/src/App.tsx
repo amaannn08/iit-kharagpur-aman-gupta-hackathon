@@ -29,6 +29,7 @@ import {
   fetchPortfolio,
   fetchReplayStatus,
   fetchSignals,
+  fetchStressRun,
   fetchStressRuns,
   HealthResponse,
   loadReplayScenario,
@@ -120,8 +121,13 @@ export function App() {
         }
       }
       if (strRes.status === 'fulfilled' && strRes.value.length > 0) {
-        setStressRuns(strRes.value);
-        setActiveStressResult(strRes.value[0]);
+        // /api/stress/runs returns summaries without breakdowns: load the full recent results
+        Promise.all(strRes.value.slice(0, 5).map((run: { stress_id: string }) => fetchStressRun(run.stress_id)))
+          .then((full) => {
+            setStressRuns(full);
+            setActiveStressResult(full[0]);
+          })
+          .catch((err) => console.error(err));
       }
     });
   }, []);
@@ -336,7 +342,7 @@ export function App() {
           <span>Candidate: Aman Gupta (IIT Kharagpur)</span>
           <span className="hidden md:inline">•</span>
           <span className="font-mono bg-amber-900/60 px-2 py-0.5 rounded border border-amber-700/40 text-amber-200 hidden md:inline">
-            Production Release
+            {(replayStatus?.source_badges ?? []).join(' + ') || 'No replay loaded'}
           </span>
         </div>
       </div>
@@ -558,7 +564,7 @@ export function App() {
 
                         {/* Middle Line: Evidence Text Snippet */}
                         <p className="text-xs text-gray-300 leading-relaxed font-sans line-clamp-2">
-                          {sig.evidence[0]?.text || 'No text snippet provided.'}
+                          {sig.text_excerpt || sig.evidence[0]?.text || 'No text snippet provided.'}
                         </p>
 
                         {/* Bottom Line: Classification, Impact, Sentiment */}
@@ -650,7 +656,7 @@ export function App() {
                       <span>Scope: {selectedSignal.entity.scope}</span>
                       <span>•</span>
                       <span className={selectedSignal.entity.resolved ? 'text-emerald-400' : 'text-amber-400'}>
-                        {selectedSignal.entity.resolved ? '✓ Disambiguated in Wholesale Graph' : '⚠️ Unresolved'}
+                        {selectedSignal.entity.resolved ? '✓ Resolved by entity linker (S&P 500 universe)' : '⚠️ Unresolved'}
                       </span>
                     </div>
                   </div>
@@ -675,7 +681,7 @@ export function App() {
                   {/* 3-Way Sentiment Probabilities */}
                   <div className="bg-[#0B0F17] p-3.5 rounded border border-gray-800 space-y-2">
                     <div className="text-gray-400 font-medium flex items-center justify-between">
-                      <span>FinBERT Sentiment Decomposition</span>
+                      <span>Sentiment ({selectedSignal.model_versions?.sentiment ?? 'model'})</span>
                       <span className="font-mono text-white font-bold">
                         Score: {selectedSignal.sentiment.score.toFixed(3)}
                       </span>
@@ -705,7 +711,15 @@ export function App() {
                   {/* Event & Severity Rubric */}
                   <div className="bg-[#0B0F17] p-3.5 rounded border border-gray-800 space-y-2">
                     <div className="text-gray-400 font-medium flex items-center justify-between">
-                      <span>Severity Rubric Decomposition (PRD §8)</span>
+                      <span>
+                        Impact:{' '}
+                        {selectedSignal.impact.method === 'market_calibrated'
+                          ? `market-calibrated decile (pred. |z| ${selectedSignal.impact.market_calibration?.predicted_abs_abnormal_z.toFixed(2)})`
+                          : selectedSignal.impact.method === 'floor'
+                            ? 'catastrophic-language floor'
+                            : 'rubric'}{' '}
+                        · rubric components below
+                      </span>
                       <span className="font-mono text-cyan-400 font-bold">
                         Final Score: {selectedSignal.impact.score}/10
                       </span>
@@ -873,7 +887,7 @@ export function App() {
                             <td className="text-right text-gray-400">${ac.baseline_value_usd.toLocaleString('en-US')}</td>
                             <td className="text-right text-white font-semibold">${ac.stressed_value_usd.toLocaleString('en-US')}</td>
                             <td className={`text-right font-bold ${ac.total_pnl_usd < 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
-                              ${ac.total_pnl_usd.toLocaleString('en-US')} ({ac.pct_change.toFixed(2)}%)
+                              ${ac.total_pnl_usd.toLocaleString('en-US')} ({(ac.pct_change * 100).toFixed(2)}%)
                             </td>
                             <td className="text-right text-amber-400">
                               {ac.credit_ecl_delta_usd !== 0 ? `+$${ac.credit_ecl_delta_usd.toLocaleString('en-US')}` : '-'}
@@ -892,7 +906,7 @@ export function App() {
                 <div className="bg-[#111827] p-4 rounded-lg border border-gray-800 space-y-3">
                   <div className="flex items-center justify-between">
                     <h3 className="text-xs font-semibold text-gray-300 uppercase tracking-wider">
-                      Position-Level Risk & Stress Matrix (12 Wholesale Facilities)
+                      Position-Level Risk & Stress Matrix ({activeStressResult?.position_deltas.length ?? 0} positions)
                     </h3>
                     <span className="text-[11px] text-gray-500 font-mono">
                       Bond Duration • Loan ECL Clamping • Swap Signed DV01
@@ -1044,8 +1058,8 @@ export function App() {
                           <div className="text-white font-bold uppercase">{run.event_class} ({run.impact_score}/10)</div>
                           <div className="text-[10px] text-gray-500">{run.executed_at.slice(11, 19)}</div>
                         </div>
-                        <div className="text-right text-rose-400 font-bold">
-                          -${Math.abs(run.total_pnl_usd).toLocaleString('en-US')}
+                        <div className={`text-right font-bold ${run.total_pnl_usd < 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
+                          {run.total_pnl_usd < 0 ? '-' : '+'}${Math.abs(run.total_pnl_usd).toLocaleString('en-US', { maximumFractionDigits: 0 })}
                         </div>
                       </div>
                     ))}
@@ -1067,7 +1081,7 @@ export function App() {
                   NLP Pipeline Sandbox & Risk Signal Generator
                 </h3>
                 <p className="text-xs text-gray-400 mt-0.5">
-                  Type or paste raw financial text to test disambiguation, FinBERT sentiment, event classification, and automated stress triggers.
+                  Type or paste raw financial text to test entity linking, sentiment, event classification, market-calibrated impact and automated stress triggers.
                 </p>
               </div>
 
@@ -1475,32 +1489,35 @@ export function App() {
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
-                    Wholesale portfolio segregation: Funded $500M vs Derivative $150M
+                    Funded book value and derivative notional/MTM reported separately (PRD §9.1)
                   </li>
                 </ul>
               </div>
 
               <div className="bg-[#0B0F17] p-4 rounded border border-gray-800 space-y-3">
                 <div className="text-cyan-400 font-semibold uppercase tracking-wider text-[11px]">
-                  NLP Quality Targets (Offline Holdout Benchmark)
+                  NLP Quality Targets (PRD §13.1)
                 </div>
                 <div className="space-y-2 text-gray-300 font-mono text-[11px]">
                   <div className="flex justify-between">
-                    <span>Sentiment Macro-F1 Target:</span>
-                    <span className="text-white font-bold">≥ 0.75 (Achieved: 0.88)</span>
+                    <span>Sentiment macro-F1</span>
+                    <span className="text-white font-bold">≥ 0.75</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Event Classification Macro-F1:</span>
-                    <span className="text-white font-bold">≥ 0.70 (Achieved: 0.85)</span>
+                    <span>Event classification macro-F1</span>
+                    <span className="text-white font-bold">≥ 0.70</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Entity Linking Precision:</span>
-                    <span className="text-white font-bold">≥ 0.90 (Achieved: 0.94)</span>
+                    <span>Entity linking precision</span>
+                    <span className="text-white font-bold">≥ 0.90</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Severity MAE Target:</span>
-                    <span className="text-white font-bold">≤ 1.5 pts (Achieved: 0.82)</span>
+                    <span>Severity MAE vs human labels</span>
+                    <span className="text-amber-300 font-bold">≤ 1.5 pts · pending human-labeled news set</span>
                   </div>
+                  <p className="text-gray-500 font-sans pt-1">
+                    Measured values are in the table above, generated from docs/metrics.json on real held-out data.
+                  </p>
                 </div>
               </div>
             </div>

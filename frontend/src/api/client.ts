@@ -127,6 +127,8 @@ export interface RiskSignal {
   duplicate_group_id?: string;
   eligible_for_action: boolean;
   action_block_reasons: string[];
+  text_excerpt?: string | null;
+  model_versions?: Record<string, string>;
 }
 
 export interface PositionStressDelta {
