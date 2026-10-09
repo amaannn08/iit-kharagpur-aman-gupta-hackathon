@@ -237,7 +237,7 @@ describe('S&P Sentinel Risk Terminal', () => {
 
     // Assert Replay controls toolbar is active and rendered
     await waitFor(() => {
-      expect(screen.getByText('Credit Crunch ($APEX Default)')).toBeInTheDocument();
+      expect(screen.getByText('Synthetic demo scenario (news + social)')).toBeInTheDocument();
       expect(screen.getByText('5 / 25')).toBeInTheDocument();
     });
   });
@@ -267,7 +267,8 @@ describe('S&P Sentinel Risk Terminal', () => {
 
     expect(screen.getByText('Funded Book Value (PRD §9.1)')).toBeInTheDocument();
     expect(screen.getByText('Derivative Gross Notional (Segregated)')).toBeInTheDocument();
-    expect(screen.getByText('$500,000,000')).toBeInTheDocument();
+    // funded book value is rendered from /api/portfolio data (no longer hardcoded)
+    expect(await screen.findByText('$500,000,000')).toBeInTheDocument();
     expect(screen.getByText('$150,000,000')).toBeInTheDocument();
 
     // Switch to NLP Sandbox tab
