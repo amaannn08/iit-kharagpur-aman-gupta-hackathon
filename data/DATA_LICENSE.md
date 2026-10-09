@@ -60,28 +60,10 @@ In strict compliance with **Hackathon Guidelines Section 8 (Confidentiality & Da
 
 ---
 
-## 6. External Public Benchmark Datasets & Attributions
+## 6. Real Public Datasets
 
-The repository provides acquisition scripts (`scripts/data/fetch_kaggle.py`) and schema converters (`scripts/data/convert_*.py`) for open Kaggle datasets referenced in the Hackathon Problem Statement (§4):
-
-1. **FinancialPhraseBank (Malo et al. 2014):**
-   - **Path:** `data/external/phrasebank/`
-   - **Upstream License:** Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)
-   - **Attribution:** Pekka Malo, Ankur Sinha, Pekka Korhonen, Jyrki Wallenius, and Pyry Takala (2014). "Good debt or bad debt: Detecting semantic orientations in economic texts", JAIST 65(4).
-   - **Role:** Pure offline sentiment evaluation benchmark with detached labels; never mixed into training or production replay.
-
-2. **Ticker-Level Financial News (rdolphin / Kaggle):**
-   - **Path:** `data/external/ticker_news/`
-   - **Upstream License:** Creative Commons CC0 1.0 Universal (Public Domain)
-   - **Role:** Public domain news replay and entity extraction validation with detached silver sentiment labels.
-
-3. **Stock Tweets Sentiment & Returns (thedevastator / Kaggle):**
-   - **Path:** `data/external/tweets/`
-   - **Upstream License:** Creative Commons CC0 1.0 Universal (Public Domain)
-   - **Role:** Social media sentiment replay with detached forward return metrics (`outcomes.csv`) for predictive backtesting.
-
-4. **Consumer & SME Credit Sleeve (computingvictor / Kaggle Transactions):**
-   - **Path:** `data/portfolio/credit_sleeve.csv`, `data/portfolio/credit_sleeve.json`
-   - **Derived License:** MIT License (Project-Derived from Public Transactions Dataset)
-   - **Role:** Aggregated pooled loan tranches mapped by sector and credit rating score bands for Module B retail loan portfolio stress testing.
-
+Earlier revisions of this repository contained hand-written fixture rows under `data/external/`
+and `data/portfolio/credit_sleeve.*` that were labeled as Kaggle data. They were not real Kaggle
+records and have been removed. Real public datasets are fetched by `scripts/data/fetch_real.py`
+into the gitignored `data/raw/real/` cache; committed samples and their licenses are documented
+in the sections added alongside them.

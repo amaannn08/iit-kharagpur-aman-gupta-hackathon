@@ -11,7 +11,7 @@
 ---
 
 > **Operational Status:** Fully Operational Offline Platform (All Milestones M0–M6 Complete & Verified).  
-> **Engineering Scope:** End-to-end pipeline: Multi-Source Ingestion & Kaggle Converters, Deduplication Replay Engine, FinBERT NLP Risk Pipeline, 10-Class Event Classification with Confidence Abstention, NetworkX Multi-Hop Contagion Graph, Module B Wholesale Portfolio Stress Testing ($500M book + $50M retail credit sleeve), Signals JSONL Sink & API, SSE Real-Time Streaming, Institutional Terminal UI, and De-Leaked 105-Sample Holdout Benchmark Evaluation.  
+> **Engineering Scope:** End-to-end pipeline: Multi-Source Ingestion, Deduplication Replay Engine, FinBERT NLP Risk Pipeline, 10-Class Event Classification with Confidence Abstention, NetworkX Multi-Hop Contagion Graph, Module B Wholesale Portfolio Stress Testing ($500M synthetic book), Signals JSONL Sink & API, SSE Real-Time Streaming, Institutional Terminal UI, and De-Leaked 105-Sample Holdout Benchmark Evaluation.  
 > **Runtime Policy:** 100% Offline Localhost Execution (`127.0.0.1`). Zero External Web APIs, Zero Paid Cloud Services, Zero Hardcoded Secrets.  
 > **Environment Badge:** `HISTORICAL REPLAY / OFFLINE RISK PLATFORM`  
 
@@ -26,7 +26,7 @@ The **S&P Global & CRISIL Campus Hackathon 2026** tasks candidates with building
 
 ### Solution Approach: S&P Sentinel
 **S&P Sentinel** is architected for CPU-first local deployment with zero external runtime dependencies:
-1. **Multi-Source Ingestion & Kaggle Pipeline:** Ingests local historical news and social post streams via typed adapters into immutable `InputRecord` Pydantic contracts. Ingests and converts open Kaggle datasets (FinancialPhraseBank, Ticker News, Stock Tweets, Financial Transactions) into contract-compliant formats with detached silver labels.
+1. **Multi-Source Ingestion:** Ingests local historical news and social post streams via typed adapters into immutable `InputRecord` Pydantic contracts.
 2. **Authoritative Contracts & Local Persistence:** Pydantic v2 schemas for input records, risk signals, and wholesale portfolio positions, backed by a local SQLite audit store and an append-only `data/signals.jsonl` sink.
 3. **Logical Replay Clock & Deduplication Engine:** Advances simulated time along a logical clock (`1x` to `60x`), enforcing exact canonical key deduplication alongside token Jaccard similarity ($\ge 0.65$) and sub-phrase containment ($\ge 0.80$) within a rolling window to prevent duplicate shocks.
 4. **Local Multi-Task NLP Engine:** 
@@ -35,11 +35,10 @@ The **S&P Global & CRISIL Campus Hackathon 2026** tasks candidates with building
    - 10-Class Event Classifier (9 financial categories + `OTHER` abstention when confidence is low).
    - Additive 1–10 Impact Severity Rubric decomposing scores into base severity, scope modifier, and dynamic regulatory/capital multipliers.
 5. **Contagion Propagation Network:** NetworkX directed customer-supplier and creditor transmission graph (`data/graph_edges.csv`) with 2-hop geometric dampening ($0.50^{\text{hop}}$).
-6. **Wholesale Portfolio Stress Engine (Module B Primary Deliverable):** Multi-asset valuation on an institutional $500M wholesale banking book plus a $50M retail credit sleeve:
+6. **Wholesale Portfolio Stress Engine (Module B Primary Deliverable):** Multi-asset valuation on an institutional $500M wholesale banking book:
    - Corporate Loans ($220M funded): IFRS 9-style single-period incremental Expected Credit Loss ($\Delta\text{ECL} = \text{EAD} \times \Delta\text{PD} \times \text{LGD}$) clamped to $[0, 1]$.
    - Corporate Bonds ($200M MTM): Modified duration and convexity spread repricing ($\Delta V = -D \times V \times \Delta s + \frac{1}{2} C \times V \times (\Delta s)^2$).
    - Interest Rate Swaps ($150M gross notional): Signed DV01 curve sensitivity ($\Delta V = \text{signed\_DV01} \times \Delta y_{\text{bps}}$).
-   - Consumer & SME Credit Sleeve ($50M): Pooled loan tranches derived from Kaggle transaction data mapped across 8 sectors.
    - Systemic Macro Curve Shifts: Parallel yield curve moves applied across all positions; handles directional rate cuts vs rate hikes correctly.
 7. **Institutional Risk Terminal UI:** High-density dark terminal built with React 18, TypeScript, and Vite, featuring live signal streaming, contagion network graph, loss attribution waterfalls, manual NLP sandbox, dataset catalog, and evaluation audit gates.
 
@@ -53,7 +52,7 @@ The **S&P Global & CRISIL Campus Hackathon 2026** tasks candidates with building
 ```mermaid
 flowchart TD
     subgraph Ingestion["1. Multi-Source Ingestion & Replay"]
-        N["News CSVs\n(Curated + Kaggle)"] --> ADAPT["Ingestion Adapters\n(NewsAdapter, SocialAdapter)"]
+        N["News CSVs\n(Curated synthetic)"] --> ADAPT["Ingestion Adapters\n(NewsAdapter, SocialAdapter)"]
         S["Social CSVs\n(Cashtags & Chatter)"] --> ADAPT
         ADAPT --> REPLAY["Replay Clock Controller\n(1x, 5x, 20x, 60x, Step)"]
         REPLAY --> DEDUP["Deduplication Engine\n(Jaccard >= 0.65 & Containment)"]
@@ -123,7 +122,7 @@ Full confusion matrices, per-class support tables, and granular inspection recor
 
 ## 4. Multi-Source Datasets & Cryptographic Manifest
 
-In strict accordance with Hackathon Guidelines Sections 8 and 9, S&P Sentinel uses zero proprietary client data. All 15 datasets are cataloged in `data/manifest.json` with SHA-256 checksums and byte counts verified by `python scripts/verify_hygiene.py`:
+In strict accordance with Hackathon Guidelines Sections 8 and 9, S&P Sentinel uses zero proprietary client data. All datasets are cataloged in `data/manifest.json` with SHA-256 checksums and byte counts verified by `python scripts/verify_hygiene.py`:
 
 | Dataset Path | Format | Records | Type / Provenance |
 |---|---|---|---|
@@ -134,10 +133,6 @@ In strict accordance with Hackathon Guidelines Sections 8 and 9, S&P Sentinel us
 | `data/graph_edges.csv` | CSV | 10 | Directed customer-supplier and creditor contagion transmission links |
 | `data/scenarios/*.json` | JSON | 3 | Crisis scenario definitions (credit crunch, rate shock, supply disruption) |
 | `data/eval/holdout_seed.csv` | CSV | 105 | De-leaked evaluation holdout with gold sentiment, event, and severity labels |
-| `data/external/phrasebank/sample.csv` | CSV | 10 | FinancialPhraseBank sentiment benchmark (CC BY-NC-SA 4.0, Malo et al. 2014) |
-| `data/external/ticker_news/replay_sample.csv` | CSV | 6 | Ticker-level financial news with detached silver labels (CC0 Public Domain) |
-| `data/external/tweets/replay_sample.csv` | CSV | 6 | Stock tweets with detached forward return metrics (CC0 Public Domain) |
-| `data/portfolio/credit_sleeve.csv` | CSV | 8 | Aggregated consumer/SME credit sleeve derived from Kaggle transaction data |
 
 ---
 
@@ -177,21 +172,6 @@ cd frontend && npm test && cd ..
 ### Step 5: Reproduce De-Leaked NLP Benchmark Evaluation
 ```bash
 uv run python scripts/run_evaluation.py
-```
-
-### Step 6: Fetch & Convert Kaggle Datasets (Optional / Offline Bootstrapped)
-```bash
-python scripts/data/fetch_kaggle.py
-python scripts/data/convert_phrasebank.py
-python scripts/data/convert_ticker_news.py
-python scripts/data/convert_tweets.py
-python scripts/data/build_credit_sleeve.py
-python scripts/data/build_manifest.py
-```
-
-### Step 7: Start Backend Server
-```bash
-uv run uvicorn sentinel.api.app:app --host 127.0.0.1 --port 8000
 ```
 
 ### Step 8: Start Frontend Terminal

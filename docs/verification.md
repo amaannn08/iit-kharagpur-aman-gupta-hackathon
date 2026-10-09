@@ -86,24 +86,6 @@ uv run python scripts/run_evaluation.py
 - Displays confusion matrices, per-class support tables, continuous MAE, and comparison against keyword/lexicon baselines.
 - Regenerates `docs/evaluation_report.md`.
 
-### Step 8: Verify Kaggle Ingestion & Converters (Offline Bootstrapped)
-```bash
-# Fetch or bootstrap raw public datasets
-python scripts/data/fetch_kaggle.py
-
-# Convert into contract-compliant schemas with detached silver labels
-python scripts/data/convert_phrasebank.py
-python scripts/data/convert_ticker_news.py
-python scripts/data/convert_tweets.py
-python scripts/data/build_credit_sleeve.py
-
-# Verify manifest re-indexing
-python scripts/data/build_manifest.py
-```
-*Expected Result:*
-- Ingests and formats open Kaggle datasets into `data/external/`.
-- Aggregates consumer credit transactions into the $50M retail loan sleeve (`data/portfolio/credit_sleeve.csv`).
-- Manifest builder updates checksums idempotently.
 
 ### Step 9: Re-generate Architecture Diagram & Presentation Deck
 ```bash
