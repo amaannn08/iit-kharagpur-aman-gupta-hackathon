@@ -162,9 +162,9 @@
       "description": "Frozen evaluation holdout seed rows with gold-standard sentiment, event class, and severity scores.",
       "is_synthetic": true,
       "license": "MIT License (Project-Authored Synthetic Data)",
-      "sha256": "34909e6fb231c931b7c4660d8e2a1ca63a062e5b4ab158e98c0c634643a834e0",
-      "byte_size": 1887,
-      "record_count": 12,
+      "sha256": "3e58b8c449507921811a31d940854b8509a50d5b5044db589cd8343abb801260",
+      "byte_size": 15292,
+      "record_count": 105,
       "primary_keys": [
         "eval_id"
       ],
@@ -180,5 +180,5 @@
       ]
     }
   ],
-  "updated_at": "2026-10-09T06:16:56.673354+00:00"
+  "updated_at": "2026-10-09T06:34:41.291094+00:00"
 }
