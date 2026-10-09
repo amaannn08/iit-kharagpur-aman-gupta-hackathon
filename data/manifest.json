@@ -157,13 +157,13 @@
       "record_count": 1
     },
     {
-      "file_path": "data/eval/holdout_seed.csv",
+      "file_path": "data/eval/synthetic_regression.csv",
       "format": "csv",
-      "description": "Frozen evaluation holdout seed rows with gold-standard sentiment, event class, and severity scores.",
+      "description": "Author-written synthetic regression set (105 rows, fictional issuers); regression check only, not an independent benchmark",
       "is_synthetic": true,
       "license": "MIT License (Project-Authored Synthetic Data)",
-      "sha256": "3e58b8c449507921811a31d940854b8509a50d5b5044db589cd8343abb801260",
-      "byte_size": 15292,
+      "sha256": "83b966fe04e9427c1823f8febb58728818b300715aa1665a0fc643ea50728d76",
+      "byte_size": 15186,
       "record_count": 105,
       "primary_keys": [
         "eval_id"
@@ -405,30 +405,6 @@
       "record_count": 600
     },
     {
-      "file_path": "data/train/sec_8k/items.csv",
-      "format": "csv",
-      "description": "Real 8-K item statements (1.05 cyber, 1.03 bankruptcy, 2.04 debt acceleration) with item-code labels",
-      "is_synthetic": false,
-      "license": "US public record (SEC EDGAR)",
-      "primary_keys": [
-        "record_id"
-      ],
-      "source": "https://efts.sec.gov/LATEST/search-index",
-      "columns": [
-        "record_id",
-        "accession",
-        "company",
-        "file_date",
-        "item",
-        "label",
-        "text",
-        "url"
-      ],
-      "byte_size": 150278,
-      "sha256": "9c52e9da08b13dec7bd8fcafc2f5ed2cc3d4202cb8a8b37b85e25c9e1eff29a0",
-      "record_count": 275
-    },
-    {
       "file_path": "data/train/synthetic_seeds.csv",
       "format": "csv",
       "description": "Hand-written event seed sentences (formerly hard-coded in events.py); used only to augment CYBER/SUPPLY_CHAIN and as the degraded fallback",
@@ -564,7 +540,31 @@
       "byte_size": 793,
       "sha256": "5accfdd6ffa23948eb1d720fa5602cce14bf669c8f963097648e664f7b32965b",
       "record_count": 1
+    },
+    {
+      "file_path": "data/train/sec_8k/items.csv",
+      "format": "csv",
+      "description": "Real 8-K item statements (1.05 cyber, 1.03 bankruptcy, 2.04 debt acceleration) with item-code labels",
+      "is_synthetic": false,
+      "license": "US public record (SEC EDGAR)",
+      "primary_keys": [
+        "record_id"
+      ],
+      "source": "https://efts.sec.gov/LATEST/search-index",
+      "columns": [
+        "record_id",
+        "accession",
+        "company",
+        "file_date",
+        "item",
+        "label",
+        "text",
+        "url"
+      ],
+      "byte_size": 365547,
+      "sha256": "8c9763e20617ecf24c6069148046dc67f12d9535038349539528978f433fbfd4",
+      "record_count": 704
     }
   ],
-  "updated_at": "2026-10-09T15:10:07.642900+00:00"
+  "updated_at": "2026-10-09T17:10:06.791731+00:00"
 }

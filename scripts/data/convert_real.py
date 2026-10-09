@@ -82,7 +82,9 @@ LICENSES = {
         "Item statements extracted from real Form 8-K filings on SEC EDGAR\n"
         "(https://www.sec.gov/edgar), found via EDGAR full-text search. Labels come from the\n"
         "8-K item the issuer itself filed under: 1.05 Material Cybersecurity Incidents -> CYBER,\n"
-        "1.03 Bankruptcy or Receivership and 2.04 Triggering Events (debt acceleration) -> CREDIT.\n",
+        "1.03 Bankruptcy or Receivership and 2.04 Triggering Events (debt acceleration) -> CREDIT;\n"
+        "routine items as negatives: 2.02 Results of Operations -> EARNINGS, 5.02 officer changes,\n"
+        "7.01 Regulation FD, 8.01 Other Events and 2.03 new debt obligations -> OTHER.\n",
     ),
     "phrasebank": (
         "CC BY-NC-SA 3.0",
@@ -345,6 +347,11 @@ SEC_ITEM_TITLES = {
     "1.05": r"Material\s+Cybersecurity\s+Incidents?",
     "1.03": r"Bankruptcy\s+or\s+Receivership",
     "2.04": r"Triggering\s+Events\s+That\s+Accelerate.{0,160}?Arrangement",
+    "2.02": r"Results\s+of\s+Operations\s+and\s+Financial\s+Condition",
+    "5.02": r"Departure\s+of\s+Directors.{0,220}?Officers",
+    "7.01": r"Regulation\s+FD\s+Disclosure",
+    "8.01": r"Other\s+Events",
+    "2.03": r"Creation\s+of\s+a\s+Direct\s+Financial\s+Obligation.{0,200}?Registrant",
 }
 
 

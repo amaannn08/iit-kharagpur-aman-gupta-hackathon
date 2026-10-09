@@ -199,7 +199,14 @@ SEC_8K_QUERIES = {
     "1.05": ('"Item 1.05" "cybersecurity incident"', "CYBER"),
     "1.03": ('"Item 1.03" "Bankruptcy or Receivership"', "CREDIT"),
     "2.04": ('"Item 2.04" "Triggering Events"', "CREDIT"),
+    # Routine filings as real negatives: 8-K boilerplate alone must not look like a credit event
+    "2.02": ('"Item 2.02" "Results of Operations and Financial Condition"', "EARNINGS"),
+    "5.02": ('"Item 5.02" "Departure of Directors"', "OTHER"),
+    "7.01": ('"Item 7.01" "Regulation FD Disclosure"', "OTHER"),
+    "8.01": ('"Item 8.01" "Other Events"', "OTHER"),
+    "2.03": ('"Item 2.03" "Creation of a Direct Financial Obligation"', "OTHER"),
 }
+DISTRESS_ITEMS = {"1.03", "1.05", "2.04", "2.06"}
 SEC_8K_CAP = 150  # filings per item
 
 
@@ -224,8 +231,11 @@ def sec_8k() -> None:
         for h in hits[:SEC_8K_CAP]:
             src = h["_source"]
             adsh, doc = h["_id"].split(":", 1)
-            if adsh in index or item not in src.get("items", []):
+            items = src.get("items", [])
+            if adsh in index or item not in items:
                 continue
+            if label in ("OTHER", "EARNINGS") and DISTRESS_ITEMS & set(items):
+                continue  # a routine-item negative must not also report a distress item
             cik = int(src["ciks"][0])
             doc_url = f"https://www.sec.gov/Archives/edgar/data/{cik}/{adsh.replace('-', '')}/{doc}"
             try:
