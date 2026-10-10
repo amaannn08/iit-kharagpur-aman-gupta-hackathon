@@ -16,6 +16,7 @@ from sentinel.contracts.signals import (
 from sentinel.nlp.entities import EntityLinker
 from sentinel.nlp.events import EventClassifier
 from sentinel.nlp.relevance import social_block_reason
+from sentinel.nlp.roles import resolve_ma_role_for_entity
 from sentinel.nlp.sentiment import (
     FinBERTSentimentAnalyzer,
     apply_macro_polarity,
@@ -162,6 +163,18 @@ class NLPEngine:
         if record.source_type == SourceType.SOCIAL and (reason := social_block_reason(record.text)):
             eligible = False
             block_reasons.append(reason)
+
+        if event.label.upper() == "M_AND_A":
+            role, role_span = resolve_ma_role_for_entity(record.text, entity_ref, entity_spans)
+            entity_ref.role = role
+            if role_span:
+                all_spans.append(role_span)
+            if role == "target":
+                eligible = False
+                block_reasons.append("TARGET_TAKEOVER_PREMIUM_NOT_STRESSED")
+            elif role == "undetermined":
+                eligible = False
+                block_reasons.append("MA_ROLES_UNDETERMINED")
 
         duplicate_group_id = (
             dedup_decision.duplicate_group_id

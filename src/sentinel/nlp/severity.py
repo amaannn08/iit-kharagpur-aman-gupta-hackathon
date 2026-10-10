@@ -25,9 +25,14 @@ from sentinel.contracts.signals import (
 from sentinel.nlp.impact_model import CATASTROPHIC, LearnedImpactModel, impact_features
 
 RUBRIC_VERSION = "2.0"
-STRESS_CLASSES = {"CREDIT", "MACRO", "GEOPOLITICAL", "SUPPLY_CHAIN", "CYBER"}
+STRESS_CLASSES = {"CREDIT", "MACRO", "GEOPOLITICAL", "SUPPLY_CHAIN", "CYBER", "M_AND_A"}
 SYSTEMIC_CAP = 7
 CATASTROPHIC_FLOOR = 8
+DEBT_FINANCED_MA = re.compile(
+    r"\b(bridge loan|debt[- ]financed|new notes|term loan|funded by (?:new )?debt|"
+    r"financed with (?:new )?debt|\$\d+\s*billion|\b\d+\s*billion\b)\b",
+    re.I,
+)
 EXPLICIT_MAGNITUDE = re.compile(
     r"\b(\d+(\.\d+)?\s?(bps|basis points?|%|percent|points)|emergency|surprise[sd]?|unexpected(ly)?|"
     r"shock|crash(es|ed)?|plunge[sd]?|soar(s|ed)?|spik(e|es|ed|ing)|record (high|low)|"
@@ -188,6 +193,12 @@ class SeverityRubricEngine:
                 out.score = min(out.score, SYSTEMIC_CAP)
 
         if event_class.upper() in STRESS_CLASSES and (m := CATASTROPHIC.search(text)):
+            if out.score < CATASTROPHIC_FLOOR:
+                out.score = CATASTROPHIC_FLOOR
+                out.method = "floor"
+            if not any(s.start == m.start() for s in spans):
+                spans.append(EvidenceSpan(start=m.start(), end=m.end(), text=m.group()))
+        elif event_class.upper() == "M_AND_A" and (m := DEBT_FINANCED_MA.search(text)):
             if out.score < CATASTROPHIC_FLOOR:
                 out.score = CATASTROPHIC_FLOOR
                 out.method = "floor"

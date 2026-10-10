@@ -91,6 +91,13 @@ DEFAULT_SHOCK_CATALOG: Dict[str, ShockParameters] = {
         equity_shock_pct=-0.05,
         description="Issuer spread +60 bps, PD +0.8 pp, equity -5%, plus fraud operational loss",
     ),
+    "M_AND_A": ShockParameters(
+        bond_spread_shift_bps=40.0,
+        loan_pd_increment=0.004,
+        equity_shock_pct=-0.03,
+        description="Acquirer: leverage-driven spread +40 bp, PD +0.4 pp, equity -3% (announcement)",
+        anchor="assumption",
+    ),
 }
 
 
@@ -135,10 +142,11 @@ def build_scaled_shock(
     target_scope: str = "entity",
     is_easing: bool = False,
     target_sector: Optional[str] = None,
+    financing_multiplier: float = 1.0,
 ) -> ScaledShock:
     """Scale the selected catalog entry proportionally by impact_score / 8.0."""
     baseline = select_parameters(event_class, target_scope, is_easing)
-    scale = max(0.125, min(1.25, impact_score / 8.0))
+    scale = max(0.125, min(1.25, impact_score / 8.0)) * financing_multiplier
     is_systemic_anchor = (
         (event_class.upper() in {"MACRO", "GEOPOLITICAL"})
         or (event_class.upper() == "CREDIT" and target_scope == "systemic")

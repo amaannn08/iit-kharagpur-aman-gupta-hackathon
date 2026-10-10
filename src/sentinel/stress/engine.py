@@ -7,6 +7,7 @@ from typing import Dict, List, Optional, Set, Tuple, Union
 from sentinel.config import settings
 from sentinel.contracts.signals import RiskSignal
 from sentinel.contracts.stress import StressRunResult
+from sentinel.nlp.roles import get_ma_financing_multiplier
 from sentinel.nlp.sentiment import macro_polarity
 from sentinel.stress.contagion import ContagionGraph
 from sentinel.stress.portfolio import WholesalePortfolio
@@ -110,6 +111,9 @@ class StressEngine:
         if signal.event.label.upper() == "MACRO" and self._macro_is_easing(signal) is None:
             return False  # direction unknown: do not guess
 
+        if signal.event.label.upper() == "M_AND_A" and signal.entity.role != "acquirer":
+            return False  # only acquirer is stressed; target/undetermined skipped
+
         return True
 
     def trigger_from_signal(
@@ -149,6 +153,12 @@ class StressEngine:
 
         is_easing = bool(self._macro_is_easing(signal)) if event_class == "MACRO" else False
 
+        financing_multiplier = (
+            get_ma_financing_multiplier(signal.text_excerpt or "")
+            if event_class == "M_AND_A"
+            else 1.0
+        )
+
         shock = build_scaled_shock(
             event_class=event_class,
             impact_score=impact,
@@ -156,6 +166,7 @@ class StressEngine:
             target_scope=scope,
             is_easing=is_easing,
             target_sector=target_sector,
+            financing_multiplier=financing_multiplier,
         )
 
         enable_contagion = scope == "entity" and event_class in {"CREDIT", "SUPPLY_CHAIN"}
