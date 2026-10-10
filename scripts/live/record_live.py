@@ -63,6 +63,7 @@ def load_state() -> dict:
 
 
 def save_state(state: dict) -> None:
+    state["last_fetch_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
     STATE.write_text(json.dumps(state, indent=1))
 
 

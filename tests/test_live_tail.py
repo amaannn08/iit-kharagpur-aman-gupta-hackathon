@@ -83,3 +83,40 @@ def test_live_status_reporting(tmp_path: Path):
     assert status["last_fetch_at"] == now_iso
     assert status["recorder_alive"] is True
     assert status["lag_seconds"] < 10.0
+
+
+def test_partial_trailing_row_is_left_for_the_next_poll(tmp_path: Path):
+    csv_file = tmp_path / "live.csv"
+    csv_file.write_text("record_id,headline,body,published_at\n")
+    _, offset, _ = parse_incremental_csv(csv_file, 0)
+    with open(csv_file, "a") as f:
+        f.write('rec-1,Full row,"Body, with comma",2023-11-01T18:00:00Z\nrec-2,Half wri')
+    records, offset, _ = parse_incremental_csv(csv_file, offset)
+    assert [r.record_id for r in records] == ["rec-1"]
+    with open(csv_file, "a") as f:
+        f.write("tten row,Body,2023-11-01T19:00:00Z\n")
+    records, _, _ = parse_incremental_csv(csv_file, offset)
+    assert [(r.record_id, r.headline) for r in records] == [("rec-2", "Half written row")]
+
+
+def test_open_quoted_field_is_not_consumed(tmp_path: Path):
+    csv_file = tmp_path / "live.csv"
+    csv_file.write_text("record_id,headline,body,published_at\n")
+    _, offset, _ = parse_incremental_csv(csv_file, 0)
+    with open(csv_file, "a") as f:
+        f.write('rec-1,Headline,"multi\nline body still being writ')
+    records, new_offset, _ = parse_incremental_csv(csv_file, offset)
+    assert records == [] and new_offset == offset
+
+
+def test_live_rows_are_not_injected_into_historical_replays(tmp_path: Path):
+    controller = ReplayController()
+    controller.load_scenario("svb", [], sources=["gdelt_svb_2023"], badges=["HISTORICAL REPLAY"])
+    live_dir = tmp_path / "live"
+    live_dir.mkdir()
+    (live_dir / "gdelt_live.csv").write_text(
+        "record_id,headline,body,published_at\nlive-1,Oil falls,Crude drops,2023-11-02T10:00:00Z\n"
+    )
+    tailer = LiveTailer(controller, live_dir=live_dir)
+    assert tailer.poll_once() == 0
+    assert controller.get_status().total_records == 0

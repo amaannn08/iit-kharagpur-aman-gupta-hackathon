@@ -30,23 +30,28 @@ def parse_incremental_csv(
         return [], offset, None
 
     try:
-        with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+        with open(file_path, "rb") as f:
             header_line = f.readline()
             if not header_line:
                 return [], 0, None
-            headers = [h.strip() for h in next(csv.reader([header_line]), [])]
+            headers = [h.strip() for h in next(csv.reader([header_line.decode("utf-8", "replace")]), [])]
             if not headers:
                 return [], 0, None
-
             if offset == 0:
                 offset = f.tell()
             f.seek(offset)
-            new_text = f.read()
-            new_offset = f.tell()
+            chunk = f.read()
     except Exception as exc:
         logger.warning("Error reading %s at offset %d: %s", file_path, offset, exc)
         return [], offset, None
 
+    # Consume complete rows only: the recorder may be mid-write. Cut at the last newline that
+    # is not inside a quoted field (balanced quotes); the remainder is read on the next poll.
+    end = chunk.rfind(b"\n") + 1
+    while end and chunk[:end].count(b'"') % 2:
+        end = chunk.rfind(b"\n", 0, end - 1) + 1
+    new_offset = offset + end
+    new_text = chunk[:end].decode("utf-8", "replace")
     if not new_text.strip():
         return [], new_offset, None
 
@@ -55,9 +60,10 @@ def parse_incremental_csv(
     stream = io.StringIO(new_text)
     reader = csv.DictReader(stream, fieldnames=headers)
     for idx, row in enumerate(reader):
-        text_content = f"{row.get('headline', '')}. {row.get('body', '')}".strip()
+        headline, body = (row.get("headline") or "").strip(), (row.get("body") or "").strip()
+        text_content = f"{headline}. {body}" if headline and body else (headline or body)
         if not text_content:
-            text_content = row.get("headline") or row.get("body") or "No content"
+            continue
 
         pub_str = row.get("published_at")
         pub_dt = None
@@ -74,7 +80,7 @@ def parse_incremental_csv(
             source_id=row.get("source_id", file_path.stem),
             source_type=SourceType.NEWS,
             text=text_content,
-            headline=row.get("headline"),
+            headline=headline or None,
             published_at=pub_dt,
             timestamp_quality=TimestampQuality.ORIGINAL,
             is_synthetic=False,
@@ -104,9 +110,14 @@ class LiveTailer:
         self.last_record_at: Optional[datetime] = None
 
     def poll_once(self) -> int:
-        """Scan data/live/*.csv for new lines and append them if active run is LIVE."""
+        """Scan data/live/*.csv for new lines and append them if the active run is LIVE.
+
+        Offsets advance in every mode, so switching to a live run later does not replay the
+        backlog into it, and live rows are never injected into historical or synthetic runs.
+        """
         if not self.live_dir.exists():
             return 0
+        is_live = self._mode() == "LIVE"
 
         appended_total = 0
         csv_files = sorted(self.live_dir.glob("*.csv"))
@@ -119,15 +130,14 @@ class LiveTailer:
             if latest_ts and (self.last_record_at is None or latest_ts > self.last_record_at):
                 self.last_record_at = latest_ts
 
-            if records:
+            if records and is_live:
                 appended = self.controller.append_records(records)
                 appended_total += appended
 
         self.last_tail_at = datetime.now(timezone.utc)
         return appended_total
 
-    def get_live_status(self) -> Dict[str, Any]:
-        """Compute live capture status, lag, and recorder process health."""
+    def _mode(self) -> str:
         badges = getattr(self.controller, "_badges", [])
         sources = getattr(self.controller, "_sources", [])
         if any(b == "LIVE CAPTURE" for b in badges) or any(
@@ -140,7 +150,11 @@ class LiveTailer:
             mode = "REPLAY"
         else:
             mode = "IDLE"
+        return mode
 
+    def get_live_status(self) -> Dict[str, Any]:
+        """Compute live capture status, lag, and recorder process health."""
+        mode = self._mode()
         state_file = self.live_dir / ".state.json"
         last_fetch_dt: Optional[datetime] = None
         last_fetch_str: Optional[str] = None
@@ -162,7 +176,8 @@ class LiveTailer:
         if last_fetch_dt:
             lag_seconds = max(0.0, (now - last_fetch_dt).total_seconds())
 
-        recorder_alive = bool(lag_seconds is not None and lag_seconds <= 600.0)
+        # the recorder writes every cycle; alive = fetched within two of our polling intervals
+        recorder_alive = bool(lag_seconds is not None and lag_seconds <= max(600.0, 2 * self.poll_interval))
 
         rec_str = (
             self.last_record_at.isoformat(timespec="seconds") if self.last_record_at else None
