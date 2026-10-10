@@ -30,12 +30,10 @@ def test_normalize_sector():
 
 
 def test_all_positions_in_portfolio_files_have_valid_sector():
-    repo_root = Path(__file__).resolve().parent.parent
-    portfolio_files = [
-        repo_root / "data" / "wholesale_positions.json",
-        repo_root / "data" / "portfolio" / "credit_sleeve.json",
-        repo_root / "data" / "portfolio" / "equity_sleeve.json",
-    ]
+    from sentinel.config import settings
+
+    portfolio_files = sorted({settings.data_dir / f for files in settings.portfolio_profiles.values()
+                              for f in files})  # fmt: skip
     valid_sectors = set(GICS_SECTORS) | set(NON_CORPORATE)
     for path in portfolio_files:
         data = json.loads(path.read_text(encoding="utf-8"))

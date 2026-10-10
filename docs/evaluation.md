@@ -18,7 +18,7 @@ uv run python scripts/run_evaluation.py --write-readme  # also refresh the READM
 | `perf` | 2,000 real articles | Records/s, p50/p95 latency, peak memory |
 | `synthetic_regression` | 105 author-written rows | Regression check only (not a quality claim) |
 
-Model cards (`models/*.card.json`) record training-data hashes, thresholds and the held-out metrics computed at training time. CI recomputes the suites that need only committed data, and tests gate the results on the PRD targets.
+Model cards (`models/*.card.json`) record training-data hashes, thresholds and the held-out metrics computed at training time. CI recomputes the suites that need only committed data, and tests gate the results on the problem-statement targets.
 
 ## Leakage controls
 

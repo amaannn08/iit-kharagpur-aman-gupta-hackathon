@@ -133,8 +133,8 @@
       "description": "Evaluation annotation rubric detailing the 9 event taxonomy classes and 1-10 severity rubric calculation.",
       "is_synthetic": false,
       "license": "MIT License (Project-Authored Evaluation Rubric)",
-      "sha256": "40b5788985831bd4410aa98cc9299871bda0e8b45ffddcf3ff7e7e502e1080f2",
-      "byte_size": 3831,
+      "sha256": "23c7365d30c2f19a52de5469e5e19d0342ab2399f515f6d2c6c5ef5f9243de99",
+      "byte_size": 3802,
       "record_count": 1
     },
     {
@@ -714,5 +714,5 @@
       "record_count": 162
     }
   ],
-  "updated_at": "2026-10-10T23:38:40.058111+00:00"
+  "updated_at": "2026-10-10T23:48:21.577213+00:00"
 }

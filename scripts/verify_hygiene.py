@@ -186,6 +186,8 @@ def check_no_prd_references() -> bool:
         "PRD" + ".md",
         "AGENTS" + ".md",
         "CODEBASE_AUDIT_" + "AND_PS_REVIEW_REPORT.md",
+        "PRD" + " Section",
+        "PRD" + " targets",
     ]
 
     for rel_path in tracked_files:
