@@ -5,10 +5,9 @@ Validates:
 2. All tickers belong to the universe (data/universe/entities.csv).
 3. 0 < transmission_factor <= 0.8 for all edges.
 4. Total edge count >= 60.
-5. SIVB has at least 2 Financials peers.
-6. A CREDIT shock to SIVB reaches held Financials positions via multi-hop contagion.
-7. Out-degree per node is capped at 5 for sector_peer relationships.
-8. 10-K customer-concentration links exist with valid citations.
+5. Every edge is computed from price data (no hand-typed correlations or citations).
+6. Names without price history (SIVB) have no edges and a shock to them books no contagion.
+7. Degree per node is capped at 5; a CREDIT shock to a held issuer reaches a held peer.
 """
 
 import csv
@@ -69,65 +68,43 @@ def test_contagion_factors_and_edge_count():
         assert 0.0 < factor <= 0.8, f"Transmission factor {factor} out of range (0, 0.8]"
 
 
-def test_sivb_has_at_least_two_financials_peers():
-    edges_path = settings.data_dir / "graph_edges.csv"
-    with open(edges_path, newline="", encoding="utf-8") as f:
-        edges = list(csv.DictReader(f))
-
-    sivb_peers = [
-        r["target_ticker"]
-        for r in edges
-        if r["source_ticker"] == "SIVB" and r["relationship_type"] == "sector_peer"
-    ]
-    assert len(sivb_peers) >= 2, f"Expected at least 2 Financials peers for SIVB, got {sivb_peers}"
+def _edges():
+    with open(settings.data_dir / "graph_edges.csv", newline="", encoding="utf-8") as f:
+        return list(csv.DictReader(f))
 
 
-def test_sivb_credit_shock_contagion_reaches_held_financials():
-    engine = StressEngine()
-    val_engine, prof_name = engine.get_valuation_engine("real_issuers")
-    assert prof_name == "real_issuers"
+def test_every_edge_is_computed_from_prices():
+    for r in _edges():
+        assert r["relationship_type"] == "sector_peer"
+        assert r["rationale"].startswith("residual return correlation ")
+        rho = float(r["rationale"].split()[3])
+        assert abs(float(r["transmission_factor"]) - round(min(0.8, 0.9 * rho), 2)) < 0.011
+        assert r["evidence"].startswith("data/raw/real/market/")
 
-    shock = build_scaled_shock(
-        "CREDIT",
-        impact_score=9,
-        target_entity="SIVB",
-        target_scope="entity",
-    )
+
+def test_degree_cap():
+    from collections import Counter
+
+    assert max(Counter(r["source_ticker"] for r in _edges()).values()) <= 5
+
+
+def test_name_without_price_history_has_no_contagion():
+    assert not [r for r in _edges() if "SIVB" in (r["source_ticker"], r["target_ticker"])]
+    val_engine, _ = StressEngine().get_valuation_engine("real_issuers")
+    shock = build_scaled_shock("CREDIT", impact_score=9, target_entity="SIVB", target_scope="entity")
     result = val_engine.run_stress_test(shock, enable_contagion=True)
-
-    assert result.contagion_positions_count > 0, "No contagion positions generated"
-    assert result.contagion_pnl_usd < 0.0, "Contagion PnL should be negative"
-
-    # Held Financials (BAC, MS) should be impacted via contagion
-    fin_contagion = [
-        p
-        for p in result.position_deltas
-        if p.is_contagion and p.sector == "Financials" and p.pnl_usd < 0.0
-    ]
-    assert len(fin_contagion) > 0, "No held Financials positions impacted by SIVB contagion"
-    impacted_entities = {p.entity_id for p in fin_contagion}
-    assert impacted_entities.intersection({"BAC", "MS"}), (
-        f"Expected BAC or MS to be impacted, got {impacted_entities}"
-    )
+    assert result.contagion_positions_count == 0
 
 
-def test_ten_k_customer_concentration_edges_exist():
-    edges_path = settings.data_dir / "graph_edges.csv"
-    with open(edges_path, newline="", encoding="utf-8") as f:
-        edges = list(csv.DictReader(f))
-
-    ten_k_pairs = {
-        (r["source_ticker"], r["target_ticker"])
-        for r in edges
-        if r["relationship_type"] == "customer_concentration"
-    }
-
-    assert ("UPS", "AMZN") in ten_k_pairs
-    assert ("PG", "WMT") in ten_k_pairs
-    assert ("AVGO", "AAPL") in ten_k_pairs
-    assert ("QCOM", "AAPL") in ten_k_pairs
-    assert ("GE", "BA") in ten_k_pairs
-    assert ("CAT", "UNP") in ten_k_pairs
+def test_credit_shock_on_held_issuer_reaches_held_peer():
+    val_engine, _ = StressEngine().get_valuation_engine("real_issuers")
+    held = {p.entity_id for p in val_engine.portfolio.loans + val_engine.portfolio.bonds}
+    pair = next((r["source_ticker"], r["target_ticker"]) for r in _edges()
+                if r["source_ticker"] in held and r["target_ticker"] in held)  # fmt: skip
+    shock = build_scaled_shock("CREDIT", impact_score=9, target_entity=pair[0], target_scope="entity")
+    result = val_engine.run_stress_test(shock, enable_contagion=True)
+    hit = {p.entity_id for p in result.position_deltas if p.is_contagion and p.pnl_usd < 0}
+    assert pair[1] in hit
 
 
 def test_contagion_graph_network_summary():
@@ -135,5 +112,4 @@ def test_contagion_graph_network_summary():
     summary = graph.get_network_summary()
     assert summary["total_edges"] >= 60
     assert summary["total_nodes"] >= 30
-    assert "sector_peer" in summary["edge_types"]
-    assert "customer_concentration" in summary["edge_types"]
+    assert set(summary["edge_types"]) == {"sector_peer"}
