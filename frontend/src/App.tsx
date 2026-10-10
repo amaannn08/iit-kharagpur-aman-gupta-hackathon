@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Activity,
   AlertTriangle,
@@ -23,7 +23,6 @@ import {
 import {
   analyzeText,
   AnalyzeResponse,
-  appendReplaySource,
   fetchDatasets,
   fetchHealth,
   fetchPortfolio,
@@ -32,35 +31,19 @@ import {
   fetchStressRun,
   fetchStressRuns,
   HealthResponse,
-  loadReplayScenario,
   ManifestResponse,
-  pauseReplay,
-  ReplayStatus,
-  resetReplay,
-  resumeReplay,
   RiskSignal,
-  setReplaySpeed,
   simulateStress,
-  stepReplay,
   StressRunResult,
   WholesalePortfolio,
-  fetchLiveStatus,
-  LiveStatusResponse,
 } from './api/client';
 import { IndexPanel } from './components/IndexPanel';
 import { MetricsPanel } from './components/MetricsPanel';
 import { StressCharts } from './components/StressCharts';
 import { WhyThisLossPanel } from './components/WhyThisLossPanel';
-
-// Replay presets map onto the backend source registry (GET /api/replay/sources)
-const SOURCE_PRESETS: Record<string, { label: string; sources: string[]; live?: boolean }> = {
-  demo: { label: 'Synthetic demo scenario (news + social)', sources: ['news_demo', 'social_demo'] },
-  polygon_2023: { label: 'Real news: Polygon 2023 (5,548 articles)', sources: ['polygon_2023'] },
-  gdelt_snapshot: { label: 'Real news: GDELT 2-hour snapshot', sources: ['gdelt_snapshot'] },
-  gdelt_svb_2023: { label: 'Real replay: SVB weekend bank run 2023', sources: ['gdelt_svb_2023'] },
-  stock_tweets: { label: 'Real social: stock tweets 2017-18 sample', sources: ['stock_tweets'] },
-  live: { label: 'Live capture: GDELT + SEC 8-K', sources: ['gdelt_live', 'sec_8k_live'], live: true },
-};
+import { useLiveStatus } from './hooks/useLiveStatus';
+import { useReplay, SOURCE_PRESETS } from './hooks/useReplay';
+import { useSSE } from './hooks/useSSE';
 
 export function App() {
   // Navigation & System State
@@ -69,37 +52,33 @@ export function App() {
   const [manifest, setManifest] = useState<ManifestResponse | null>(null);
   const [portfolio, setPortfolio] = useState<WholesalePortfolio | null>(null);
 
-  // Replay Controller State
-  const [replayStatus, setReplayStatus] = useState<ReplayStatus | null>(null);
-  const [selectedScenario, setSelectedScenario] = useState<string>('demo');
-  const [replayLoading, setReplayLoading] = useState(false);
-
-  // Signals Feed & SSE State
+  // Signals Feed & Selection State
   const [signals, setSignals] = useState<RiskSignal[]>([]);
   const [selectedSignal, setSelectedSignal] = useState<RiskSignal | null>(null);
   const [filterEvent, setFilterEvent] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [showDuplicates, setShowDuplicates] = useState<boolean>(true);
-  const [sseConnected, setSseConnected] = useState<boolean>(false);
-  const [liveStatus, setLiveStatus] = useState<LiveStatusResponse | null>(null);
 
-  useEffect(() => {
-    let active = true;
-    const pollLive = async () => {
-      try {
-        const s = await fetchLiveStatus();
-        if (active) setLiveStatus(s);
-      } catch {
-        // ignore
-      }
-    };
-    pollLive();
-    const interval = setInterval(pollLive, 15000);
-    return () => {
-      active = false;
-      clearInterval(interval);
-    };
-  }, []);
+  // Live Tailer Status Hook
+  const { liveStatus } = useLiveStatus();
+
+  // Replay Controller Hook
+  const {
+    replayStatus,
+    setReplayStatus,
+    selectedScenario,
+    replayLoading,
+    handleLoadScenario,
+    handleAppendLive,
+    handleStep,
+    handlePlay,
+    handlePause,
+    handleReset,
+    handleSpeed,
+  } = useReplay({
+    onSignalsUpdated: (sigs) => setSignals(sigs),
+    onSignalSelected: (sig) => setSelectedSignal(sig),
+  });
 
   // Stress State
   const [stressRuns, setStressRuns] = useState<StressRunResult[]>([]);
@@ -120,8 +99,6 @@ export function App() {
   const [playgroundSource, setPlaygroundSource] = useState<string>('news');
   const [playgroundLoading, setPlaygroundLoading] = useState<boolean>(false);
   const [playgroundResult, setPlaygroundResult] = useState<AnalyzeResponse | null>(null);
-
-  const eventSourceRef = useRef<EventSource | null>(null);
 
   // Initial Data Fetch
   useEffect(() => {
@@ -156,141 +133,22 @@ export function App() {
   }, []);
 
   // SSE Realtime Subscription with Graceful Reconnect
-  useEffect(() => {
-    try {
-      const es = new EventSource('/api/events/stream');
-      eventSourceRef.current = es;
-
-      es.addEventListener('open', () => {
-        setSseConnected(true);
+  const { sseConnected } = useSSE({
+    onSignal: (sig) => {
+      setSignals((prev) => {
+        const exists = prev.some((s) => s.signal_id === sig.signal_id);
+        if (exists) return prev;
+        return [sig, ...prev];
       });
-
-      es.addEventListener('signal', (event) => {
-        try {
-          const sig: RiskSignal = JSON.parse(event.data);
-          setSignals((prev) => {
-            const exists = prev.some((s) => s.signal_id === sig.signal_id);
-            if (exists) return prev;
-            return [sig, ...prev];
-          });
-        } catch {
-          // ignore parse error
-        }
-      });
-
-      es.addEventListener('stress_run', (event) => {
-        try {
-          const sRun: StressRunResult = JSON.parse(event.data);
-          setStressRuns((prev) => [sRun, ...prev.filter((r) => r.stress_id !== sRun.stress_id)]);
-          setActiveStressResult(sRun);
-        } catch {
-          // ignore parse error
-        }
-      });
-
-      es.addEventListener('replay_status', (event) => {
-        try {
-          const st: ReplayStatus = JSON.parse(event.data);
-          setReplayStatus(st);
-        } catch {
-          // ignore parse error
-        }
-      });
-
-      es.onerror = () => {
-        setSseConnected(false);
-      };
-
-      return () => {
-        es.close();
-      };
-    } catch {
-      setSseConnected(false);
-    }
-  }, []);
-
-  // Replay Control Handlers
-  const handleLoadScenario = async (scId: string) => {
-    setReplayLoading(true);
-    try {
-      setSelectedScenario(scId);
-      const st = await loadReplayScenario(scId, SOURCE_PRESETS[scId]?.sources ?? ['news_demo', 'social_demo']);
+    },
+    onStressRun: (sRun) => {
+      setStressRuns((prev) => [sRun, ...prev.filter((r) => r.stress_id !== sRun.stress_id)]);
+      setActiveStressResult(sRun);
+    },
+    onReplayStatus: (st) => {
       setReplayStatus(st);
-      const sigs = await fetchSignals(50);
-      setSignals(sigs);
-      if (sigs.length > 0) setSelectedSignal(sigs[0]);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setReplayLoading(false);
-    }
-  };
-
-  const handleAppendLive = async () => {
-    setReplayLoading(true);
-    try {
-      let st: ReplayStatus | null = null;
-      for (const src of SOURCE_PRESETS[selectedScenario]?.sources ?? []) st = await appendReplaySource(src);
-      if (st) setReplayStatus(st);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setReplayLoading(false);
-    }
-  };
-
-  const handleStep = async () => {
-    setReplayLoading(true);
-    try {
-      await stepReplay();
-      const st = await fetchReplayStatus();
-      setReplayStatus(st);
-      const sigs = await fetchSignals(50);
-      setSignals(sigs);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setReplayLoading(false);
-    }
-  };
-
-  const handlePlay = async () => {
-    try {
-      const st = await resumeReplay();
-      setReplayStatus(st);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handlePause = async () => {
-    try {
-      const st = await pauseReplay();
-      setReplayStatus(st);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handleReset = async () => {
-    try {
-      const st = await resetReplay();
-      setReplayStatus(st);
-      const sigs = await fetchSignals(50);
-      setSignals(sigs);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handleSpeed = async (spd: number) => {
-    try {
-      const st = await setReplaySpeed(spd);
-      setReplayStatus(st);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+    },
+  });
 
   // Manual Stress Simulation
   const handleRunStressSimulation = async (e: React.FormEvent) => {
