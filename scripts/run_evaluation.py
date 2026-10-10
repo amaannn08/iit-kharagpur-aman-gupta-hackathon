@@ -20,6 +20,7 @@ Usage: uv run python scripts/run_evaluation.py [--suite public_real,perf] [--wri
 import argparse
 import csv
 import hashlib
+import importlib.util
 import json
 import resource
 import sys
@@ -57,6 +58,8 @@ TARGETS = {
     "severity_mae": 1.5,
     "p95_latency_s": 2.0,
     "peak_rss_gb": 4.0,
+    "false_trigger_rate_routine": 0.05,
+    "trigger_precision_lift": 1.5,
 }
 
 BASELINE_KEYWORDS = [
@@ -85,6 +88,15 @@ def macro_f1(y_true, y_pred, labels) -> float:
     return round(
         float(f1_score(y_true, y_pred, labels=labels, average="macro", zero_division=0)), 4
     )
+
+
+def bootstrap_ratio_ci(hits: int, total: int, n: int = 1000, seed: int = 42) -> List[float]:
+    if total == 0:
+        return [0.0, 0.0]
+    rng = np.random.default_rng(seed)
+    arr = np.array([1] * hits + [0] * (total - hits))
+    means = [float(np.mean(rng.choice(arr, size=total, replace=True))) for _ in range(n)]
+    return [round(float(np.percentile(means, 2.5)), 4), round(float(np.percentile(means, 97.5)), 4)]
 
 
 def suite_public_real() -> Dict[str, Any]:
@@ -261,11 +273,181 @@ def suite_synthetic_regression() -> Dict[str, Any]:
     }
 
 
+def suite_pipeline() -> Dict[str, Any]:
+    from sentinel.nlp.impact_model import LearnedImpactModel
+    from sentinel.nlp.severity import SeverityRubricEngine
+    from sentinel.replay.dedup import ExactTextDeduplicator
+    from sentinel.stress.engine import StressEngine
+
+    # 1. Fit impact model on temporal training split (2023-01..2023-09)
+    spec = importlib.util.spec_from_file_location(
+        "train_impact", REPO_ROOT / "scripts" / "models" / "train_impact.py"
+    )
+    ti = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ti)
+
+    feat_parquet = DATA / "market" / "impact_train_features.parquet"
+    if feat_parquet.exists():
+        feat_df = pd.read_parquet(feat_parquet)
+    else:
+        labels = pd.read_csv(DATA / "market" / "reaction_labels.csv")
+        train_labels = labels[labels.reaction_date < "2023-10-01"]
+        feat_df = ti.build_features(train_labels)
+
+    bundle = ti.fit(feat_df)
+    model = LearnedImpactModel(bundle)
+    rubric = SeverityRubricEngine(impact_model=model)
+    nlp_engine = NLPEngine(severity_engine=rubric)
+    stress_engine = StressEngine()
+    dedup = ExactTextDeduplicator()
+
+    # 2. Load holdout reaction labels (2023-10..2023-12)
+    labels = pd.read_csv(DATA / "market" / "reaction_labels.csv")
+    holdout = labels[labels.reaction_date >= "2023-10-01"].copy()
+    base_rate_z2 = float((holdout.abnormal_z.abs() >= 2.0).mean())
+    base_rate_z3 = float((holdout.abnormal_z.abs() >= 3.0).mean())
+    gold_high = holdout[holdout.abnormal_z.abs() >= 3.0]
+    z_map = {(r.record_id, r.ticker): abs(r.abnormal_z) for r in holdout.itertuples()}
+
+    # 3. Evaluate full pipeline on holdout articles from Polygon news (2023-10..2023-12)
+    news = pd.read_csv(DATA / "real" / "polygon_news" / "polygon_news.csv")
+    news["pub"] = pd.to_datetime(news.published_at)
+    q4_news = news[(news.pub >= "2023-10-01") & (news.pub <= "2023-12-31")].copy()
+
+    total_signals = 0
+    eligible_signals = 0
+    stress_triggers = 0
+    matched_eligible = []
+    captured_high = set()
+    dup_records = 0
+    dup_eligible = 0
+
+    for r in q4_news.itertuples():
+        text = f"{r.headline}. {r.body if isinstance(r.body, str) else ''}"
+        decision = dedup.process(r.record_id, text)
+        if decision.is_duplicate:
+            dup_records += 1
+        rec = InputRecord(
+            record_id=r.record_id,
+            source_id="polygon",
+            source_type=SourceType.NEWS,
+            text=text,
+        )
+        sigs = nlp_engine.process_record_multi(rec, "polygon")
+        for s in sigs:
+            total_signals += 1
+            if s.eligible_for_action:
+                eligible_signals += 1
+                if decision.is_duplicate:
+                    dup_eligible += 1
+                key = (r.record_id, s.entity.ticker)
+                if key in z_map:
+                    z = z_map[key]
+                    matched_eligible.append(z)
+                    if z >= 3.0:
+                        captured_high.add(key)
+            if stress_engine.should_trigger(s):
+                stress_triggers += 1
+
+    # Precision & recall metrics
+    n_mat = len(matched_eligible)
+    prec_z2_hits = sum(z >= 2.0 for z in matched_eligible)
+    prec_z2 = round(prec_z2_hits / n_mat, 4) if n_mat else 0.0
+    prec_lift = round(prec_z2 / base_rate_z2, 2) if base_rate_z2 else 0.0
+    prec_ci = bootstrap_ratio_ci(prec_z2_hits, n_mat)
+
+    n_gold_high = len(gold_high)
+    rec_hits = len(captured_high)
+    recall_z3 = round(rec_hits / n_gold_high, 4) if n_gold_high else 0.0
+    recall_ci = bootstrap_ratio_ci(rec_hits, n_gold_high)
+
+    # 4. Evaluate routine false-trigger rates on 3 negative controls
+    routine_counts = {}
+
+    # 4a. Routine 8-Ks (gold OTHER/EARNINGS)
+    s8k = pd.read_csv(DATA / "train" / "sec_8k" / "items.csv")
+    routine_8k = s8k[s8k.label.isin(["OTHER", "EARNINGS"])]
+    s8k_trigs = 0
+    for r in routine_8k.itertuples():
+        rec = InputRecord(
+            record_id=r.record_id,
+            source_id="8k",
+            source_type=SourceType.NEWS,
+            text=str(r.text),
+        )
+        for s in nlp_engine.process_record_multi(rec, "8k"):
+            if stress_engine.should_trigger(s):
+                s8k_trigs += 1
+    routine_counts["sec_8k_routine"] = (s8k_trigs, len(routine_8k))
+
+    # 4b. GDELT snapshot sample
+    gd = pd.read_csv(DATA / "real" / "gdelt" / "snapshot.csv").head(1000)
+    gd_trigs = 0
+    for r in gd.itertuples():
+        text = f"{r.headline}. {r.body if isinstance(r.body, str) else ''}"
+        rec = InputRecord(
+            record_id=r.record_id,
+            source_id="gdelt",
+            source_type=SourceType.NEWS,
+            text=text,
+        )
+        for s in nlp_engine.process_record_multi(rec, "gdelt"):
+            if stress_engine.should_trigger(s):
+                gd_trigs += 1
+    routine_counts["gdelt_snapshot"] = (gd_trigs, len(gd))
+
+    # 4c. Social tweets sample (should be ~0 due to social filters)
+    tw = pd.read_csv(DATA / "train" / "hf_fin_topic" / "topic_train.csv").head(2000)
+    tw_trigs = 0
+    for idx, r in enumerate(tw.itertuples()):
+        rec = InputRecord(
+            record_id=f"tw-{idx}",
+            source_id="twitter",
+            source_type=SourceType.SOCIAL,
+            text=str(r.text),
+        )
+        for s in nlp_engine.process_record_multi(rec, "twitter"):
+            if stress_engine.should_trigger(s):
+                tw_trigs += 1
+    routine_counts["social_tweets"] = (tw_trigs, len(tw))
+
+    total_routine_trigs = sum(t for t, _ in routine_counts.values())
+    total_routine_records = sum(n for _, n in routine_counts.values())
+    false_trigger_rate_routine = round(total_routine_trigs / total_routine_records, 4)
+
+    return {
+        "dataset": "Polygon 2023 Q4 holdout + SEC 8-K routine + GDELT + Twitter controls",
+        "train_window": "2023-01..2023-09",
+        "holdout_window": "2023-10..2023-12",
+        "holdout_articles": len(q4_news),
+        "total_signals": total_signals,
+        "actionable_signals": eligible_signals,
+        "actionable_rate": round(eligible_signals / total_signals, 4) if total_signals else 0.0,
+        "trigger_rate_per_1k_records": round(stress_triggers / (len(q4_news) / 1000), 2),
+        "high_impact_recall": recall_z3,
+        "high_impact_recall_ci95": recall_ci,
+        "gold_base_rate_z3": round(base_rate_z3, 4),
+        "gold_high_impact_events": n_gold_high,
+        "trigger_precision_market": prec_z2,
+        "trigger_precision_market_ci95": prec_ci,
+        "trigger_precision_lift": prec_lift,
+        "gold_base_rate_z2": round(base_rate_z2, 4),
+        "false_trigger_rate_routine": false_trigger_rate_routine,
+        "routine_eval_records": total_routine_records,
+        "false_trigger_rates_by_source": {
+            k: round(t / n, 4) for k, (t, n) in routine_counts.items()
+        },
+        "duplicate_records": dup_records,
+        "duplicate_suppression": round(dup_records / len(q4_news), 4),
+    }
+
+
 SUITES = {
     "public_real": suite_public_real,
     "entity_polygon": suite_entity_polygon,
     "market_impact": suite_market_impact,
     "sec_8k": suite_sec_8k,
+    "pipeline": suite_pipeline,
     "stress": suite_stress,
     "module_a": suite_module_a,
     "perf": suite_perf,
@@ -301,6 +483,21 @@ def headline_rows(m: Dict[str, Any]) -> List[List[str]]:
         rows.append([f"Impact vs next-day abnormal return, {mi['events']:,} real events",
                      f"Spearman {mi['learned_oof_spearman']:.3f} [{lo:.3f}, {hi:.3f}]", "> 0",
                      f"rubric {mi['rubric_v1_spearman']:.3f}"])  # fmt: skip
+    if pl := m.get("pipeline"):
+        r_ci = pl["high_impact_recall_ci95"]
+        p_ci = pl["trigger_precision_market_ci95"]
+        rows.append([
+            f"Pipeline temporal holdout (Q4 2023), {pl['holdout_articles']:,} articles",
+            f"Precision lift {pl['trigger_precision_lift']:.2f}x ({pl['trigger_precision_market']:.1%} [{p_ci[0]:.1%}, {p_ci[1]:.1%}] vs base {pl['gold_base_rate_z2']:.1%})",
+            f"> {TARGETS['trigger_precision_lift']}x lift",
+            f"recall {pl['high_impact_recall']:.1%} [{r_ci[0]:.1%}, {r_ci[1]:.1%}] (|z|>=3)",
+        ])
+        rows.append([
+            f"Routine false-trigger rate, {pl['routine_eval_records']:,} routine texts",
+            f"{pl['false_trigger_rate_routine']:.2%}",
+            f"<= {TARGETS['false_trigger_rate_routine']:.0%}",
+            f"8-K {pl['false_trigger_rates_by_source']['sec_8k_routine']:.1%}, social {pl['false_trigger_rates_by_source']['social_tweets']:.1%}, gdelt {pl['false_trigger_rates_by_source']['gdelt_snapshot']:.1%}",
+        ])
     if p := m.get("perf"):
         rows.append(["Latency per record (p95), CPU", f"{p['latency_p95_s']:.3f} s",
                      f"<= {TARGETS['p95_latency_s']} s", f"{p['records_per_s']:.0f} records/s"])  # fmt: skip

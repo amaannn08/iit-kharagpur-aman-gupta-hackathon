@@ -27,6 +27,11 @@ def test_committed_metrics_meet_targets_on_real_data():
     assert m["perf"]["latency_p95_s"] <= t["p95_latency_s"]
     assert m["perf"]["peak_rss_gb"] <= t["peak_rss_gb"]
     assert all(s["reconciled"] for s in m["stress"]["scenarios"].values())
+    if "pipeline" in m:
+        pl = m["pipeline"]
+        assert pl["false_trigger_rate_routine"] <= t["false_trigger_rate_routine"]
+        assert pl["trigger_precision_lift"] >= t["trigger_precision_lift"]
+        assert pl["high_impact_recall"] > 0
 
 
 def test_synthetic_set_is_labeled_regression_only():

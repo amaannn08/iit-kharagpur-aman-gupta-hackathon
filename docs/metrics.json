@@ -339,13 +339,48 @@
   "sentiment_macro_f1": 0.3477,
   "severity_mae": 2.79
  },
- "generated_at": "2026-10-10T09:33:56+00:00",
+ "generated_at": "2026-10-10T14:46:45+00:00",
  "targets": {
   "event_macro_f1": 0.7,
   "sentiment_macro_f1": 0.75,
   "entity_precision": 0.9,
   "severity_mae": 1.5,
   "p95_latency_s": 2.0,
-  "peak_rss_gb": 4.0
+  "peak_rss_gb": 4.0,
+  "false_trigger_rate_routine": 0.05,
+  "trigger_precision_lift": 1.5
+ },
+ "pipeline": {
+  "dataset": "Polygon 2023 Q4 holdout + SEC 8-K routine + GDELT + Twitter controls",
+  "train_window": "2023-01..2023-09",
+  "holdout_window": "2023-10..2023-12",
+  "holdout_articles": 1336,
+  "total_signals": 1510,
+  "actionable_signals": 109,
+  "actionable_rate": 0.0722,
+  "trigger_rate_per_1k_records": 0.0,
+  "high_impact_recall": 0.5152,
+  "high_impact_recall_ci95": [
+   0.3333,
+   0.697
+  ],
+  "gold_base_rate_z3": 0.0502,
+  "gold_high_impact_events": 33,
+  "trigger_precision_market": 0.2621,
+  "trigger_precision_market_ci95": [
+   0.1845,
+   0.3495
+  ],
+  "trigger_precision_lift": 2.97,
+  "gold_base_rate_z2": 0.0881,
+  "false_trigger_rate_routine": 0.0003,
+  "routine_eval_records": 3428,
+  "false_trigger_rates_by_source": {
+   "sec_8k_routine": 0.0023,
+   "gdelt_snapshot": 0.0,
+   "social_tweets": 0.0
+  },
+  "duplicate_records": 18,
+  "duplicate_suppression": 0.0135
  }
 }

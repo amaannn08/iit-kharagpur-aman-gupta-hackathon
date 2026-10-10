@@ -65,7 +65,14 @@ def impact_features(
 class LearnedImpactModel:
     """Loads models/impact_v2.joblib; predicts expected |abnormal z| and its 1-10 decile."""
 
-    def __init__(self, path: Optional[Union[str, Path]] = None) -> None:
+    def __init__(self, path: Optional[Union[str, Path, dict]] = None) -> None:
+        if isinstance(path, dict):
+            self._model = path["model"]
+            self.features = path["features"]
+            self.decile_edges = np.asarray(path["decile_edges"])
+            self.version = "impact_temporal_holdout"
+            self.available = True
+            return
         self.path = Path(path) if path else settings.base_dir / "models" / "impact_v2.joblib"
         self.available = False
         self.version = "unavailable"

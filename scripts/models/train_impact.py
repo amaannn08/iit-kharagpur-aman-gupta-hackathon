@@ -160,6 +160,24 @@ def bootstrap_ci(x, y, n=1000):
     return [round(float(np.percentile(stats, 2.5)), 4), round(float(np.percentile(stats, 97.5)), 4)]
 
 
+def fit(df: pd.DataFrame) -> dict:
+    """Fit HistGradientBoostingRegressor and compute decile edges. Exposes model bundle."""
+    feature_cols = [
+        c for c in df.columns if c not in ("rubric_score", "abs_z", "month", "record_id")
+    ]
+    y = df.abs_z.to_numpy()
+    final = HistGradientBoostingRegressor(
+        max_depth=3, learning_rate=0.05, max_iter=300, min_samples_leaf=30, random_state=SEED
+    ).fit(df[feature_cols], y)
+    preds = final.predict(df[feature_cols])
+    edges = np.quantile(preds, np.linspace(0, 1, 11)[1:-1]).tolist()
+    return {
+        "model": final,
+        "features": feature_cols,
+        "decile_edges": edges,
+    }
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--rebuild-labels", action="store_true")

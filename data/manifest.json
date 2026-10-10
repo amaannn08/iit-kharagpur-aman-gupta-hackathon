@@ -633,7 +633,45 @@
       "byte_size": 698506,
       "sha256": "ddd52d5e598527f38c16ddeadf0c3e7f2d9d4c8948156ed7a4452a46e1e62fa4",
       "record_count": 2643
+    },
+    {
+      "file_path": "data/market/impact_train_features.parquet",
+      "format": "parquet",
+      "description": "Feature matrix for impact model fitted on 2023-01..2023-09 temporal training events",
+      "is_synthetic": false,
+      "license": "Pre-extracted features for fast evaluation run",
+      "primary_keys": [],
+      "source": "data/market/reaction_labels.csv",
+      "derived_from": [
+        "data/market/reaction_labels.csv"
+      ],
+      "columns": [
+        "p_CREDIT",
+        "p_CYBER",
+        "p_EARNINGS",
+        "p_GEOPOLITICAL",
+        "p_MACRO",
+        "p_M_AND_A",
+        "p_OTHER",
+        "p_PRODUCT",
+        "p_REGULATORY",
+        "p_SUPPLY_CHAIN",
+        "sentiment",
+        "abs_sentiment",
+        "n_entities",
+        "log_length",
+        "is_social",
+        "catastrophic_language",
+        "material_language",
+        "rubric_score",
+        "abs_z",
+        "month",
+        "record_id"
+      ],
+      "byte_size": 128154,
+      "sha256": "b287d44aca43f25dfdc0a21ae417eade671237d730ebe4fba11820329b60242e",
+      "record_count": 1
     }
   ],
-  "updated_at": "2026-10-10T10:16:31.130591+00:00"
+  "updated_at": "2026-10-10T14:42:55.351643+00:00"
 }
