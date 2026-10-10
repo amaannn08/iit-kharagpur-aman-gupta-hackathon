@@ -173,10 +173,13 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--once", action="store_true")
     ap.add_argument("--interval-min", type=float, default=15.0)
+    ap.add_argument("--interval", type=float, default=None, help="interval in seconds")
     ap.add_argument("--backfill-days", type=int, default=0)
     ap.add_argument("--max-filers", type=int, default=600)
     ap.add_argument("--skip", default="", help="comma list: gdelt,sec")
     args = ap.parse_args()
+    if args.interval is not None:
+        args.interval_min = args.interval / 60.0
     LIVE.mkdir(parents=True, exist_ok=True)
     skip = set(filter(None, args.skip.split(",")))
     while True:
