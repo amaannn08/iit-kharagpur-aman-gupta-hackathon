@@ -49,16 +49,21 @@ COVERAGE_TO_RATING: List[Tuple[float, str]] = [
     (-1e9, "CC"),
 ]
 
-# S&P Global Ratings, Annual Global Corporate Default and Rating Transition Study (1981-2024)
-# One-year average corporate default rates by rating category (decimal probabilities)
+# S&P Global Ratings, "Default, Transition, and Recovery: 2020 Annual Global Corporate Default And
+# Rating Transition Study" (2021-04-07), Table 3, weighted long-term average annual default rate by
+# rating category, 1981-2020 (%): AAA 0.00, AA 0.02, A 0.05, BBB 0.16, BB 0.63, B 3.34, CCC/C 28.30.
+PD_SOURCE = (
+    "S&P Global Ratings, 2020 Annual Global Corporate Default And Rating Transition Study, "
+    "Table 3: weighted long-term average annual default rates by rating, 1981-2020"
+)
 PD_BY_BUCKET: Dict[str, float] = {
     "AAA": 0.0000,
     "AA": 0.0002,
     "A": 0.0005,
-    "BBB": 0.0015,
-    "BB": 0.0060,
-    "B": 0.0300,
-    "CCC": 0.2600,
+    "BBB": 0.0016,
+    "BB": 0.0063,
+    "B": 0.0334,
+    "CCC": 0.2830,
 }
 
 OAS_SERIES: Dict[str, str] = {
@@ -78,14 +83,96 @@ CREDIT_BOOK_USD = TOTAL_BOOK_USD - CASH_USD  # $420,000,000.0
 NAME_CAP_RATIO = 0.08  # Max 8% of total book ($40,000,000) per issuer
 
 
-def latest_fact(facts: Dict[str, Any], tag: str, unit: str = "USD", forms: Tuple[str, ...] = ("10-K",)) -> Optional[float]:
-    """Most recent annual value for a us-gaap tag, or None."""
-    vals = facts.get("facts", {}).get("us-gaap", {}).get(tag, {}).get("units", {}).get(unit, [])
-    vals = [v for v in vals if v.get("form") in forms and v.get("fp") == "FY"]
-    if not vals:
-        return None
-    latest = max(vals, key=lambda v: v["end"])
-    return float(latest["val"])
+# Facts must come from the issuer's latest annual report; an issuer whose latest 10-K balance
+# sheet is older than this is excluded rather than sized on stale numbers.
+MIN_FISCAL_YEAR_END = "2024-06-30"
+
+# Consolidated interest of issuers with a captive finance arm includes that arm's funding costs,
+# so EBIT / interest says nothing about the industrial credit (Damodaran separates the two).
+CAPTIVE_FINANCE = {"GM": "GM Financial", "F": "Ford Credit"}
+
+TOTAL_DEBT_TAGS = (  # tags that already include current maturities
+    "DebtLongtermAndShorttermCombinedAmount",
+    "LongTermDebtAndCapitalLeaseObligationsIncludingCurrentMaturities",
+    "DebtAndCapitalLeaseObligations",
+    "LongTermDebt",
+)
+NONCURRENT_DEBT_TAGS = ("LongTermDebtNoncurrent", "LongTermDebtAndCapitalLeaseObligations")
+CURRENT_DEBT_TAGS = ("LongTermDebtCurrent", "DebtCurrent", "LongTermDebtAndCapitalLeaseObligationsCurrent")
+INTEREST_TAGS = ("InterestExpense", "InterestExpenseNonoperating", "InterestExpenseDebt",
+                 "InterestAndDebtExpense", "InterestPaidNet")  # last resort: cash interest paid
+PRETAX_TAGS = (
+    "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest",
+    "IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments",
+)
+EQUITY_TAGS = ("StockholdersEquity",
+               "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest")
+
+
+def _annual(facts: Dict[str, Any], tag: str) -> List[Dict[str, Any]]:
+    vals = facts.get("facts", {}).get("us-gaap", {}).get(tag, {}).get("units", {}).get("USD", [])
+    return [v for v in vals if v.get("form") == "10-K" and v.get("fp") == "FY"]
+
+
+def fiscal_year_end(facts: Dict[str, Any]) -> Optional[str]:
+    """Balance-sheet date of the latest annual report (from Assets)."""
+    vals = _annual(facts, "Assets")
+    return max(v["end"] for v in vals) if vals else None
+
+
+def fact_at(facts: Dict[str, Any], tags: Tuple[str, ...], fy_end: str,
+            flow: bool = False) -> Tuple[Optional[float], Optional[str]]:
+    """First tag with a value for exactly the fiscal year ending fy_end, and the tag used.
+
+    Instant facts must be dated fy_end; flow facts (income statement) must cover ~one year ending
+    fy_end. Values from other periods are never used.
+    """
+    for tag in tags:
+        for v in sorted(_annual(facts, tag), key=lambda x: x.get("filed", ""), reverse=True):
+            if v["end"] != fy_end:
+                continue
+            if flow:
+                start = v.get("start")
+                if not start or not 330 <= (pd.Timestamp(fy_end) - pd.Timestamp(start)).days <= 400:
+                    continue
+            return float(v["val"]), tag
+    return None, None
+
+
+def issuer_financials(facts: Dict[str, Any]) -> Dict[str, Any]:
+    """Debt, EBIT, interest, assets and equity, all from the same (latest) fiscal year."""
+    fy = fiscal_year_end(facts)
+    if fy is None:
+        return {"excluded": "no annual 10-K XBRL balance sheet"}
+    if fy < MIN_FISCAL_YEAR_END:
+        return {"excluded": f"latest annual balance sheet {fy} is older than {MIN_FISCAL_YEAR_END}"}
+    debt, debt_tag = fact_at(facts, TOTAL_DEBT_TAGS, fy)
+    if debt is None:
+        lt, lt_tag = fact_at(facts, NONCURRENT_DEBT_TAGS, fy)
+        cur, cur_tag = fact_at(facts, CURRENT_DEBT_TAGS, fy)
+        if lt is not None:
+            debt, debt_tag = lt + (cur or 0.0), "+".join(t for t in (lt_tag, cur_tag) if t)
+    if not debt:
+        return {"excluded": f"no total-debt fact for fiscal year {fy}"}
+    ebit, _ = fact_at(facts, ("OperatingIncomeLoss",), fy, flow=True)
+    interest, _ = fact_at(facts, INTEREST_TAGS, fy, flow=True)
+    if ebit is None and interest:  # no operating-income line (e.g. integrated oil): pretax + interest
+        pretax, _ = fact_at(facts, PRETAX_TAGS, fy, flow=True)
+        ebit = pretax + interest if pretax is not None else None
+    assets, _ = fact_at(facts, ("Assets",), fy)
+    equity, _ = fact_at(facts, EQUITY_TAGS, fy)
+    return {
+        "fiscal_year_end": fy,
+        "total_debt": debt,
+        "debt_tag": debt_tag,
+        "coverage": (ebit / interest) if ebit is not None and interest else None,
+        "equity_to_assets": (equity / assets) if equity is not None and assets else None,
+    }
+
+
+def fred_last_date(series_name: str) -> str:
+    df = pd.read_csv(FRED_DIR / f"{series_name}.csv")
+    return str(df[df.iloc[:, 1] != "."].dropna().iloc[-1, 0])
 
 
 def load_fred_series(series_name: str) -> float:
@@ -127,6 +214,7 @@ def build_wholesale_book() -> Dict[str, Any]:
 
     # 2. Extract balance-sheet and coverage stats from SEC XBRL
     issuer_records = []
+    excluded: Dict[str, str] = {}
     for ticker in sp100_df.ticker.unique():
         t = ticker.upper()
         xbrl_file = SEC_XBRL_DIR / f"{t}.json"
@@ -137,30 +225,14 @@ def build_wholesale_book() -> Dict[str, Any]:
         except Exception:
             continue
 
-        lt_debt = (
-            latest_fact(facts, "LongTermDebt")
-            or latest_fact(facts, "LongTermDebtNoncurrent")
-            or latest_fact(facts, "LongTermDebtAndCapitalLeaseObligations")
-            or 0.0
-        )
-        st_debt = latest_fact(facts, "DebtCurrent") or 0.0
-        total_debt = lt_debt + st_debt
-        if total_debt <= 0.0:
+        if t in CAPTIVE_FINANCE:
+            excluded[t] = f"captive finance arm ({CAPTIVE_FINANCE[t]}): interest coverage not meaningful"
             continue
-
-        ebit = latest_fact(facts, "OperatingIncomeLoss")
-        interest = (
-            latest_fact(facts, "InterestExpense")
-            or latest_fact(facts, "InterestAndDebtExpense")
-        )
-        assets = latest_fact(facts, "Assets")
-        equity = (
-            latest_fact(facts, "StockholdersEquity")
-            or latest_fact(facts, "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest")
-        )
-
-        cov = (ebit / interest) if (ebit is not None and interest is not None and interest > 0) else None
-        e2a = (equity / assets) if (equity is not None and assets is not None and assets > 0) else None
+        fin = issuer_financials(facts)
+        if "excluded" in fin:
+            excluded[t] = fin["excluded"]
+            continue
+        cov, e2a = fin["coverage"], fin["equity_to_assets"]
 
         uni_meta = uni_map.get(t)
         raw_sector = (
@@ -179,7 +251,9 @@ def build_wholesale_book() -> Dict[str, Any]:
             "ticker": t,
             "name": canonical_name,
             "sector": sector,
-            "total_debt": total_debt,
+            "total_debt": fin["total_debt"],
+            "debt_tag": fin["debt_tag"],
+            "fiscal_year_end": fin["fiscal_year_end"],
             "coverage": cov,
             "equity_to_assets": e2a,
             "rating": synth_rat,
@@ -364,14 +438,20 @@ def build_wholesale_book() -> Dict[str, Any]:
         "provenance": {
             "issuers": "S&P 100 constituents (Wikipedia, CC BY-SA 4.0)",
             "financials": "SEC EDGAR XBRL companyfacts (debt, interest, EBIT, assets, equity)",
-            "pd": "S&P Global Ratings Annual Corporate Default Study 1981-2024 (Table 1)",
+            "pd": PD_SOURCE,
             "spreads": "FRED ICE BofA OAS rating-bucket series (latest derived)",
             "lgd": "Basel F-IRB senior unsecured benchmark (0.45)",
             "benchmark_rates": "FRED DGS5 (5-year Treasury yield)",
         },
         "selection_rule": "2 largest debt issuers per GICS sector among S&P 100 constituents",
         "base_currency": "USD",
-        "valuation_date": "2026-03-01",
+        "valuation_date": fred_last_date("DGS5"),
+        "issuers": [
+            {k: (round(v, 3) if isinstance(v, float) and k != "total_debt" else v)
+             for k, v in r.items() if k != "allocated_exposure"}
+            for r in picks.drop(columns=["sector_rank"]).to_dict("records")
+        ],
+        "excluded_issuers": dict(sorted(excluded.items())),
         "summary": summary,
         "positions": positions,
     }
