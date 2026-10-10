@@ -7,6 +7,7 @@ from typing import List, Optional, Set, Union
 from sentinel.config import settings
 from sentinel.contracts.signals import RiskSignal
 from sentinel.contracts.stress import StressRunResult
+from sentinel.nlp.sentiment import macro_polarity
 from sentinel.stress.portfolio import WholesalePortfolio
 from sentinel.stress.shocks import (
     DEFAULT_SHOCK_CATALOG,
@@ -44,6 +45,16 @@ class StressEngine:
         )
         self.acted_signal_ids: Set[str] = set()
 
+    def _macro_is_easing(self, signal: RiskSignal) -> Optional[bool]:
+        """True = easing/benign, False = tightening/adverse, None = no direction (skip)."""
+        direction = signal.event.macro_direction or "none"
+        if direction in ("easing", "tightening"):
+            return direction == "easing"
+        pol = macro_polarity(signal.text_excerpt or "")
+        if pol is not None:
+            return pol[0] > 0
+        return None
+
     def should_trigger(self, signal: RiskSignal) -> bool:
         """Evaluate if an incoming RiskSignal meets criteria for automated stress testing."""
 
@@ -61,6 +72,9 @@ class StressEngine:
 
         if signal.signal_id in self.acted_signal_ids:
             return False
+
+        if signal.event.label.upper() == "MACRO" and self._macro_is_easing(signal) is None:
+            return False  # direction unknown: do not guess
 
         return True
 
@@ -91,24 +105,7 @@ class StressEngine:
             # Always use ticker symbol (e.g. 'APEX'), never company name string
             target_entity = signal.entity.ticker
 
-        # Easing detection for macro rate events (Bug B2 fix)
-        is_easing = False
-        if getattr(signal.event, "macro_direction", None) == "easing":
-            is_easing = True
-        else:
-            evidence_text = " ".join(e.text for e in signal.evidence).lower()
-            if any(
-                w in evidence_text
-                for w in (
-                    "rate cut",
-                    "cuts rate",
-                    "cutting rate",
-                    "easing",
-                    "lower rate",
-                    "lowers rate",
-                )
-            ):
-                is_easing = True
+        is_easing = bool(self._macro_is_easing(signal)) if event_class == "MACRO" else False
 
         shock = build_scaled_shock(
             event_class=event_class,
