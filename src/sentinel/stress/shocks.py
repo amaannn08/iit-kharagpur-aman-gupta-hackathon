@@ -6,8 +6,9 @@ Treasury yield change, implied high-yield spread change from HYG vs IEF, and PD 
 triangle (spread ~ PD x LGD). The data showed that credit and geopolitical stress *lower*
 Treasury yields (flight to quality); only a tightening macro shock raises them.
 
-Single-name shocks keep the PRD's documented assumptions (the SVB window's +139 bp / +2.3 pp
-independently supports the PRD's +150 bp / +2.5 pp credit shock).
+Single-name shocks keep documented assumptions (single-name CREDIT shock +150 bp is an
+assumption; the SVB index move was +79 bp, and single names in distress widen several times
+the index).
 Shocks scale linearly with impact / 8, bounded to [0.125, 1.25].
 """
 
@@ -33,35 +34,35 @@ class ShockParameters:
 # Systemic shocks: measured windows (values copied from data/market/stress_windows.json;
 # tests/test_stress_shocks.py keeps them consistent).
 MACRO_TIGHTENING = ShockParameters(
-    bond_spread_shift_bps=68.2,
-    loan_pd_increment=0.0114,
+    bond_spread_shift_bps=88.6,
+    loan_pd_increment=0.0,
     benchmark_yield_shift_bps=26.3,
     equity_shock_pct=-0.0867,
-    description="Fed 75 bp surprise week: S&P -8.7%, 10y +26 bp, HY spread +68 bp",
+    description="Fed 75 bp surprise week: S&P -8.7%, 10y +26 bp, HY spread +89 bp",
     anchor="fed_jun_2022",
 )
 MACRO_EASING = ShockParameters(
-    bond_spread_shift_bps=2.6,
-    loan_pd_increment=0.0004,
+    bond_spread_shift_bps=-89.5,
+    loan_pd_increment=0.0,
     benchmark_yield_shift_bps=-85.9,
     equity_shock_pct=0.1168,
-    description="Fed pivot rally: S&P +11.7%, 10y -86 bp, spreads flat",
+    description="Fed pivot rally: S&P +11.7%, 10y -86 bp, spreads -90 bp",
     anchor="fed_pivot_2023",
 )
 CREDIT_SYSTEMIC = ShockParameters(
-    bond_spread_shift_bps=139.0,
-    loan_pd_increment=0.0232,
+    bond_spread_shift_bps=78.9,
+    loan_pd_increment=0.0,
     benchmark_yield_shift_bps=-58.1,
     equity_shock_pct=-0.0187,
-    description="SVB failure: HY spread +139 bp, PD +2.3 pp, 10y -58 bp (flight to quality)",
+    description="SVB failure: HY spread +79 bp, 10y -58 bp (flight to quality)",
     anchor="svb_2023",
 )
 GEOPOLITICAL_SYSTEMIC = ShockParameters(
-    bond_spread_shift_bps=54.4,
-    loan_pd_increment=0.0091,
+    bond_spread_shift_bps=39.2,
+    loan_pd_increment=0.0,
     benchmark_yield_shift_bps=-10.5,
     equity_shock_pct=-0.0135,
-    description="Russia-Ukraine invasion: HY spread +54 bp, 10y -11 bp, S&P -1.3%",
+    description="Russia-Ukraine invasion: HY spread +39 bp, 10y -11 bp, S&P -1.3%",
     anchor="russia_2022",
 )
 

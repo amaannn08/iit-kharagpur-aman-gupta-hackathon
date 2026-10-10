@@ -189,52 +189,52 @@
   },
   "scenarios": {
    "HIST-COVID_2020": {
-    "total_pnl_usd": -96738688.2,
-    "pnl_pct_of_funded": -0.1586,
+    "total_pnl_usd": -72821788.2,
+    "pnl_pct_of_funded": -0.1194,
     "by_sleeve_usd": {
      "equity": -18446863.2,
-     "retail_sme": -5096000.0,
-     "wholesale": -73074925.0
+     "retail_sme": 0.0,
+     "wholesale": -54254025.0
     },
     "reconciled": true
    },
    "HIST-FED_JUN_2022": {
-    "total_pnl_usd": -14720635.19,
-    "pnl_pct_of_funded": -0.0241,
+    "total_pnl_usd": -15119245.2,
+    "pnl_pct_of_funded": -0.0248,
     "by_sleeve_usd": {
      "equity": -4743010.2,
-     "retail_sme": -455999.99,
-     "wholesale": -9561075.0
+     "retail_sme": 0.0,
+     "wholesale": -10415685.0
     },
     "reconciled": true
    },
    "HIST-FED_PIVOT_2023": {
-    "total_pnl_usd": 13761055.81,
-    "pnl_pct_of_funded": 0.0226,
+    "total_pnl_usd": 22160820.8,
+    "pnl_pct_of_funded": 0.0363,
     "by_sleeve_usd": {
      "equity": 6389660.8,
-     "retail_sme": -15999.99,
-     "wholesale": 7516245.0
+     "retail_sme": 0.0,
+     "wholesale": 15900010.0
     },
     "reconciled": true
    },
    "HIST-RUSSIA_2022": {
-    "total_pnl_usd": -5891791.0,
-    "pnl_pct_of_funded": -0.0097,
+    "total_pnl_usd": -3355936.0,
+    "pnl_pct_of_funded": -0.0055,
     "by_sleeve_usd": {
      "equity": -738531.0,
-     "retail_sme": -364000.0,
-     "wholesale": -4773510.0
+     "retail_sme": 0.0,
+     "wholesale": -2601655.0
     },
     "reconciled": true
    },
    "HIST-SVB_2023": {
-    "total_pnl_usd": -11395937.2,
-    "pnl_pct_of_funded": -0.0187,
+    "total_pnl_usd": -2995672.2,
+    "pnl_pct_of_funded": -0.0049,
     "by_sleeve_usd": {
      "equity": -1023002.2,
-     "retail_sme": -928000.0,
-     "wholesale": -9357785.0
+     "retail_sme": 0.0,
+     "wholesale": -1885520.0
     },
     "reconciled": true
    }
@@ -326,10 +326,10 @@
  },
  "perf": {
   "records": 2000,
-  "records_per_s": 96.2,
-  "latency_p50_s": 0.0096,
-  "latency_p95_s": 0.0148,
-  "peak_rss_gb": 0.272,
+  "records_per_s": 88.2,
+  "latency_p50_s": 0.0105,
+  "latency_p95_s": 0.0159,
+  "peak_rss_gb": 0.282,
   "note": "single process, CPU, full pipeline (linking, sentiment, event, impact)"
  },
  "synthetic_regression": {
@@ -339,7 +339,7 @@
   "sentiment_macro_f1": 0.3477,
   "severity_mae": 2.79
  },
- "generated_at": "2026-10-09T19:06:16+00:00",
+ "generated_at": "2026-10-10T09:07:33+00:00",
  "targets": {
   "event_macro_f1": 0.7,
   "sentiment_macro_f1": 0.75,

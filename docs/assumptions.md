@@ -38,8 +38,8 @@ Every assumption below is implemented in code; the file that owns it is named so
 | Retail LGD / size | 80% unsecured; scaled to $50M (scale factor recorded in the file) | same |
 | Retail sector | GICS sector of the borrower's largest card-spend MCC category | same |
 | Equity sleeve | 15 S&P 100 names, $4M each (synthetic sizes), beta/vol from 252 days of real returns | `scripts/data/build_equity_sleeve.py` |
-| HY spread proxy | -(HYG return - IEF return) / 3.7 (HYG duration approximation) | `scripts/data/calibrate_shocks.py` |
-| PD shock | credit triangle: dPD = d_spread / 0.6 | same |
+| HY spread proxy | -(r_HYG - (D_HY/D_IEF) r_IEF) / D_HY with D_HY=3.7, D_IEF=7.3 (duration-matched hedge removes yield bias). Sensitivity evaluated over D_HY +/- 0.5, D_IEF +/- 0.5; validated against FRED ICE BofA OAS (Fed-pivot within 11 bp) | `sentinel.stress.calibration`, `scripts/data/calibrate_shocks.py` |
+| PD shock | Derived per loan from rating-tier spread via credit triangle (spread ~ PD x LGD); floored at 0 (no provision release in market rallies) | `sentinel.stress.valuation` |
 | Systemic shocks at impact 8 | measured windows: MACRO tightening = Fed Jun-2022, easing = Fed pivot 2023, CREDIT systemic = SVB 2023, GEOPOLITICAL = Russia 2022 | `sentinel.stress.shocks` |
 | Single-name shocks | CREDIT +150 bp / +2.5 pp PD / +5 pp LGD / equity -15%; SUPPLY_CHAIN +80 bp / +1.2 pp / +3 pp / -6%; CYBER +60 bp / +0.8 pp / +2 pp / -5% | same |
 | Shock scaling | linear in impact / 8, bounded to [0.125, 1.25] | same |

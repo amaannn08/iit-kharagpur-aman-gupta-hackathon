@@ -1,7 +1,11 @@
 {
- "source": "yfinance closes (SPY, ^TNX, HYG, IEF, ^VIX)",
- "hy_duration_assumption": 3.7,
- "credit_triangle_lgd": 0.6,
+ "source": "yfinance closes (SPY, ^TNX, HYG, LQD, IEF, ^VIX)",
+ "durations": {
+  "HYG": 3.7,
+  "LQD": 8.4,
+  "IEF": 7.3
+ },
+ "spread_formula": "-(r_credit - (D_c/D_t) r_IEF) / D_c",
  "windows": {
   "covid_2020": {
    "name": "COVID-19 liquidity shock",
@@ -12,8 +16,13 @@
    "equity_shock_pct": -0.3372,
    "benchmark_yield_shift_bps": -80.6,
    "hy_minus_treasury_return": -0.2827,
-   "bond_spread_shift_bps": 764.1,
-   "loan_pd_increment": 0.1274,
+   "bond_spread_shift_bps": 679.1,
+   "ig_spread_shift_bps": 233.7,
+   "ig_to_hy_ratio": 0.344,
+   "spread_sensitivity_bps": {
+    "low": 603.1,
+    "high": 778.0
+   },
    "vix_change": 47.2,
    "vix_peak": 82.7
   },
@@ -26,8 +35,13 @@
    "equity_shock_pct": -0.0135,
    "benchmark_yield_shift_bps": -10.5,
    "hy_minus_treasury_return": -0.0201,
-   "bond_spread_shift_bps": 54.4,
-   "loan_pd_increment": 0.0091,
+   "bond_spread_shift_bps": 39.2,
+   "ig_spread_shift_bps": 22.8,
+   "ig_to_hy_ratio": 0.582,
+   "spread_sensitivity_bps": {
+    "low": 35.4,
+    "high": 44.0
+   },
    "vix_change": 4.1,
    "vix_peak": 36.5
   },
@@ -40,8 +54,13 @@
    "equity_shock_pct": -0.0867,
    "benchmark_yield_shift_bps": 26.3,
    "hy_minus_treasury_return": -0.0252,
-   "bond_spread_shift_bps": 68.2,
-   "loan_pd_increment": 0.0114,
+   "bond_spread_shift_bps": 88.6,
+   "ig_spread_shift_bps": 4.5,
+   "ig_to_hy_ratio": 0.051,
+   "spread_sensitivity_bps": {
+    "low": 74.0,
+    "high": 107.1
+   },
    "vix_change": 6.9,
    "vix_peak": 34.0
   },
@@ -54,8 +73,13 @@
    "equity_shock_pct": -0.0187,
    "benchmark_yield_shift_bps": -58.1,
    "hy_minus_treasury_return": -0.0514,
-   "bond_spread_shift_bps": 139.0,
-   "loan_pd_increment": 0.0232,
+   "bond_spread_shift_bps": 78.9,
+   "ig_spread_shift_bps": 32.6,
+   "ig_to_hy_ratio": 0.413,
+   "spread_sensitivity_bps": {
+    "low": 72.9,
+    "high": 86.2
+   },
    "vix_change": 6.4,
    "vix_peak": 26.5
   },
@@ -68,10 +92,29 @@
    "equity_shock_pct": 0.1168,
    "benchmark_yield_shift_bps": -85.9,
    "hy_minus_treasury_return": -0.0009,
-   "bond_spread_shift_bps": 2.6,
-   "loan_pd_increment": 0.0004,
+   "bond_spread_shift_bps": -89.5,
+   "ig_spread_shift_bps": -37.4,
+   "ig_to_hy_ratio": 0.417,
+   "spread_sensitivity_bps": {
+    "low": -124.3,
+    "high": -60.6
+   },
    "vix_change": -4.4,
    "vix_peak": 16.9
+  }
+ },
+ "validation_vs_fred_oas": {
+  "fed_pivot_2023": {
+   "BAMLH0A0HYM2": {
+    "implied_bps": -89.5,
+    "actual_oas_bps": -100.0,
+    "error_bps": 10.5
+   },
+   "BAMLC0A0CM": {
+    "implied_bps": -37.4,
+    "actual_oas_bps": -29.0,
+    "error_bps": -8.4
+   }
   }
  }
 }

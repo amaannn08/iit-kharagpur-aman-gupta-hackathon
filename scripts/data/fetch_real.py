@@ -273,6 +273,34 @@ def checksums() -> None:
     print(f"ok checksums ({len(rows)} files)")
 
 
+FRED_SERIES = [
+    "BAMLH0A0HYM2",
+    "BAMLC0A0CM",
+    "BAMLC0A1CAAA",
+    "BAMLC0A2CAA",
+    "BAMLC0A3CA",
+    "BAMLC0A4CBBB",
+    "BAMLH0A1HYBB",
+    "BAMLH0A2HYB",
+    "BAMLH0A3HYC",
+    "DGS5",
+]
+
+
+def fred() -> None:
+    d = RAW / "fred"
+    d.mkdir(parents=True, exist_ok=True)
+    for sid in FRED_SERIES:
+        out = d / f"{sid}.csv"
+        url = f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={sid}"
+        try:
+            out.write_bytes(get(url))
+        except Exception as exc:
+            print(f"  skip fred {sid}: {exc}")
+            continue
+    print(f"ok fred ({len(list(d.glob('*.csv')))} series)")
+
+
 STEPS = {
     "kaggle": kaggle,
     "hf": hf,
@@ -280,6 +308,7 @@ STEPS = {
     "sec_8k": sec_8k,
     "market": market,
     "gdelt": gdelt,
+    "fred": fred,
 }
 
 if __name__ == "__main__":

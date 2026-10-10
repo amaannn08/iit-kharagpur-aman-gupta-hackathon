@@ -444,78 +444,6 @@
       "record_count": 15
     },
     {
-      "file_path": "data/market/stress_windows.json",
-      "format": "json",
-      "description": "Measured market moves over five historical stress windows (shock calibration anchors)",
-      "is_synthetic": false,
-      "license": "Derived statistics from Yahoo Finance closes (yfinance); no raw prices redistributed",
-      "primary_keys": [],
-      "source": "https://finance.yahoo.com via yfinance",
-      "byte_size": 2057,
-      "sha256": "bf1c9b21c5108f4b80cec3182d097a5ec8a2187504d7e39c15ae8b56710451d7",
-      "record_count": 1
-    },
-    {
-      "file_path": "data/scenarios/historical_covid_2020.json",
-      "format": "json",
-      "description": "Runnable historical stress scenario: COVID-19 liquidity shock",
-      "is_synthetic": false,
-      "license": "Derived statistics from Yahoo Finance closes (yfinance)",
-      "primary_keys": [],
-      "source": "data/market/stress_windows.json",
-      "byte_size": 794,
-      "sha256": "77e9c35a6e246c49bb89b396e1ca8b9e2a29031867976a039e7cb7a64b26ffd1",
-      "record_count": 1
-    },
-    {
-      "file_path": "data/scenarios/historical_russia_2022.json",
-      "format": "json",
-      "description": "Runnable historical stress scenario: Russia-Ukraine invasion",
-      "is_synthetic": false,
-      "license": "Derived statistics from Yahoo Finance closes (yfinance)",
-      "primary_keys": [],
-      "source": "data/market/stress_windows.json",
-      "byte_size": 797,
-      "sha256": "1c17439f7956a6279f327427a43ebec32c47abdd4c9af234290bc6c9960ed2f5",
-      "record_count": 1
-    },
-    {
-      "file_path": "data/scenarios/historical_fed_jun_2022.json",
-      "format": "json",
-      "description": "Runnable historical stress scenario: Fed 75 bp surprise hike",
-      "is_synthetic": false,
-      "license": "Derived statistics from Yahoo Finance closes (yfinance)",
-      "primary_keys": [],
-      "source": "data/market/stress_windows.json",
-      "byte_size": 790,
-      "sha256": "a5d01a237209694a4f693d475888a014ca723765adf0b4ea218738bd63c95a41",
-      "record_count": 1
-    },
-    {
-      "file_path": "data/scenarios/historical_svb_2023.json",
-      "format": "json",
-      "description": "Runnable historical stress scenario: Silicon Valley Bank failure",
-      "is_synthetic": false,
-      "license": "Derived statistics from Yahoo Finance closes (yfinance)",
-      "primary_keys": [],
-      "source": "data/market/stress_windows.json",
-      "byte_size": 798,
-      "sha256": "5e4fe2fca7f05a4e63e0d4f7ae4e7b129ba2d8a7628e347b5325c5c329fef005",
-      "record_count": 1
-    },
-    {
-      "file_path": "data/scenarios/historical_fed_pivot_2023.json",
-      "format": "json",
-      "description": "Runnable historical stress scenario: Fed pivot rally (easing)",
-      "is_synthetic": false,
-      "license": "Derived statistics from Yahoo Finance closes (yfinance)",
-      "primary_keys": [],
-      "source": "data/market/stress_windows.json",
-      "byte_size": 793,
-      "sha256": "5accfdd6ffa23948eb1d720fa5602cce14bf669c8f963097648e664f7b32965b",
-      "record_count": 1
-    },
-    {
       "file_path": "data/train/sec_8k/items.csv",
       "format": "csv",
       "description": "Real 8-K item statements (1.05 cyber, 1.03 bankruptcy, 2.04 debt acceleration) with item-code labels",
@@ -564,7 +492,79 @@
       "byte_size": 34750,
       "sha256": "4a8009cf308de32c7f0f4c12aee219afa9718ba5a232ae9224d946a6f456e4fd",
       "record_count": 519
+    },
+    {
+      "file_path": "data/market/stress_windows.json",
+      "format": "json",
+      "description": "Measured market moves over five historical stress windows (shock calibration anchors)",
+      "is_synthetic": false,
+      "license": "Derived statistics from Yahoo Finance closes (yfinance); no raw prices redistributed",
+      "primary_keys": [],
+      "source": "https://finance.yahoo.com via yfinance",
+      "byte_size": 2888,
+      "sha256": "f2da483a9cdc6e4ab9623bb16abfc26e7cf062f1f5844f8930f67d9f83ebe14e",
+      "record_count": 1
+    },
+    {
+      "file_path": "data/scenarios/historical_covid_2020.json",
+      "format": "json",
+      "description": "Runnable historical stress scenario: COVID-19 liquidity shock",
+      "is_synthetic": false,
+      "license": "Derived statistics from Yahoo Finance closes (yfinance)",
+      "primary_keys": [],
+      "source": "data/market/stress_windows.json",
+      "byte_size": 789,
+      "sha256": "05b25dfbebaf5a1293c71428daf8b5fc942c034acf8308dd97e7abb2579ed29b",
+      "record_count": 1
+    },
+    {
+      "file_path": "data/scenarios/historical_russia_2022.json",
+      "format": "json",
+      "description": "Runnable historical stress scenario: Russia-Ukraine invasion",
+      "is_synthetic": false,
+      "license": "Derived statistics from Yahoo Finance closes (yfinance)",
+      "primary_keys": [],
+      "source": "data/market/stress_windows.json",
+      "byte_size": 792,
+      "sha256": "d70a35e8c269d984a17d0d61782a95281ce9517ff21149b5c45f8ae09e5ccd4b",
+      "record_count": 1
+    },
+    {
+      "file_path": "data/scenarios/historical_fed_jun_2022.json",
+      "format": "json",
+      "description": "Runnable historical stress scenario: Fed 75 bp surprise hike",
+      "is_synthetic": false,
+      "license": "Derived statistics from Yahoo Finance closes (yfinance)",
+      "primary_keys": [],
+      "source": "data/market/stress_windows.json",
+      "byte_size": 785,
+      "sha256": "0e79ed0c08b98c1d18d339f23deecdd7d3a8e4ee3ec5e9f97f7b6be73033ec91",
+      "record_count": 1
+    },
+    {
+      "file_path": "data/scenarios/historical_svb_2023.json",
+      "format": "json",
+      "description": "Runnable historical stress scenario: Silicon Valley Bank failure",
+      "is_synthetic": false,
+      "license": "Derived statistics from Yahoo Finance closes (yfinance)",
+      "primary_keys": [],
+      "source": "data/market/stress_windows.json",
+      "byte_size": 791,
+      "sha256": "9e5dc2be2bfe1230c53832b53b43c688650ea6a5bc5b40640f88f7c5cacc52df",
+      "record_count": 1
+    },
+    {
+      "file_path": "data/scenarios/historical_fed_pivot_2023.json",
+      "format": "json",
+      "description": "Runnable historical stress scenario: Fed pivot rally (easing)",
+      "is_synthetic": false,
+      "license": "Derived statistics from Yahoo Finance closes (yfinance)",
+      "primary_keys": [],
+      "source": "data/market/stress_windows.json",
+      "byte_size": 791,
+      "sha256": "54065a5036a4f7fed31464af898ae146345ac0265438c6f73cbbcba4415055df",
+      "record_count": 1
     }
   ],
-  "updated_at": "2026-10-09T18:51:16.458949+00:00"
+  "updated_at": "2026-10-10T09:06:40.041585+00:00"
 }

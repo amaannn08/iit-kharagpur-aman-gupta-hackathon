@@ -296,8 +296,8 @@ def build_presentation_pdf() -> None:
                 "10-year Treasury yield <i>fell</i> while spreads widened; only Fed tightening raised "
                 "it. The shock catalog encodes this instead of assuming every crisis lifts yields.",
                 f"<b>Credit triangle:</b> the SVB window's {svb['bond_spread_shift_bps']:+.0f} bp HY "
-                f"spread implies {svb['loan_pd_increment'] * 100:+.1f} pp PD at 60% LGD, independently "
-                "supporting the +150 bp / +2.5 pp single-name credit shock.",
+                "index spread move is duration-corrected (validated vs FRED OAS within 11 bp); "
+                "single names in distress widen multiple times the index.",
                 f"<b>Retail credit from real transactions:</b> {n_borrowers:,} borrowers and "
                 f"{n_tx:,} card transactions pooled into sector x rating tranches; cyber losses use "
                 "observed fraud rates by sector.",

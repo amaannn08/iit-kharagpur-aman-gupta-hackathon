@@ -2,12 +2,31 @@
 
 import json
 
+import pytest
+
 from sentinel.config import settings
 from sentinel.contracts.stress import AssetClass, EquityPosition
 from sentinel.stress import shocks
+from sentinel.stress.calibration import implied_spread_change_bps
 from sentinel.stress.engine import StressEngine
 from sentinel.stress.shocks import ScaledShock, build_scaled_shock
 from sentinel.stress.valuation import ValuationEngine
+
+
+def test_spread_formula_removes_duration_bias():
+    # pure rates rally of -100 bp, zero spread change
+    r_hy, r_tsy = 3.7 * 0.01, 7.3 * 0.01
+    assert abs(implied_spread_change_bps(r_hy, r_tsy, 3.7, 7.3)) < 1e-6
+    # pure +100 bp spread widening, no rates move
+    assert abs(implied_spread_change_bps(-3.7 * 0.01, 0.0, 3.7, 7.3) - 100) < 1e-6
+
+
+def test_fed_pivot_validates_against_fred():
+    w = json.loads((settings.data_dir / "market" / "stress_windows.json").read_text())
+    v = w.get("validation_vs_fred_oas", {}).get("fed_pivot_2023", {}).get("BAMLH0A0HYM2")
+    if v is None:
+        pytest.skip("FRED validation not built")
+    assert abs(v["error_bps"]) <= 25 and v["implied_bps"] < 0
 
 
 def test_systemic_catalog_matches_measured_windows():
@@ -24,7 +43,8 @@ def test_systemic_catalog_matches_measured_windows():
         assert abs(params.equity_shock_pct - w["equity_shock_pct"]) < 1e-3
         assert abs(params.benchmark_yield_shift_bps - w["benchmark_yield_shift_bps"]) < 0.2
         assert abs(params.bond_spread_shift_bps - w["bond_spread_shift_bps"]) < 0.2
-        assert abs(params.loan_pd_increment - w["loan_pd_increment"]) < 1e-3
+        if "loan_pd_increment" in w:
+            assert abs(params.loan_pd_increment - w["loan_pd_increment"]) < 1e-3
 
 
 def test_flight_to_quality_signs():
