@@ -19,3 +19,9 @@ def test_gitignored_raw_data_cache_is_exempt_from_forbidden_file_scan():
         assert "_hygiene_probe.db" not in res.stderr
     finally:
         probe.unlink(missing_ok=True)
+
+
+def test_tests_never_touch_the_developer_database():
+    from sentinel.config import settings
+
+    assert ".runtime" not in settings.database_url
