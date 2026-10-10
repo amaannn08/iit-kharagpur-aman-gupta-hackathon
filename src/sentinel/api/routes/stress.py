@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 
+from sentinel.config import settings
 from sentinel.contracts.stress import StressRunResult
 from sentinel.nlp.entities import EntityLinker
 from sentinel.storage.db import get_db
@@ -84,6 +85,7 @@ class CustomStressRequest(BaseModel):
     loan_pd_increment: float = Field(0.0, ge=-1.0, le=1.0)
     lgd_increment: float = Field(0.0, ge=-1.0, le=1.0)
     pd_from_spread: bool = False
+    rating_tiered: bool = Field(False, description="Scale the spread/PD shock by rating tier")
     run_id: str = "custom-sandbox"
     profile: Optional[str] = Field(None, description="Portfolio profile: real_issuers or synthetic_demo")
 
@@ -101,9 +103,11 @@ class PersistedStressSummary(BaseModel):
 
 @router.get("/portfolio")
 def get_portfolio(profile: Optional[str] = None) -> Dict[str, Any]:
-    """Return synthetic wholesale baseline portfolio with funded and derivative segregation."""
-    prof_name = profile or "synthetic_demo"
-    prof = stress_engine.profiles.get(prof_name, stress_engine.portfolio)
+    """Baseline portfolio of a profile (default: the one stress runs use)."""
+    prof_name = profile or settings.default_portfolio_profile
+    if prof_name not in stress_engine.profiles:
+        raise HTTPException(status_code=404, detail=f"Unknown portfolio profile '{prof_name}'")
+    prof = stress_engine.profiles[prof_name]
     return prof.to_dict()
 
 
@@ -121,13 +125,16 @@ def simulate_stress(
                 status_code=400,
                 detail=f"Unknown target entity '{req.target_entity}' for entity scope",
             )
-    sector = (
-        _sector_of(target)
-        if req.target_scope == "entity"
-        else normalize_sector(req.target_entity)
-        if req.target_scope == "sector"
-        else None
-    )
+    try:
+        sector = (
+            _sector_of(target)
+            if req.target_scope == "entity"
+            else normalize_sector(req.target_entity)
+            if req.target_scope == "sector"
+            else None
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
     prof = req.profile
     if not prof:
         demo_port = stress_engine.profiles.get("synthetic_demo", stress_engine.portfolio)

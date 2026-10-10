@@ -29,8 +29,9 @@ STRESS_CLASSES = {"CREDIT", "MACRO", "GEOPOLITICAL", "SUPPLY_CHAIN", "CYBER", "M
 SYSTEMIC_CAP = 7
 CATASTROPHIC_FLOOR = 8
 DEBT_FINANCED_MA = re.compile(
+    # deal size alone is not evidence of leverage; only explicit debt financing floors impact
     r"\b(bridge loan|debt[- ]financed|new notes|term loan|funded by (?:new )?debt|"
-    r"financed with (?:new )?debt|\$\d+\s*billion|\b\d+\s*billion\b)\b",
+    r"financed with (?:new )?debt)\b",
     re.I,
 )
 EXPLICIT_MAGNITUDE = re.compile(

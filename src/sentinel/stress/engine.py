@@ -268,10 +268,14 @@ class StressEngine:
         lgd_increment: float = 0.0,
         run_id: str = "custom-run",
         pd_from_spread: bool = False,
-        rating_tiered: bool = True,
+        rating_tiered: bool = False,
         profile: Optional[str] = None,
     ) -> StressRunResult:
-        """Explicit systemic shock set, e.g. the PS example: equities -10%, rates +200 bp."""
+        """Explicit systemic shock set, e.g. the PS example: equities -10%, rates +200 bp.
+
+        The shocks are applied as given: rating tiers (index-to-rating spread scaling) are off
+        unless requested, because the caller specified the spread move directly.
+        """
         shock = ScaledShock(
             bond_spread_shift_bps=bond_spread_shift_bps,
             loan_pd_increment=loan_pd_increment,
