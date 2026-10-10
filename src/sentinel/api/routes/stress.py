@@ -12,6 +12,7 @@ from sentinel.nlp.entities import EntityLinker
 from sentinel.storage.db import get_db
 from sentinel.storage.repository import ReplayRepository
 from sentinel.stress.engine import StressEngine
+from sentinel.stress.sectors import normalize_sector
 from sentinel.stress.shocks import DEFAULT_SHOCK_CATALOG
 
 router = APIRouter(prefix="/stress", tags=["Stress Testing Engine"])
@@ -65,10 +66,10 @@ def _sector_of(target: Optional[str]) -> Optional[str]:
         return None
     ent = _linker.entities.get(target.upper())
     if ent and ent.sector:
-        return ent.sector
+        return normalize_sector(ent.sector)
     for p in stress_engine.portfolio.all_positions():
         if p.entity_id.upper() == target.upper():
-            return p.sector
+            return normalize_sector(p.sector)
     return None
 
 
@@ -118,7 +119,7 @@ def simulate_stress(
     sector = (
         _sector_of(target)
         if req.target_scope == "entity"
-        else req.target_entity
+        else normalize_sector(req.target_entity)
         if req.target_scope == "sector"
         else None
     )

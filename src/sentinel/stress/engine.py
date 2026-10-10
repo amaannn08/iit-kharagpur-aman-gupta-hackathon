@@ -9,6 +9,7 @@ from sentinel.contracts.signals import RiskSignal
 from sentinel.contracts.stress import StressRunResult
 from sentinel.nlp.sentiment import macro_polarity
 from sentinel.stress.portfolio import WholesalePortfolio
+from sentinel.stress.sectors import normalize_sector
 from sentinel.stress.shocks import (
     DEFAULT_SHOCK_CATALOG,
     ScaledShock,
@@ -93,17 +94,23 @@ class StressEngine:
         if (
             event_class in {"MACRO", "GEOPOLITICAL"}
             or signal.entity.scope == "macro"
-            or not signal.entity.ticker
         ):
             scope = "systemic"
             target_entity = None
+            target_sector = None
         elif signal.entity.scope == "sector":
             scope = "sector"
-            target_entity = signal.entity.name
+            target_entity = None
+            target_sector = normalize_sector(signal.entity.sector or signal.entity.name)
+        elif not signal.entity.ticker:
+            scope = "systemic"
+            target_entity = None
+            target_sector = None
         else:
             scope = "entity"
             # Always use ticker symbol (e.g. 'APEX'), never company name string
             target_entity = signal.entity.ticker
+            target_sector = normalize_sector(signal.entity.sector)
 
         is_easing = bool(self._macro_is_easing(signal)) if event_class == "MACRO" else False
 
@@ -113,7 +120,7 @@ class StressEngine:
             target_entity=target_entity,
             target_scope=scope,
             is_easing=is_easing,
-            target_sector=signal.entity.sector,
+            target_sector=target_sector,
         )
 
         enable_contagion = scope == "entity" and event_class in {"CREDIT", "SUPPLY_CHAIN"}

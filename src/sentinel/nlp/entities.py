@@ -19,6 +19,7 @@ from typing import Dict, List, Optional, Set, Tuple, Union
 
 from sentinel.config import settings
 from sentinel.contracts.signals import EntityReference, EvidenceSpan
+from sentinel.stress.sectors import GICS_SECTORS
 
 
 @dataclass
@@ -89,6 +90,14 @@ MACRO_TERMS = [
     "federal reserve", "central bank", "treasury yield", "treasury yields", "fomc",
     "european central bank", "ecb", "macro", "sovereign bond",
 ]  # fmt: skip
+SECTOR_PHRASES = [
+    (re.compile(r"\b(regional banks|bank stocks|lenders)\b", re.I), "Financials"),
+    (re.compile(r"\b(chipmakers|semiconductor stocks)\b", re.I), "Information Technology"),
+    (re.compile(r"\b(airlines)\b", re.I), "Industrials"),
+    (re.compile(r"\b(oil producers|oil majors)\b", re.I), "Energy"),
+    (re.compile(r"\b(automakers)\b", re.I), "Consumer Discretionary"),
+    (re.compile(r"\b(drugmakers|pharma stocks)\b", re.I), "Health Care"),
+]
 
 
 def _universe_path() -> Path:
@@ -238,17 +247,31 @@ class EntityLinker:
                 ]
         return None
 
+    def _sector(self, text: str) -> Optional[Tuple[EntityReference, List[EvidenceSpan]]]:
+        for pattern, sector in SECTOR_PHRASES:
+            m = pattern.search(text)
+            if m:
+                ref = EntityReference(
+                    name=sector, ticker=None, scope="sector", sector=sector, resolved=True
+                )
+                return ref, [
+                    EvidenceSpan(start=m.start(), end=m.end(), text=text[m.start() : m.end()])
+                ]
+        return None
+
     def resolve_all(
         self, text: str, hint_entity_id: Optional[str] = None
     ) -> List[Tuple[EntityReference, List[EvidenceSpan]]]:
         """Every resolved company (PRD 6.2: one signal per entity/event association).
 
-        Falls back to the macro entity, then a valid hint (without fabricated spans), then a
-        single unresolved reference.
+        Falls back to sector phrases, the macro entity, then a valid hint (without fabricated
+        spans), then a single unresolved reference.
         """
         companies = self.find_companies(text)
         if companies:
             return [(self._ref(t), spans) for t, spans in companies.items()]
+        if sector := self._sector(text):
+            return [sector]
         if macro := self._macro(text):
             return [macro]
         if hint_entity_id:
@@ -259,6 +282,11 @@ class EntityLinker:
                 ]
             if hint in self.entities:
                 return [(self._ref(hint), [])]
+            for g in GICS_SECTORS:
+                if hint == g.upper():
+                    return [
+                        (EntityReference(name=g, ticker=None, scope="sector", sector=g, resolved=True), [])
+                    ]
         unknown = EntityReference(
             name="Unknown Entity", ticker=None, scope="unknown", resolved=False
         )

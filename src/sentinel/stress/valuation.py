@@ -21,6 +21,7 @@ from sentinel.contracts.stress import (
 from sentinel.stress.contagion import ContagionGraph
 from sentinel.stress.portfolio import WholesalePortfolio
 from sentinel.stress.ratings import rating_bucket, spread_multiplier
+from sentinel.stress.sectors import normalize_sector
 from sentinel.stress.shocks import ScaledShock
 
 RISK_NEUTRAL_TO_PHYSICAL = 1.0
@@ -62,9 +63,10 @@ class ValuationEngine:
             return True
 
         if shock.target_scope == "sector":
-            if not shock.target_entity:
+            target = shock.target_sector or shock.target_entity
+            if not target:
                 return True
-            return shock.target_entity.lower() in position_sector.lower()
+            return normalize_sector(target) == position_sector
 
         if shock.target_scope == "entity":
             if not shock.target_entity:
@@ -196,11 +198,12 @@ class ValuationEngine:
         # card-fraud rate observed for that sector in the real labelled transactions.
         op_loss = 0.0
         fraud_rate = self.portfolio.sector_fraud_rates.get(loan.sector, 0.0)
+        target_sec = normalize_sector(shock.target_sector) if shock.target_sector else None
         if (
             shock.operational_loss_multiplier > 0
             and loan.sleeve == "retail_sme"
-            and shock.target_sector
-            and loan.sector == shock.target_sector
+            and target_sec
+            and loan.sector == target_sec
             and fraud_rate > 0
         ):
             op_loss = min(
@@ -284,7 +287,7 @@ class ValuationEngine:
                 move = equity.beta * shock.equity_shock_pct
             elif shock.target_scope == "sector":
                 sector = shock.target_sector or shock.target_entity or ""
-                if not sector or sector.lower() in equity.sector.lower():
+                if not sector or normalize_sector(sector) == equity.sector:
                     move = equity.beta * shock.equity_shock_pct
             elif shock.target_entity and equity.entity_id.upper() == shock.target_entity.upper():
                 move = shock.equity_shock_pct

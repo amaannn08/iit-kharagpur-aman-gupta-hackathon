@@ -12,6 +12,7 @@ from sentinel.contracts.stress import (
     PortfolioSummary,
     SwapPosition,
 )
+from sentinel.stress.sectors import normalize_sector
 
 
 class WholesalePortfolio:
@@ -58,6 +59,8 @@ class WholesalePortfolio:
         equities: List[EquityPosition] = []
 
         for p in data.get("positions", []):
+            if "sector" in p and p["sector"] is not None:
+                p["sector"] = normalize_sector(p["sector"])
             asset_class = p.get("asset_class")
             if asset_class == "loan":
                 loans.append(LoanPosition.model_validate(p))
@@ -110,13 +113,13 @@ class WholesalePortfolio:
     @classmethod
     def _load_sleeve(cls, path: Path) -> "WholesalePortfolio":
         data = json.loads(path.read_text(encoding="utf-8"))
-        loans = [
-            LoanPosition.model_validate(p) for p in data["positions"] if p["asset_class"] == "loan"
-        ]
+        positions = data.get("positions", [])
+        for p in positions:
+            if "sector" in p and p["sector"] is not None:
+                p["sector"] = normalize_sector(p["sector"])
+        loans = [LoanPosition.model_validate(p) for p in positions if p["asset_class"] == "loan"]
         equities = [
-            EquityPosition.model_validate(p)
-            for p in data["positions"]
-            if p["asset_class"] == "equity"
+            EquityPosition.model_validate(p) for p in positions if p["asset_class"] == "equity"
         ]
         sleeve = cls(
             portfolio_name=data.get("portfolio_name", path.stem),
@@ -135,7 +138,9 @@ class WholesalePortfolio:
             cash=[],
             equities=equities,
         )
-        sleeve.sector_fraud_rates = data.get("sector_fraud_rates", {})
+        sleeve.sector_fraud_rates = {
+            normalize_sector(k): v for k, v in data.get("sector_fraud_rates", {}).items()
+        }
         return sleeve
 
     def _computed_summary(self) -> PortfolioSummary:
