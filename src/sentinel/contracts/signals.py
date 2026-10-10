@@ -6,11 +6,18 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field, model_validator
 
 
+class EvidenceSpan(BaseModel):
+    start: int = Field(..., ge=0, description="Character offset start in raw text")
+    end: int = Field(..., ge=0, description="Character offset end in raw text")
+    text: str = Field(..., description="Extracted textual span")
+
+
 class EntityReference(BaseModel):
     name: str = Field(..., description="Canonical entity name")
     ticker: Optional[str] = Field(None, description="Mapped ticker symbol if applicable")
     scope: str = Field(default="company", description="Entity scope e.g. company, sector, macro")
     resolved: bool = Field(default=True, description="Whether entity resolution was confident")
+    sector: Optional[str] = Field(None, description="Sector of the resolved company, if known")
 
 
 class SentimentProbabilities(BaseModel):
@@ -39,6 +46,12 @@ class EventOutput(BaseModel):
     macro_direction: Optional[str] = Field(
         default=None, description="Macro policy direction: easing, tightening, or none"
     )
+    evidence: List[EvidenceSpan] = Field(
+        default_factory=list, description="Spans that satisfied the event-class evidence gate"
+    )
+    probabilities: Dict[str, float] = Field(
+        default_factory=dict, description="Calibrated class probabilities from the classifier"
+    )
 
 
 class ImpactComponents(BaseModel):
@@ -51,12 +64,13 @@ class ImpactOutput(BaseModel):
     score: int = Field(..., ge=1, le=10, description="Overall severity score on 1-10 scale")
     rubric_version: str = Field(default="1.0")
     components: ImpactComponents
-
-
-class EvidenceSpan(BaseModel):
-    start: int = Field(..., ge=0, description="Character offset start in raw text")
-    end: int = Field(..., ge=0, description="Character offset end in raw text")
-    text: str = Field(..., description="Extracted textual span")
+    method: str = Field(
+        default="rubric",
+        description="rubric | market_calibrated (decile of predicted abnormal return) | floor",
+    )
+    market_calibration: Optional[Dict[str, Any]] = Field(
+        default=None, description="Model version, predicted |abnormal z| and decile when used"
+    )
 
 
 class RiskSignal(BaseModel):
@@ -73,6 +87,7 @@ class RiskSignal(BaseModel):
     timestamp_quality: str = Field(default="synthetic")
     simulated_at: Optional[datetime] = None
     processed_at: datetime = Field(default_factory=datetime.utcnow)
+    text_excerpt: Optional[str] = Field(None, description="First 280 characters of the source text")
     entity: EntityReference
     sentiment: SentimentOutput
     event: EventOutput

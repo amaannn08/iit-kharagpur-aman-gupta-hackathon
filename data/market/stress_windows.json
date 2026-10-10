@@ -1,0 +1,77 @@
+{
+ "source": "yfinance closes (SPY, ^TNX, HYG, IEF, ^VIX)",
+ "hy_duration_assumption": 3.7,
+ "credit_triangle_lgd": 0.6,
+ "windows": {
+  "covid_2020": {
+   "name": "COVID-19 liquidity shock",
+   "event_class": "MACRO",
+   "start": "2020-02-19",
+   "end": "2020-03-23",
+   "trading_days": 24,
+   "equity_shock_pct": -0.3372,
+   "benchmark_yield_shift_bps": -80.6,
+   "hy_minus_treasury_return": -0.2827,
+   "bond_spread_shift_bps": 764.1,
+   "loan_pd_increment": 0.1274,
+   "vix_change": 47.2,
+   "vix_peak": 82.7
+  },
+  "russia_2022": {
+   "name": "Russia-Ukraine invasion",
+   "event_class": "GEOPOLITICAL",
+   "start": "2022-02-23",
+   "end": "2022-03-08",
+   "trading_days": 10,
+   "equity_shock_pct": -0.0135,
+   "benchmark_yield_shift_bps": -10.5,
+   "hy_minus_treasury_return": -0.0201,
+   "bond_spread_shift_bps": 54.4,
+   "loan_pd_increment": 0.0091,
+   "vix_change": 4.1,
+   "vix_peak": 36.5
+  },
+  "fed_jun_2022": {
+   "name": "Fed 75 bp surprise hike",
+   "event_class": "MACRO",
+   "start": "2022-06-09",
+   "end": "2022-06-16",
+   "trading_days": 6,
+   "equity_shock_pct": -0.0867,
+   "benchmark_yield_shift_bps": 26.3,
+   "hy_minus_treasury_return": -0.0252,
+   "bond_spread_shift_bps": 68.2,
+   "loan_pd_increment": 0.0114,
+   "vix_change": 6.9,
+   "vix_peak": 34.0
+  },
+  "svb_2023": {
+   "name": "Silicon Valley Bank failure",
+   "event_class": "CREDIT",
+   "start": "2023-03-08",
+   "end": "2023-03-17",
+   "trading_days": 8,
+   "equity_shock_pct": -0.0187,
+   "benchmark_yield_shift_bps": -58.1,
+   "hy_minus_treasury_return": -0.0514,
+   "bond_spread_shift_bps": 139.0,
+   "loan_pd_increment": 0.0232,
+   "vix_change": 6.4,
+   "vix_peak": 26.5
+  },
+  "fed_pivot_2023": {
+   "name": "Fed pivot rally (easing)",
+   "event_class": "MACRO",
+   "start": "2023-11-01",
+   "end": "2023-12-14",
+   "trading_days": 31,
+   "equity_shock_pct": 0.1168,
+   "benchmark_yield_shift_bps": -85.9,
+   "hy_minus_treasury_return": -0.0009,
+   "bond_spread_shift_bps": 2.6,
+   "loan_pd_increment": 0.0004,
+   "vix_change": -4.4,
+   "vix_peak": 16.9
+  }
+ }
+}

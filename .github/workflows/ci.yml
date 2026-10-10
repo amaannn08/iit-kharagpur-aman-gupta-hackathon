@@ -34,6 +34,9 @@ jobs:
       - name: Run Hygiene & Manifest Cryptographic Verification
         run: python scripts/verify_hygiene.py
 
+      - name: Recompute Real-Data Evaluation Suites (committed data and models only)
+        run: uv run python scripts/run_evaluation.py --suite public_real,entity_polygon,stress,synthetic_regression
+
       - name: Run Backend Pytest Suite
         run: uv run pytest -v
 

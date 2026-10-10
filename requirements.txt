@@ -10,6 +10,10 @@ anyio==4.15.1
     #   watchfiles
 click==8.5.0
     # via uvicorn
+cloudpickle==3.1.2
+    # via joblib
+datasketch==2.0.0
+    # via sentinel (pyproject.toml)
 fastapi==0.142.2
     # via sentinel (pyproject.toml)
 h11==0.16.0
@@ -18,12 +22,20 @@ httptools==0.8.0
     # via uvicorn
 idna==3.20
     # via anyio
+joblib==1.6.0
+    # via
+    #   sentinel (pyproject.toml)
+    #   scikit-learn
+narwhals==2.26.0
+    # via scikit-learn
 networkx==3.6.1
     # via sentinel (pyproject.toml)
 numpy==2.4.6
     # via
     #   sentinel (pyproject.toml)
+    #   datasketch
     #   pandas
+    #   scikit-learn
     #   scipy
 opentelemetry-api==1.45.0
     # via fastapi
@@ -48,14 +60,21 @@ python-multipart==0.0.32
     # via sentinel (pyproject.toml)
 pyyaml==6.0.3
     # via uvicorn
-scipy==1.17.1
+scikit-learn==1.9.1
     # via sentinel (pyproject.toml)
+scipy==1.17.1
+    # via
+    #   sentinel (pyproject.toml)
+    #   datasketch
+    #   scikit-learn
 six==1.17.0
     # via python-dateutil
 sqlalchemy==2.1.3
     # via sentinel (pyproject.toml)
 starlette==1.7.0
     # via fastapi
+threadpoolctl==3.7.0
+    # via scikit-learn
 typing-extensions==4.16.0
     # via
     #   anyio

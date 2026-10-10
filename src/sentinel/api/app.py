@@ -11,6 +11,7 @@ from sentinel.api.routes.datasets import router as datasets_router
 from sentinel.api.routes.events import router as events_router
 from sentinel.api.routes.exports import router as exports_router
 from sentinel.api.routes.health import router as health_router
+from sentinel.api.routes.index import router as index_router
 from sentinel.api.routes.replay import router as replay_router
 from sentinel.api.routes.signals import router as signals_router
 from sentinel.api.routes.stress import (
@@ -68,6 +69,7 @@ def create_app() -> FastAPI:
     app.include_router(analyze_router, prefix="/api")
     app.include_router(events_router, prefix="/api")
     app.include_router(exports_router, prefix="/api")
+    app.include_router(index_router, prefix="/api")
 
     # Direct aliases conforming to exact PRD Section 12 specifications
     app.add_api_route("/api/portfolio", get_portfolio, methods=["GET"], tags=["Portfolio"])

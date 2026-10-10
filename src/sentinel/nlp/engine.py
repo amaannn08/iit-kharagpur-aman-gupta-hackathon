@@ -5,11 +5,22 @@ from typing import List, Optional
 from uuid import uuid4
 
 from sentinel.config import settings
-from sentinel.contracts.records import InputRecord
-from sentinel.contracts.signals import EvidenceSpan, RiskSignal
+from sentinel.contracts.records import InputRecord, SourceType
+from sentinel.contracts.signals import (
+    EntityReference,
+    EventOutput,
+    EvidenceSpan,
+    RiskSignal,
+    SentimentOutput,
+)
 from sentinel.nlp.entities import EntityLinker
 from sentinel.nlp.events import EventClassifier
-from sentinel.nlp.sentiment import FinBERTSentimentAnalyzer
+from sentinel.nlp.relevance import social_block_reason
+from sentinel.nlp.sentiment import (
+    FinBERTSentimentAnalyzer,
+    apply_macro_polarity,
+    policy_direction,
+)
 from sentinel.nlp.severity import SeverityRubricEngine
 from sentinel.replay.dedup import DedupDecision
 
@@ -40,9 +51,8 @@ class NLPEngine:
 
         self.entity_linker = entity_linker or EntityLinker()
         self.sentiment_analyzer = sentiment_analyzer or FinBERTSentimentAnalyzer()
-        self.event_classifier = event_classifier or EventClassifier(
-            confidence_threshold=self.action_confidence_threshold
-        )
+        # Abstention threshold comes from the trained model's card (chosen on a dev split)
+        self.event_classifier = event_classifier or EventClassifier()
         self.severity_engine = severity_engine or SeverityRubricEngine()
 
     def process_record(
@@ -51,11 +61,22 @@ class NLPEngine:
         run_id: str,
         dedup_decision: Optional[DedupDecision] = None,
     ) -> RiskSignal:
-        """Process an input record and emit an auditable RiskSignal contract."""
-        lower_text = record.text.lower()
+        """Process a record and return the signal for its primary (first-mentioned) entity."""
+        return self.process_record_multi(record, run_id, dedup_decision)[0]
 
-        # 1. Entity Resolution
-        entity_ref, entity_spans = self.entity_linker.resolve(
+    def process_record_multi(
+        self,
+        record: InputRecord,
+        run_id: str,
+        dedup_decision: Optional[DedupDecision] = None,
+    ) -> List[RiskSignal]:
+        """Emit one auditable RiskSignal per resolved entity (PRD Section 6.2).
+
+        Sentiment and event classification are computed once per record; impact and action
+        eligibility are computed per entity because scope (company vs macro) changes them.
+        """
+        # 1. Entity Resolution (every company mentioned, or macro / unresolved fallback)
+        entities = self.entity_linker.resolve_all(
             record.text,
             hint_entity_id=record.primary_entity_id,
         )
@@ -66,50 +87,49 @@ class NLPEngine:
         # 3. Event Classification
         event = self.event_classifier.predict(record.text)
 
-        # Directional macro policy tagging (Bug B2 fix)
+        # Directional macro policy tagging (PRD 9.2: a cut and a hike map to opposite shocks)
         if event.label.upper() == "MACRO":
-            if any(
-                w in lower_text
-                for w in (
-                    "rate cut",
-                    "cuts rate",
-                    "cutting rate",
-                    "easing",
-                    "lower rate",
-                    "lowers rate",
-                    "rate reduction",
-                    "monetary stimulus",
-                )
-            ):
-                event.macro_direction = "easing"
-            elif any(
-                w in lower_text
-                for w in (
-                    "rate hike",
-                    "hikes rate",
-                    "hiking rate",
-                    "tightening",
-                    "raise rate",
-                    "raises rate",
-                    "rate increase",
-                    "inflation surge",
-                )
-            ):
-                event.macro_direction = "tightening"
-            else:
-                event.macro_direction = "none"
+            event.macro_direction, _ = policy_direction(record.text)
+            # Policy/indicator direction for a credit and rates book: a rate cut or "inflation
+            # cooled" is good news, "jobless claims rose sharply" is bad news.
+            if m := apply_macro_polarity(sentiment, record.text):
+                event.evidence.append(EvidenceSpan(start=m.start(), end=m.end(), text=m.group()))
 
+        n_companies = sum(1 for ref, _ in entities if ref.ticker)
+        return [
+            self._build_signal(
+                record, run_id, dedup_decision, entity_ref, entity_spans, sentiment, event,
+                n_companies,
+            )
+            for entity_ref, entity_spans in entities
+        ]  # fmt: skip
+
+    def _build_signal(
+        self,
+        record: InputRecord,
+        run_id: str,
+        dedup_decision: Optional[DedupDecision],
+        entity_ref: EntityReference,
+        entity_spans: List[EvidenceSpan],
+        sentiment: SentimentOutput,
+        event: EventOutput,
+        n_companies: int = 1,
+    ) -> RiskSignal:
         # 4. Severity Rubric Scoring
         impact, severity_spans = self.severity_engine.evaluate(
             event_class=event.label,
             text=record.text,
             entity=entity_ref,
+            event=event,
+            sentiment_score=sentiment.score,
+            n_entities=n_companies,
+            is_social=record.source_type == SourceType.SOCIAL,
         )
 
         # Combine unique evidence spans
         all_spans: List[EvidenceSpan] = []
         seen_spans = set()
-        for span in entity_spans + severity_spans:
+        for span in entity_spans + event.evidence + severity_spans:
             key = (span.start, span.end, span.text)
             if key not in seen_spans:
                 seen_spans.add(key)
@@ -139,6 +159,10 @@ class NLPEngine:
             eligible = False
             block_reasons.append("UNRESOLVED_ENTITY")
 
+        if record.source_type == SourceType.SOCIAL and (reason := social_block_reason(record.text)):
+            eligible = False
+            block_reasons.append(reason)
+
         duplicate_group_id = (
             dedup_decision.duplicate_group_id
             if dedup_decision and dedup_decision.is_duplicate
@@ -157,9 +181,10 @@ class NLPEngine:
             timestamp_quality=record.timestamp_quality.value,
             simulated_at=record.simulated_at,
             processed_at=datetime.utcnow(),
+            text_excerpt=record.text[:280],
             entity=entity_ref,
-            sentiment=sentiment,
-            event=event,
+            sentiment=sentiment.model_copy(deep=True),
+            event=event.model_copy(deep=True),
             impact=impact,
             evidence=all_spans,
             duplicate_group_id=duplicate_group_id,
@@ -167,7 +192,8 @@ class NLPEngine:
             action_block_reasons=block_reasons,
             model_versions={
                 "sentiment": self.sentiment_analyzer.model_version,
-                "event": "tfidf_logreg_v1.0",
+                "event": self.event_classifier.model_version,
                 "rubric": self.severity_engine.rubric_version,
+                "impact": self.severity_engine.impact_model.version,
             },
         )

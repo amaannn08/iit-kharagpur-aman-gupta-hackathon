@@ -12,6 +12,7 @@ class AssetClass(str, Enum):
     BOND = "bond"
     SWAP = "swap"
     CASH = "cash"
+    EQUITY = "equity"
 
 
 class LoanPosition(BaseModel):
@@ -26,6 +27,7 @@ class LoanPosition(BaseModel):
     baseline_pd: float = Field(..., ge=0.0, le=1.0, description="Probability of default")
     lgd: float = Field(..., ge=0.0, le=1.0, description="Loss given default")
     rating: str
+    sleeve: str = Field(default="wholesale", description="wholesale | retail_sme | equity")
     maturity_date: date
 
 
@@ -45,6 +47,7 @@ class BondPosition(BaseModel):
     spread_bps: float = Field(..., ge=0.0)
     modified_duration: float = Field(..., ge=0.0, description="Effective duration in years")
     rating: str
+    sleeve: str = Field(default="wholesale", description="wholesale | retail_sme | equity")
     maturity_date: date
 
 
@@ -62,6 +65,7 @@ class SwapPosition(BaseModel):
     floating_benchmark: str = "SOFR"
     signed_dv01: float = Field(..., description="Dollar value of 1 basis point shift")
     maturity_years: float = Field(..., ge=0.0)
+    sleeve: str = Field(default="wholesale", description="wholesale | retail_sme | equity")
     maturity_date: date
 
 
@@ -79,7 +83,21 @@ class CashPosition(BaseModel):
     yield_val: float = Field(..., alias="yield", ge=0.0)
     modified_duration: float = 0.0
     rating: str = "AAA"
+    sleeve: str = Field(default="wholesale", description="wholesale | retail_sme | equity")
     maturity_date: date
+
+
+class EquityPosition(BaseModel):
+    position_id: str
+    asset_class: AssetClass = AssetClass.EQUITY
+    entity_id: str = Field(..., description="Ticker")
+    counterparty_name: str
+    sector: str
+    currency: str = "USD"
+    market_value: float = Field(..., ge=0.0)
+    beta: float = Field(..., description="Beta vs SPY estimated from real daily returns")
+    volatility_annual: float = Field(0.0, ge=0.0)
+    sleeve: str = Field(default="equity")
 
 
 class PortfolioSummary(BaseModel):
@@ -89,6 +107,7 @@ class PortfolioSummary(BaseModel):
     cash_reserves_usd: float = Field(..., ge=0.0)
     interest_rate_swaps_mtm_usd: float = 0.0
     interest_rate_swaps_gross_notional_usd: float = Field(..., ge=0.0)
+    equities_value_usd: float = Field(0.0, ge=0.0)
 
 
 class PositionStressDelta(BaseModel):
@@ -105,11 +124,21 @@ class PositionStressDelta(BaseModel):
     ecl_stressed_usd: float = 0.0
     incremental_ecl_usd: float = 0.0
     market_risk_pnl_usd: float = 0.0
+    operational_loss_usd: float = 0.0
     applied_shock_summary: str = "Unimpacted"
     is_contagion: bool = False
     contagion_hops: int = 0
     contagion_source: Optional[str] = None
     transmission_factor: float = 1.0
+    sleeve: str = "wholesale"
+
+
+class SleeveStressSummary(BaseModel):
+    sleeve: str
+    baseline_value_usd: float
+    stressed_value_usd: float
+    total_pnl_usd: float
+    pct_change: float
 
 
 class AssetClassStressSummary(BaseModel):
@@ -155,3 +184,9 @@ class StressRunResult(BaseModel):
     sector_breakdown: List[SectorStressSummary]
     position_deltas: List[PositionStressDelta]
     reconciliation_passed: bool
+    sleeve_breakdown: List[SleeveStressSummary] = Field(default_factory=list)
+    # PRD 9.1: funded balance-sheet value and derivative MTM are reported separately.
+    funded_baseline_value_usd: float = 0.0
+    funded_stressed_value_usd: float = 0.0
+    derivative_mtm_change_usd: float = 0.0
+    status: str = Field(default="COMPLETED", description="COMPLETED | NO_EXPOSURE")

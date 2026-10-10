@@ -4,27 +4,71 @@ import json
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 
 from sentinel.contracts.stress import StressRunResult
+from sentinel.nlp.entities import EntityLinker
 from sentinel.storage.db import get_db
 from sentinel.storage.repository import ReplayRepository
 from sentinel.stress.engine import StressEngine
+from sentinel.stress.shocks import DEFAULT_SHOCK_CATALOG
 
 router = APIRouter(prefix="/stress", tags=["Stress Testing Engine"])
 
 # Shared singleton stress engine instance for backend runtime
 stress_engine = StressEngine()
+_linker = EntityLinker()
 
 
 class ManualStressRequest(BaseModel):
     event_class: str = Field(..., description="CREDIT, MACRO, GEOPOLITICAL, SUPPLY_CHAIN, or CYBER")
+
+    @field_validator("event_class")
+    @classmethod
+    def known_event_class(cls, v: str) -> str:
+        # Unknown classes used to run silently as a zero shock (a $0 'stress test')
+        v = v.strip().upper()
+        if v not in DEFAULT_SHOCK_CATALOG:
+            raise ValueError(f"event_class must be one of {sorted(DEFAULT_SHOCK_CATALOG)}")
+        return v
+
+    @field_validator("target_scope")
+    @classmethod
+    def known_scope(cls, v: str) -> str:
+        if v not in ("entity", "sector", "systemic"):
+            raise ValueError("target_scope must be entity, sector or systemic")
+        return v
+
     impact_score: int = Field(8, ge=1, le=10, description="Severity score 1 to 10")
     target_entity: Optional[str] = Field(None, description="Ticker or entity identifier, e.g. APEX")
     target_scope: str = Field("entity", description="entity, sector, or systemic")
     is_easing: bool = Field(False, description="True for interest rate cut / easing scenario")
     run_id: str = Field("manual-sandbox", description="Associated run identifier")
+
+
+def _resolve_target(target: Optional[str]) -> Optional[str]:
+    """Accept a ticker ('APEX') or a company name ('Apex Industrial Holdings')."""
+    if not target:
+        return None
+    held = {p.entity_id.upper() for p in stress_engine.valuation_engine.portfolio.loans}
+    held |= {p.entity_id.upper() for p in stress_engine.valuation_engine.portfolio.bonds}
+    held |= {p.entity_id.upper() for p in stress_engine.valuation_engine.portfolio.equities}
+    if target.upper() in held or target.upper() in _linker.entities:
+        return target.upper()
+    companies = list(_linker.find_companies(target))
+    return companies[0] if companies else None
+
+
+class CustomStressRequest(BaseModel):
+    """Explicit systemic shock set (PS Module B example: equities -10%, rates +2%)."""
+
+    equity_shock_pct: float = Field(0.0, ge=-1.0, le=1.0, description="e.g. -0.10 for -10%")
+    benchmark_yield_shift_bps: float = Field(0.0, ge=-1000, le=1000)
+    bond_spread_shift_bps: float = Field(0.0, ge=-1000, le=3000)
+    loan_pd_increment: float = Field(0.0, ge=-1.0, le=1.0)
+    lgd_increment: float = Field(0.0, ge=-1.0, le=1.0)
+    run_id: str = "custom-sandbox"
 
 
 class PersistedStressSummary(BaseModel):
@@ -50,10 +94,18 @@ def simulate_stress(
     db: Session = Depends(get_db),
 ) -> StressRunResult:
     """Execute a user-triggered / sandbox multi-asset stress simulation (PRD 9.3)."""
+    target = req.target_entity
+    if req.target_scope == "entity":
+        target = _resolve_target(target)
+        if target is None:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unknown target entity '{req.target_entity}' for entity scope",
+            )
     result = stress_engine.run_manual_stress(
         event_class=req.event_class,
         impact_score=req.impact_score,
-        target_entity=req.target_entity,
+        target_entity=target,
         target_scope=req.target_scope,
         is_easing=req.is_easing,
         run_id=req.run_id,
@@ -61,6 +113,31 @@ def simulate_stress(
 
     repo = ReplayRepository(db)
     repo.save_stress_run(result)
+    return result
+
+
+@router.get("/scenarios")
+def list_stress_scenarios() -> Dict[str, Any]:
+    """Runnable named scenarios, including five measured historical stress windows."""
+    return {"scenarios": stress_engine.list_scenarios()}
+
+
+@router.post("/scenario/{scenario_id}", response_model=StressRunResult)
+def run_stress_scenario(scenario_id: str, db: Session = Depends(get_db)) -> StressRunResult:
+    """Run a named scenario file against the full portfolio and persist the result."""
+    try:
+        result = stress_engine.run_scenario(scenario_id, run_id=f"scenario-{scenario_id}")
+    except KeyError:
+        raise HTTPException(status_code=404, detail=f"Scenario '{scenario_id}' not found.")
+    ReplayRepository(db).save_stress_run(result)
+    return result
+
+
+@router.post("/custom", response_model=StressRunResult)
+def run_custom_stress(req: CustomStressRequest, db: Session = Depends(get_db)) -> StressRunResult:
+    """Run an explicit systemic shock set and persist the result."""
+    result = stress_engine.run_custom_stress(**req.model_dump())
+    ReplayRepository(db).save_stress_run(result)
     return result
 
 

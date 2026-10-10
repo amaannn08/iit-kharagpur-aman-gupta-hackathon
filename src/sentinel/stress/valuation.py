@@ -10,9 +10,11 @@ from sentinel.contracts.stress import (
     AssetClassStressSummary,
     BondPosition,
     CashPosition,
+    EquityPosition,
     LoanPosition,
     PositionStressDelta,
     SectorStressSummary,
+    SleeveStressSummary,
     StressRunResult,
     SwapPosition,
 )
@@ -127,6 +129,7 @@ class ValuationEngine:
             contagion_hops=contagion_hops,
             contagion_source=contagion_source,
             transmission_factor=round(transmission_factor, 4),
+            sleeve=bond.sleeve,
         )
 
     def value_loan(
@@ -175,6 +178,28 @@ class ValuationEngine:
             stressed_val = baseline_val
             shock_summary = "Unimpacted"
 
+        # CYBER operational loss on retail tranches in the victim's sector, at a multiple of the
+        # card-fraud rate observed for that sector in the real labelled transactions.
+        op_loss = 0.0
+        fraud_rate = self.portfolio.sector_fraud_rates.get(loan.sector, 0.0)
+        if (
+            shock.operational_loss_multiplier > 0
+            and loan.sleeve == "retail_sme"
+            and shock.target_sector
+            and loan.sector == shock.target_sector
+            and fraud_rate > 0
+        ):
+            op_loss = min(
+                stressed_val, baseline_val * fraud_rate * shock.operational_loss_multiplier
+            )
+            stressed_val -= op_loss
+            delta_val -= op_loss
+            note = (
+                f"Op. loss {fraud_rate * shock.operational_loss_multiplier:.2%} "
+                f"(fraud rate {fraud_rate:.3%} x {shock.operational_loss_multiplier:.1f})"
+            )
+            shock_summary = note if shock_summary == "Unimpacted" else f"{shock_summary}; {note}"
+
         pct_change = (delta_val / baseline_val) if baseline_val > 0 else 0.0
 
         return PositionStressDelta(
@@ -190,11 +215,13 @@ class ValuationEngine:
             ecl_baseline_usd=round(baseline_ecl, 2),
             ecl_stressed_usd=round(stressed_ecl, 2),
             incremental_ecl_usd=round(incremental_ecl, 2),
+            operational_loss_usd=round(op_loss, 2),
             applied_shock_summary=shock_summary,
             is_contagion=is_contagion,
             contagion_hops=contagion_hops,
             contagion_source=contagion_source,
             transmission_factor=round(transmission_factor, 4),
+            sleeve=loan.sleeve,
         )
 
     def value_swap(self, swap: SwapPosition, shock: ScaledShock) -> PositionStressDelta:
@@ -231,6 +258,42 @@ class ValuationEngine:
             pct_change=round(pct_change, 6),
             market_risk_pnl_usd=round(delta_val, 2),
             applied_shock_summary=shock_summary,
+            sleeve=swap.sleeve,
+        )
+
+    def value_equity(self, equity: EquityPosition, shock: ScaledShock) -> PositionStressDelta:
+        """Equity: systemic/sector move = beta x market shock; entity scope = idiosyncratic shock."""
+        baseline_val = equity.market_value
+        move = 0.0
+        if shock.equity_shock_pct:
+            if shock.target_scope == "systemic":
+                move = equity.beta * shock.equity_shock_pct
+            elif shock.target_scope == "sector":
+                sector = shock.target_sector or shock.target_entity or ""
+                if not sector or sector.lower() in equity.sector.lower():
+                    move = equity.beta * shock.equity_shock_pct
+            elif shock.target_entity and equity.entity_id.upper() == shock.target_entity.upper():
+                move = shock.equity_shock_pct
+        move = max(-1.0, move)
+        delta_val = baseline_val * move
+        if move:
+            basis = "idiosyncratic" if shock.target_scope == "entity" else f"beta {equity.beta:.2f}"
+            summary = f"Equity {move:+.2%} ({basis})"
+        else:
+            summary = "Unimpacted"
+        return PositionStressDelta(
+            position_id=equity.position_id,
+            asset_class=AssetClass.EQUITY,
+            entity_id=equity.entity_id,
+            counterparty_name=equity.counterparty_name,
+            sector=equity.sector,
+            baseline_value_usd=round(baseline_val, 2),
+            stressed_value_usd=round(baseline_val + delta_val, 2),
+            pnl_usd=round(delta_val, 2),
+            pct_change=round(move, 6),
+            market_risk_pnl_usd=round(delta_val, 2),
+            applied_shock_summary=summary,
+            sleeve=equity.sleeve,
         )
 
     def value_cash(self, cash: CashPosition, shock: ScaledShock) -> PositionStressDelta:
@@ -247,6 +310,7 @@ class ValuationEngine:
             pnl_usd=0.0,
             pct_change=0.0,
             applied_shock_summary="Unimpacted (Risk-free cash)",
+            sleeve=cash.sleeve,
         )
 
     def run_stress_test(
@@ -320,6 +384,9 @@ class ValuationEngine:
         for cash in self.portfolio.cash:
             position_deltas.append(self.value_cash(cash, shock))
 
+        for equity in self.portfolio.equities:
+            position_deltas.append(self.value_equity(equity, shock))
+
         # Financial totals: funded book value (loans + bonds + cash)
         # Note: Swap MTM is segregated from funded balance sheet, but included in P&L
         baseline_funded = self.portfolio.total_funded_exposure
@@ -338,7 +405,13 @@ class ValuationEngine:
             asset_class_groups[p.asset_class].append(p)
 
         asset_class_breakdown: List[AssetClassStressSummary] = []
-        for ac in [AssetClass.LOAN, AssetClass.BOND, AssetClass.SWAP, AssetClass.CASH]:
+        for ac in [
+            AssetClass.LOAN,
+            AssetClass.BOND,
+            AssetClass.SWAP,
+            AssetClass.CASH,
+            AssetClass.EQUITY,
+        ]:
             positions = asset_class_groups[ac]
             base_v = sum(p.baseline_value_usd for p in positions)
             stress_v = sum(p.stressed_value_usd for p in positions)
@@ -404,6 +477,28 @@ class ValuationEngine:
 
         total_pnl_pct = (total_pnl / baseline_funded) if baseline_funded > 0 else 0.0
 
+        # PRD 9.1: funded balance-sheet value vs derivative MTM, and per-sleeve subtotals
+        derivative_mtm = sum(p.pnl_usd for p in position_deltas if p.asset_class == AssetClass.SWAP)
+        funded_pnl = total_pnl - derivative_mtm
+        sleeve_breakdown = []
+        for sleeve in sorted({p.sleeve for p in position_deltas}):
+            funded = [
+                p
+                for p in position_deltas
+                if p.sleeve == sleeve and p.asset_class != AssetClass.SWAP
+            ]
+            base_v = sum(p.baseline_value_usd for p in funded)
+            pnl_v = sum(p.pnl_usd for p in funded)
+            sleeve_breakdown.append(
+                SleeveStressSummary(
+                    sleeve=sleeve,
+                    baseline_value_usd=round(base_v, 2),
+                    stressed_value_usd=round(base_v + pnl_v, 2),
+                    total_pnl_usd=round(pnl_v, 2),
+                    pct_change=round(pnl_v / base_v, 6) if base_v > 0 else 0.0,
+                )
+            )
+
         shock_params_dict = {
             "bond_spread_shift_bps": shock.bond_spread_shift_bps,
             "loan_pd_increment": shock.loan_pd_increment,
@@ -412,6 +507,10 @@ class ValuationEngine:
             "scale_multiplier": shock.scale_multiplier,
             "target_entity": shock.target_entity,
             "target_scope": shock.target_scope,
+            "equity_shock_pct": shock.equity_shock_pct,
+            "operational_loss_multiplier": shock.operational_loss_multiplier,
+            "target_sector": shock.target_sector,
+            "catalog_entry": shock.catalog_entry,
         }
 
         return StressRunResult(
@@ -438,4 +537,8 @@ class ValuationEngine:
             sector_breakdown=sector_breakdown,
             position_deltas=position_deltas,
             reconciliation_passed=reconciliation_passed,
+            sleeve_breakdown=sleeve_breakdown,
+            funded_baseline_value_usd=round(baseline_funded, 2),
+            funded_stressed_value_usd=round(baseline_funded + funded_pnl, 2),
+            derivative_mtm_change_usd=round(derivative_mtm, 2),
         )

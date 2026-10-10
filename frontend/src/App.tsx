@@ -18,15 +18,18 @@ import {
   StepForward,
   TrendingDown,
   XCircle,
+  LineChart,
 } from 'lucide-react';
 import {
   analyzeText,
   AnalyzeResponse,
+  appendReplaySource,
   fetchDatasets,
   fetchHealth,
   fetchPortfolio,
   fetchReplayStatus,
   fetchSignals,
+  fetchStressRun,
   fetchStressRuns,
   HealthResponse,
   loadReplayScenario,
@@ -42,17 +45,29 @@ import {
   StressRunResult,
   WholesalePortfolio,
 } from './api/client';
+import { IndexPanel } from './components/IndexPanel';
+import { MetricsPanel } from './components/MetricsPanel';
+import { StressCharts } from './components/StressCharts';
+
+// Replay presets map onto the backend source registry (GET /api/replay/sources)
+const SOURCE_PRESETS: Record<string, { label: string; sources: string[]; live?: boolean }> = {
+  demo: { label: 'Synthetic demo scenario (news + social)', sources: ['news_demo', 'social_demo'] },
+  polygon_2023: { label: 'Real news: Polygon 2023 (5,548 articles)', sources: ['polygon_2023'] },
+  gdelt_snapshot: { label: 'Real news: GDELT 2-hour snapshot', sources: ['gdelt_snapshot'] },
+  stock_tweets: { label: 'Real social: stock tweets 2017-18 sample', sources: ['stock_tweets'] },
+  live: { label: 'Live capture: GDELT + SEC 8-K', sources: ['gdelt_live', 'sec_8k_live'], live: true },
+};
 
 export function App() {
   // Navigation & System State
-  const [activeTab, setActiveTab] = useState<'feed' | 'stress' | 'playground' | 'overview' | 'eval'>('feed');
+  const [activeTab, setActiveTab] = useState<'feed' | 'stress' | 'index' | 'playground' | 'overview' | 'eval'>('feed');
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [manifest, setManifest] = useState<ManifestResponse | null>(null);
   const [portfolio, setPortfolio] = useState<WholesalePortfolio | null>(null);
 
   // Replay Controller State
   const [replayStatus, setReplayStatus] = useState<ReplayStatus | null>(null);
-  const [selectedScenario, setSelectedScenario] = useState<string>('credit_crunch');
+  const [selectedScenario, setSelectedScenario] = useState<string>('demo');
   const [replayLoading, setReplayLoading] = useState(false);
 
   // Signals Feed & SSE State
@@ -67,9 +82,9 @@ export function App() {
   const [stressRuns, setStressRuns] = useState<StressRunResult[]>([]);
   const [activeStressResult, setActiveStressResult] = useState<StressRunResult | null>(null);
   const [stressForm, setStressForm] = useState({
-    event_class: 'credit',
+    event_class: 'CREDIT',
     impact_score: 8,
-    target_entity: 'Apex Industrial Holdings',
+    target_entity: 'APEX',
     target_scope: 'entity',
     is_easing: false,
   });
@@ -106,8 +121,13 @@ export function App() {
         }
       }
       if (strRes.status === 'fulfilled' && strRes.value.length > 0) {
-        setStressRuns(strRes.value);
-        setActiveStressResult(strRes.value[0]);
+        // /api/stress/runs returns summaries without breakdowns: load the full recent results
+        Promise.all(strRes.value.slice(0, 5).map((run: { stress_id: string }) => fetchStressRun(run.stress_id)))
+          .then((full) => {
+            setStressRuns(full);
+            setActiveStressResult(full[0]);
+          })
+          .catch((err) => console.error(err));
       }
     });
   }, []);
@@ -171,11 +191,24 @@ export function App() {
     setReplayLoading(true);
     try {
       setSelectedScenario(scId);
-      const st = await loadReplayScenario(scId);
+      const st = await loadReplayScenario(scId, SOURCE_PRESETS[scId]?.sources ?? ['news_demo', 'social_demo']);
       setReplayStatus(st);
       const sigs = await fetchSignals(50);
       setSignals(sigs);
       if (sigs.length > 0) setSelectedSignal(sigs[0]);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setReplayLoading(false);
+    }
+  };
+
+  const handleAppendLive = async () => {
+    setReplayLoading(true);
+    try {
+      let st: ReplayStatus | null = null;
+      for (const src of SOURCE_PRESETS[selectedScenario]?.sources ?? []) st = await appendReplaySource(src);
+      if (st) setReplayStatus(st);
     } catch (err) {
       console.error(err);
     } finally {
@@ -279,7 +312,7 @@ export function App() {
   // Filtered Signals
   const filteredSignals = signals.filter((sig) => {
     if (filterEvent !== 'all' && sig.event.label !== filterEvent) return false;
-    if (!showDuplicates && sig.duplicate_group_id && sig.action_block_reasons.includes('duplicate_suppression')) {
+    if (!showDuplicates && sig.duplicate_group_id && sig.action_block_reasons.includes('DUPLICATE_TEXT_SUPPRESSED')) {
       return false;
     }
     if (searchQuery.trim()) {
@@ -309,7 +342,7 @@ export function App() {
           <span>Candidate: Aman Gupta (IIT Kharagpur)</span>
           <span className="hidden md:inline">•</span>
           <span className="font-mono bg-amber-900/60 px-2 py-0.5 rounded border border-amber-700/40 text-amber-200 hidden md:inline">
-            Production Release
+            {(replayStatus?.source_badges ?? []).join(' + ') || 'No replay loaded'}
           </span>
         </div>
       </div>
@@ -349,6 +382,17 @@ export function App() {
             >
               <TrendingDown className="w-3.5 h-3.5 text-rose-400" />
               Wholesale Stress
+            </button>
+            <button
+              onClick={() => setActiveTab('index')}
+              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5 whitespace-nowrap ${
+                activeTab === 'index'
+                  ? 'bg-cyan-950/80 text-cyan-300 border border-cyan-700/50'
+                  : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/60'
+              }`}
+            >
+              <LineChart className="w-3.5 h-3.5 text-violet-400" />
+              Index Rebalancer (Module A)
             </button>
             <button
               onClick={() => setActiveTab('playground')}
@@ -391,7 +435,7 @@ export function App() {
           <div className="flex items-center gap-2 text-xs bg-gray-900 border border-gray-800 rounded-full px-3 py-1">
             <span className="text-gray-400">Replay Clock:</span>
             <span className="text-cyan-300 font-mono">
-              {replayStatus?.simulated_at ? replayStatus.simulated_at.replace('T', ' ') : 'STANDBY'}
+              {replayStatus?.current_simulated_at ? replayStatus.current_simulated_at.replace('T', ' ').slice(0, 19) : 'STANDBY'}
             </span>
           </div>
           <div className="flex items-center gap-2 text-xs bg-gray-900 border border-gray-800 rounded-full px-3 py-1">
@@ -439,11 +483,14 @@ export function App() {
                       className="bg-[#0B0F17] border border-gray-800 rounded px-2.5 py-1.5 text-xs text-gray-300 focus:outline-none focus:border-cyan-500"
                     >
                       <option value="all">All Events</option>
-                      <option value="credit">Credit Event</option>
-                      <option value="macro_rates">Macro Rates</option>
-                      <option value="cyber">Cyber Security</option>
-                      <option value="geopolitical">Geopolitical</option>
-                      <option value="routine_administrative">Routine Admin</option>
+                      <option value="CREDIT">Credit Event</option>
+                      <option value="MACRO">Macro</option>
+                      <option value="CYBER">Cyber Security</option>
+                      <option value="GEOPOLITICAL">Geopolitical</option>
+                      <option value="SUPPLY_CHAIN">Supply Chain</option>
+                      <option value="M_AND_A">M&amp;A</option>
+                      <option value="EARNINGS">Earnings</option>
+                      <option value="OTHER">Other / abstained</option>
                     </select>
                   </div>
                 </div>
@@ -517,7 +564,7 @@ export function App() {
 
                         {/* Middle Line: Evidence Text Snippet */}
                         <p className="text-xs text-gray-300 leading-relaxed font-sans line-clamp-2">
-                          {sig.evidence[0]?.text || 'No text snippet provided.'}
+                          {sig.text_excerpt || sig.evidence[0]?.text || 'No text snippet provided.'}
                         </p>
 
                         {/* Bottom Line: Classification, Impact, Sentiment */}
@@ -527,9 +574,9 @@ export function App() {
                               className={`px-2 py-0.5 rounded font-mono font-medium ${
                                 sig.event.abstained
                                   ? 'bg-gray-800 text-gray-400'
-                                  : sig.event.label === 'credit'
+                                  : sig.event.label === 'CREDIT'
                                   ? 'bg-red-950 text-red-300 border border-red-800/40'
-                                  : sig.event.label === 'macro_rates'
+                                  : sig.event.label === 'MACRO'
                                   ? 'bg-amber-950 text-amber-300 border border-amber-800/40'
                                   : 'bg-blue-950 text-blue-300 border border-blue-800/40'
                               }`}
@@ -609,7 +656,7 @@ export function App() {
                       <span>Scope: {selectedSignal.entity.scope}</span>
                       <span>•</span>
                       <span className={selectedSignal.entity.resolved ? 'text-emerald-400' : 'text-amber-400'}>
-                        {selectedSignal.entity.resolved ? '✓ Disambiguated in Wholesale Graph' : '⚠️ Unresolved'}
+                        {selectedSignal.entity.resolved ? '✓ Resolved by entity linker (S&P 500 universe)' : '⚠️ Unresolved'}
                       </span>
                     </div>
                   </div>
@@ -634,7 +681,7 @@ export function App() {
                   {/* 3-Way Sentiment Probabilities */}
                   <div className="bg-[#0B0F17] p-3.5 rounded border border-gray-800 space-y-2">
                     <div className="text-gray-400 font-medium flex items-center justify-between">
-                      <span>FinBERT Sentiment Decomposition</span>
+                      <span>Sentiment ({selectedSignal.model_versions?.sentiment ?? 'model'})</span>
                       <span className="font-mono text-white font-bold">
                         Score: {selectedSignal.sentiment.score.toFixed(3)}
                       </span>
@@ -664,7 +711,15 @@ export function App() {
                   {/* Event & Severity Rubric */}
                   <div className="bg-[#0B0F17] p-3.5 rounded border border-gray-800 space-y-2">
                     <div className="text-gray-400 font-medium flex items-center justify-between">
-                      <span>Severity Rubric Decomposition (PRD §8)</span>
+                      <span>
+                        Impact:{' '}
+                        {selectedSignal.impact.method === 'market_calibrated'
+                          ? `market-calibrated decile (pred. |z| ${selectedSignal.impact.market_calibration?.predicted_abs_abnormal_z.toFixed(2)})`
+                          : selectedSignal.impact.method === 'floor'
+                            ? 'catastrophic-language floor'
+                            : 'rubric'}{' '}
+                        · rubric components below
+                      </span>
                       <span className="font-mono text-cyan-400 font-bold">
                         Final Score: {selectedSignal.impact.score}/10
                       </span>
@@ -734,12 +789,21 @@ export function App() {
         {/* ===================== TAB 2: WHOLESALE STRESS DASHBOARD ===================== */}
         {activeTab === 'stress' && (
           <div className="flex-1 flex flex-col space-y-6 overflow-y-auto">
+            <StressCharts result={activeStressResult} onResult={setActiveStressResult} />
             {/* Top Summary Segregation Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="bg-[#111827] p-4 rounded-lg border border-gray-800">
                 <div className="text-xs text-gray-400 font-medium">Funded Book Value (PRD §9.1)</div>
-                <div className="text-xl font-bold text-emerald-400 font-mono mt-1">$500,000,000</div>
-                <div className="text-[11px] text-gray-500 mt-0.5">{portfolio?.portfolio_name || 'Loans $220M + Bonds $200M + Cash $80M'}</div>
+                <div className="text-xl font-bold text-emerald-400 font-mono mt-1">
+                  ${(portfolio?.summary.total_book_value_usd ?? 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                </div>
+                <div className="text-[11px] text-gray-500 mt-0.5">
+                  {portfolio?.funded_value_by_sleeve_usd
+                    ? Object.entries(portfolio.funded_value_by_sleeve_usd)
+                        .map(([k, v]) => `${k} $${Math.round(v / 1e6)}M`)
+                        .join(' + ')
+                    : portfolio?.portfolio_name}
+                </div>
               </div>
 
               <div className="bg-[#111827] p-4 rounded-lg border border-gray-800">
@@ -751,10 +815,12 @@ export function App() {
               <div className="bg-[#111827] p-4 rounded-lg border border-gray-800">
                 <div className="text-xs text-gray-400 font-medium">Latest Stress Total PnL</div>
                 <div className="text-xl font-bold text-rose-400 font-mono mt-1">
-                  {activeStressResult ? `-$${Math.abs(activeStressResult.total_pnl_usd).toLocaleString()}` : '$0'}
+                  {activeStressResult
+                    ? `${activeStressResult.total_pnl_usd < 0 ? '-' : '+'}$${Math.abs(activeStressResult.total_pnl_usd).toLocaleString('en-US', { maximumFractionDigits: 0 })}`
+                    : '$0'}
                 </div>
                 <div className="text-[11px] text-rose-400/80 mt-0.5">
-                  {activeStressResult ? `${activeStressResult.total_pnl_pct.toFixed(2)}% of funded book value` : 'No stress active'}
+                  {activeStressResult ? `${(activeStressResult.total_pnl_pct * 100).toFixed(2)}% of funded book value` : 'No stress active'}
                 </div>
               </div>
 
@@ -818,16 +884,16 @@ export function App() {
                         {activeStressResult?.asset_class_breakdown.map((ac) => (
                           <tr key={ac.asset_class} className="hover:bg-gray-900/40">
                             <td className="py-2.5 font-bold uppercase text-gray-200">{ac.asset_class}</td>
-                            <td className="text-right text-gray-400">${ac.baseline_value_usd.toLocaleString()}</td>
-                            <td className="text-right text-white font-semibold">${ac.stressed_value_usd.toLocaleString()}</td>
+                            <td className="text-right text-gray-400">${ac.baseline_value_usd.toLocaleString('en-US')}</td>
+                            <td className="text-right text-white font-semibold">${ac.stressed_value_usd.toLocaleString('en-US')}</td>
                             <td className={`text-right font-bold ${ac.total_pnl_usd < 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
-                              ${ac.total_pnl_usd.toLocaleString()} ({ac.pct_change.toFixed(2)}%)
+                              ${ac.total_pnl_usd.toLocaleString('en-US')} ({(ac.pct_change * 100).toFixed(2)}%)
                             </td>
                             <td className="text-right text-amber-400">
-                              {ac.credit_ecl_delta_usd !== 0 ? `+$${ac.credit_ecl_delta_usd.toLocaleString()}` : '-'}
+                              {ac.credit_ecl_delta_usd !== 0 ? `+$${ac.credit_ecl_delta_usd.toLocaleString('en-US')}` : '-'}
                             </td>
                             <td className="text-right text-cyan-400">
-                              {ac.mark_to_market_pnl_usd !== 0 ? `${ac.mark_to_market_pnl_usd < 0 ? '-' : '+'}$${Math.abs(ac.mark_to_market_pnl_usd).toLocaleString()}` : '-'}
+                              {ac.mark_to_market_pnl_usd !== 0 ? `${ac.mark_to_market_pnl_usd < 0 ? '-' : '+'}$${Math.abs(ac.mark_to_market_pnl_usd).toLocaleString('en-US')}` : '-'}
                             </td>
                           </tr>
                         ))}
@@ -840,7 +906,7 @@ export function App() {
                 <div className="bg-[#111827] p-4 rounded-lg border border-gray-800 space-y-3">
                   <div className="flex items-center justify-between">
                     <h3 className="text-xs font-semibold text-gray-300 uppercase tracking-wider">
-                      Position-Level Risk & Stress Matrix (12 Wholesale Facilities)
+                      Position-Level Risk & Stress Matrix ({activeStressResult?.position_deltas.length ?? 0} positions)
                     </h3>
                     <span className="text-[11px] text-gray-500 font-mono">
                       Bond Duration • Loan ECL Clamping • Swap Signed DV01
@@ -866,10 +932,10 @@ export function App() {
                             <td className="py-2 text-cyan-400 font-semibold">{pos.position_id}</td>
                             <td className="text-white font-sans font-medium">{pos.counterparty_name}</td>
                             <td className="text-gray-400 uppercase text-[11px]">{pos.asset_class}</td>
-                            <td className="text-right text-gray-400">${pos.baseline_value_usd.toLocaleString()}</td>
-                            <td className="text-right text-white font-semibold">${pos.stressed_value_usd.toLocaleString()}</td>
+                            <td className="text-right text-gray-400">${pos.baseline_value_usd.toLocaleString('en-US')}</td>
+                            <td className="text-right text-white font-semibold">${pos.stressed_value_usd.toLocaleString('en-US')}</td>
                             <td className={`text-right font-bold ${pos.pnl_usd < 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
-                              ${pos.pnl_usd.toLocaleString()}
+                              ${pos.pnl_usd.toLocaleString('en-US')}
                             </td>
                             <td className="text-gray-400 text-[11px] truncate max-w-xs">{pos.applied_shock_summary}</td>
                           </tr>
@@ -895,12 +961,11 @@ export function App() {
                       onChange={(e) => setStressForm({ ...stressForm, event_class: e.target.value })}
                       className="w-full bg-[#0B0F17] border border-gray-800 rounded p-2 text-gray-200 focus:outline-none focus:border-cyan-500 font-mono"
                     >
-                      <option value="credit">Credit Event (Spread / PD Shock)</option>
-                      <option value="macro_rates">Macro Rates (SOFR Yield Shock)</option>
-                      <option value="cyber">Cybersecurity (Operational / Spread Shock)</option>
-                      <option value="geopolitical">Geopolitical Tension</option>
-                      <option value="supply_chain">Supply Chain Disruption</option>
-                      <option value="liquidity">Liquidity Crunch</option>
+                      <option value="CREDIT">Credit Event (spread / PD / LGD, equity -15%)</option>
+                      <option value="MACRO">Macro (Fed Jun-2022 window: 10y +26 bp, S&amp;P -8.7%)</option>
+                      <option value="CYBER">Cybersecurity (spread + fraud-rate operational loss)</option>
+                      <option value="GEOPOLITICAL">Geopolitical (Russia-2022 window, yields down)</option>
+                      <option value="SUPPLY_CHAIN">Supply Chain Disruption</option>
                     </select>
                   </div>
 
@@ -993,8 +1058,8 @@ export function App() {
                           <div className="text-white font-bold uppercase">{run.event_class} ({run.impact_score}/10)</div>
                           <div className="text-[10px] text-gray-500">{run.executed_at.slice(11, 19)}</div>
                         </div>
-                        <div className="text-right text-rose-400 font-bold">
-                          -${Math.abs(run.total_pnl_usd).toLocaleString()}
+                        <div className={`text-right font-bold ${run.total_pnl_usd < 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
+                          {run.total_pnl_usd < 0 ? '-' : '+'}${Math.abs(run.total_pnl_usd).toLocaleString('en-US', { maximumFractionDigits: 0 })}
                         </div>
                       </div>
                     ))}
@@ -1016,7 +1081,7 @@ export function App() {
                   NLP Pipeline Sandbox & Risk Signal Generator
                 </h3>
                 <p className="text-xs text-gray-400 mt-0.5">
-                  Type or paste raw financial text to test disambiguation, FinBERT sentiment, event classification, and automated stress triggers.
+                  Type or paste raw financial text to test entity linking, sentiment, event classification, market-calibrated impact and automated stress triggers.
                 </p>
               </div>
 
@@ -1217,11 +1282,11 @@ export function App() {
                           Triggered Stress Valuation Result
                         </div>
                         <span className="font-mono text-rose-400 font-bold">
-                          PnL: -${Math.abs(playgroundResult.stress_run.total_pnl_usd).toLocaleString()}
+                          PnL: -${Math.abs(playgroundResult.stress_run.total_pnl_usd).toLocaleString('en-US')}
                         </span>
                       </div>
                       <div className="text-[11px] text-gray-400 font-mono">
-                        Credit ECL Delta: +${playgroundResult.stress_run.credit_ecl_change_usd.toLocaleString()} • Market MTM Delta: ${playgroundResult.stress_run.market_mtm_change_usd.toLocaleString()}
+                        Credit ECL Delta: +${playgroundResult.stress_run.credit_ecl_change_usd.toLocaleString('en-US')} • Market MTM Delta: ${playgroundResult.stress_run.market_mtm_change_usd.toLocaleString('en-US')}
                       </div>
                       <button
                         onClick={() => setActiveTab('stress')}
@@ -1385,8 +1450,11 @@ export function App() {
         )}
 
         {/* ===================== TAB 5: EVALUATION & GOVERNANCE ===================== */}
+        {activeTab === 'index' && <IndexPanel />}
+
         {activeTab === 'eval' && (
           <div className="flex-1 flex flex-col bg-[#111827] border border-gray-800 rounded-lg p-6 space-y-6 overflow-y-auto">
+            <MetricsPanel />
             <div className="border-b border-gray-800 pb-4">
               <h2 className="text-base font-bold text-white flex items-center gap-2">
                 <FileCheck className="w-5 h-5 text-cyan-400" />
@@ -1421,32 +1489,35 @@ export function App() {
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
-                    Wholesale portfolio segregation: Funded $500M vs Derivative $150M
+                    Funded book value and derivative notional/MTM reported separately (PRD §9.1)
                   </li>
                 </ul>
               </div>
 
               <div className="bg-[#0B0F17] p-4 rounded border border-gray-800 space-y-3">
                 <div className="text-cyan-400 font-semibold uppercase tracking-wider text-[11px]">
-                  NLP Quality Targets (Offline Holdout Benchmark)
+                  NLP Quality Targets (PRD §13.1)
                 </div>
                 <div className="space-y-2 text-gray-300 font-mono text-[11px]">
                   <div className="flex justify-between">
-                    <span>Sentiment Macro-F1 Target:</span>
-                    <span className="text-white font-bold">≥ 0.75 (Achieved: 0.88)</span>
+                    <span>Sentiment macro-F1</span>
+                    <span className="text-white font-bold">≥ 0.75</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Event Classification Macro-F1:</span>
-                    <span className="text-white font-bold">≥ 0.70 (Achieved: 0.85)</span>
+                    <span>Event classification macro-F1</span>
+                    <span className="text-white font-bold">≥ 0.70</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Entity Linking Precision:</span>
-                    <span className="text-white font-bold">≥ 0.90 (Achieved: 0.94)</span>
+                    <span>Entity linking precision</span>
+                    <span className="text-white font-bold">≥ 0.90</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Severity MAE Target:</span>
-                    <span className="text-white font-bold">≤ 1.5 pts (Achieved: 0.82)</span>
+                    <span>Severity MAE vs human labels</span>
+                    <span className="text-amber-300 font-bold">≤ 1.5 pts · pending human-labeled news set</span>
                   </div>
+                  <p className="text-gray-500 font-sans pt-1">
+                    Measured values are in the table above, generated from docs/metrics.json on real held-out data.
+                  </p>
                 </div>
               </div>
             </div>
@@ -1458,17 +1529,34 @@ export function App() {
       <footer className="bg-[#111827] border-t border-gray-800 px-6 py-3 flex flex-wrap items-center justify-between gap-4 text-xs shrink-0">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <span className="text-gray-400 font-medium">Scenario:</span>
+            <span className="text-gray-400 font-medium">Replay source:</span>
             <select
               value={selectedScenario}
               onChange={(e) => handleLoadScenario(e.target.value)}
               disabled={replayLoading}
               className="bg-[#0B0F17] border border-gray-800 rounded px-2.5 py-1 text-xs text-cyan-300 font-mono focus:outline-none focus:border-cyan-500"
             >
-              <option value="credit_crunch">Credit Crunch ($APEX Default)</option>
-              <option value="rate_shock">Macro Rate Shock (+75bps)</option>
-              <option value="supply_disruption">Supply Disruption (Chip Plant)</option>
+              {Object.entries(SOURCE_PRESETS).map(([id, p]) => (
+                <option key={id} value={id}>
+                  {p.label}
+                </option>
+              ))}
             </select>
+            {(replayStatus?.source_badges ?? []).map((b) => (
+              <span key={b} className="px-1.5 py-0.5 rounded border border-amber-700/50 text-amber-300 font-mono text-[10px]">
+                {b}
+              </span>
+            ))}
+            {SOURCE_PRESETS[selectedScenario]?.live && (
+              <button
+                onClick={handleAppendLive}
+                disabled={replayLoading}
+                className="px-2 py-1 rounded border border-cyan-700 text-cyan-300 hover:bg-cyan-950"
+                title="Queue records the live recorder appended since loading"
+              >
+                Pull new live records
+              </button>
+            )}
           </div>
 
           <div className="flex items-center gap-1 bg-gray-900 border border-gray-800 rounded p-1">

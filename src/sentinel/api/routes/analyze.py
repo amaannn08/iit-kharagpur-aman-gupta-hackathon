@@ -2,15 +2,13 @@
 
 import uuid
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from sentinel.api.events import broadcaster
-from sentinel.api.routes.replay import nlp_engine, replay_controller
-from sentinel.api.routes.stress import stress_engine
+from sentinel.api.routes.replay import emit_signal, nlp_engine, replay_controller
 from sentinel.contracts.records import InputRecord
 from sentinel.contracts.signals import RiskSignal
 from sentinel.contracts.stress import StressRunResult
@@ -32,8 +30,10 @@ class AnalyzeRequest(BaseModel):
 
 class AnalyzeResponse(BaseModel):
     record: InputRecord
-    signal: RiskSignal
+    signal: RiskSignal  # primary (first-mentioned) entity
+    signals: List[RiskSignal] = Field(default_factory=list)  # one per resolved entity
     stress_run: Optional[StressRunResult] = None
+    stress_runs: List[StressRunResult] = Field(default_factory=list)
     is_duplicate: bool
     duplicate_group_id: Optional[str] = None
 
@@ -66,38 +66,17 @@ async def analyze_manual_text(
 
     dedup = deduplicator.process(record_id=record.record_id, text=record.text)
 
-    # Execute learned NLP pipeline
-    sig = nlp_engine.process_record(
-        record=record,
-        run_id=run_id,
-        dedup_decision=dedup,
-    )
-
     repo = ReplayRepository(db)
     repo.save_record(record, dedup, run_id=run_id)
-    repo.save_signal(sig)
-
-    # Evaluate automated stress trigger
-    stress_res: Optional[StressRunResult] = None
-    if stress_engine.should_trigger(sig):
-        stress_res = stress_engine.trigger_from_signal(sig)
-        if stress_res:
-            repo.save_stress_run(stress_res)
-
-    # Broadcast to live SSE stream
-    await broadcaster.broadcast(
-        event_type="signal_emitted",
-        data={
-            "signal": sig.model_dump(mode="json"),
-            "record": record.model_dump(mode="json"),
-            "stress_run": stress_res.model_dump(mode="json") if stress_res else None,
-        },
-    )
+    signals = nlp_engine.process_record_multi(record=record, run_id=run_id, dedup_decision=dedup)
+    stress_runs = [r for sig in signals if (r := await emit_signal(repo, record, sig))]
 
     return AnalyzeResponse(
         record=record,
-        signal=sig,
-        stress_run=stress_res,
+        signal=signals[0],
+        signals=signals,
+        stress_run=stress_runs[0] if stress_runs else None,
+        stress_runs=stress_runs,
         is_duplicate=dedup.is_duplicate,
         duplicate_group_id=dedup.duplicate_group_id if dedup.is_duplicate else None,
     )

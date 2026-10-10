@@ -157,13 +157,13 @@
       "record_count": 1
     },
     {
-      "file_path": "data/eval/holdout_seed.csv",
+      "file_path": "data/eval/synthetic_regression.csv",
       "format": "csv",
-      "description": "Frozen evaluation holdout seed rows with gold-standard sentiment, event class, and severity scores.",
+      "description": "Author-written synthetic regression set (105 rows, fictional issuers); regression check only, not an independent benchmark",
       "is_synthetic": true,
       "license": "MIT License (Project-Authored Synthetic Data)",
-      "sha256": "3e58b8c449507921811a31d940854b8509a50d5b5044db589cd8343abb801260",
-      "byte_size": 15292,
+      "sha256": "83b966fe04e9427c1823f8febb58728818b300715aa1665a0fc643ea50728d76",
+      "byte_size": 15186,
       "record_count": 105,
       "primary_keys": [
         "eval_id"
@@ -180,70 +180,391 @@
       ]
     },
     {
-      "file_path": "data/external/phrasebank/sample.csv",
+      "file_path": "data/real/polygon_news/polygon_news.csv",
       "format": "csv",
-      "description": "FinancialPhraseBank sentiment benchmark samples formatted to InputRecord schema.",
+      "description": "Real 2023 Polygon.io financial news (title + description), news replay feed",
       "is_synthetic": false,
-      "license": "CC BY-NC-SA 4.0 (Malo et al. 2014)",
-      "sha256": "aec1c2b3bc9cdde933295c2dc1b2bab5018306298733c03f81a84e4fa00a0ab7",
-      "byte_size": 2598,
-      "record_count": 10,
+      "license": "MIT",
       "primary_keys": [
         "record_id"
-      ]
+      ],
+      "source": "https://www.kaggle.com/datasets/rdolphin/financial-news-with-ticker-level-sentiment",
+      "columns": [
+        "record_id",
+        "source_id",
+        "source_type",
+        "headline",
+        "body",
+        "published_at",
+        "timestamp_quality",
+        "simulated_at",
+        "is_synthetic",
+        "primary_entity_id"
+      ],
+      "byte_size": 2411550,
+      "sha256": "3f19ea319b6dbdaa631d3c2af25b91589e6b216039742d803c4aa5318b3f3a01",
+      "record_count": 5548
     },
     {
-      "file_path": "data/external/ticker_news/replay_sample.csv",
+      "file_path": "data/real/polygon_news/silver_labels.csv",
       "format": "csv",
-      "description": "Financial news articles with ticker-level references formatted for replay.",
+      "description": "Polygon tickers[] and LLM ticker-level sentiment (silver labels, eval only)",
       "is_synthetic": false,
-      "license": "CC0 1.0 Universal Public Domain (rdolphin/Kaggle)",
-      "sha256": "e4750dc8c4f283a11417866c2fa6312618ed19bb27a6d985046082a37537b4e3",
-      "byte_size": 1597,
-      "record_count": 6,
+      "license": "MIT",
       "primary_keys": [
         "record_id"
-      ]
+      ],
+      "source": "https://www.kaggle.com/datasets/rdolphin/financial-news-with-ticker-level-sentiment",
+      "byte_size": 1166955,
+      "sha256": "a1e0f8c17a7b899ad05033942a0ee1d8cf1f21b5790f48fb3803650ffd1059ed",
+      "record_count": 26778
     },
     {
-      "file_path": "data/external/tweets/replay_sample.csv",
+      "file_path": "data/real/stock_tweets/sample.csv",
       "format": "csv",
-      "description": "Stock tweets with cashtags formatted for social replay and forward return backtesting.",
+      "description": "Real 2017-2018 stock tweets, 5000-row sample across 25 companies, social replay feed",
       "is_synthetic": false,
-      "license": "CC0 1.0 Universal Public Domain (thedevastator/Kaggle)",
-      "sha256": "1cc313ef2eab31530d47870e29306f25e21a145bea493ab5a25c4127a1fe5596",
-      "byte_size": 1242,
-      "record_count": 6,
+      "license": "CC0-1.0",
       "primary_keys": [
         "record_id"
-      ]
+      ],
+      "source": "https://www.kaggle.com/datasets/thedevastator/tweet-sentiment-s-impact-on-stock-returns",
+      "columns": [
+        "record_id",
+        "source_id",
+        "source_type",
+        "text",
+        "author_handle",
+        "published_at",
+        "timestamp_quality",
+        "simulated_at",
+        "is_synthetic",
+        "cashtags",
+        "primary_entity_id"
+      ],
+      "byte_size": 1163807,
+      "sha256": "16f1297efeb4e374d1eda7989b8c562d8053eb371a31e14fef6c1e904aacecc7",
+      "record_count": 5000
     },
     {
-      "file_path": "data/portfolio/credit_sleeve.csv",
+      "file_path": "data/real/stock_tweets/outcomes.csv",
       "format": "csv",
-      "description": "Consumer and SME credit portfolio sleeve aggregated from transaction data for Module B stress testing.",
+      "description": "Forward 1/3/7-day returns, volatility and model polarity for the tweet sample",
+      "is_synthetic": false,
+      "license": "CC0-1.0",
+      "primary_keys": [
+        "record_id"
+      ],
+      "source": "https://www.kaggle.com/datasets/thedevastator/tweet-sentiment-s-impact-on-stock-returns",
+      "byte_size": 552891,
+      "sha256": "8f1537ae5c425751e7956d4bc72beb924f764361a69d435c39c9a00595a42efa",
+      "record_count": 5000
+    },
+    {
+      "file_path": "data/real/gdelt/snapshot.csv",
+      "format": "csv",
+      "description": "Real GDELT 2.0 GKG finance-relevant headlines, recorded 2-hour live snapshot",
+      "is_synthetic": false,
+      "license": "GDELT open data (attribution required)",
+      "primary_keys": [
+        "record_id"
+      ],
+      "source": "http://data.gdeltproject.org/gdeltv2/",
+      "columns": [
+        "record_id",
+        "source_id",
+        "source_type",
+        "headline",
+        "body",
+        "published_at",
+        "timestamp_quality",
+        "simulated_at",
+        "is_synthetic",
+        "primary_entity_id",
+        "source_url"
+      ],
+      "byte_size": 690420,
+      "sha256": "9142f84b63a76502d6a006aa6d7bee1cd63369d9dfe3599cc719db6e67edbd3f",
+      "record_count": 2690
+    },
+    {
+      "file_path": "data/train/hf_fin_topic/topic_train.csv",
+      "format": "csv",
+      "description": "zeroshot/twitter-financial-news-topic train split (real labeled financial tweets)",
+      "is_synthetic": false,
+      "license": "MIT",
+      "primary_keys": [
+        "record_id"
+      ],
+      "source": "https://huggingface.co/datasets/zeroshot/twitter-financial-news-topic",
+      "columns": [
+        "text",
+        "label"
+      ],
+      "byte_size": 2385009,
+      "sha256": "63b9ea8183728dd5ddc6a57289341556509ddc0a8d037616519319a316b54490",
+      "record_count": 16990
+    },
+    {
+      "file_path": "data/train/hf_fin_topic/topic_valid.csv",
+      "format": "csv",
+      "description": "zeroshot/twitter-financial-news-topic valid split (real labeled financial tweets)",
+      "is_synthetic": false,
+      "license": "MIT",
+      "primary_keys": [
+        "record_id"
+      ],
+      "source": "https://huggingface.co/datasets/zeroshot/twitter-financial-news-topic",
+      "columns": [
+        "text",
+        "label"
+      ],
+      "byte_size": 580140,
+      "sha256": "67396d6cd4a21c3755de783f20fb5842f12ae8edb9367eed5d2644dd85ca9243",
+      "record_count": 4117
+    },
+    {
+      "file_path": "data/train/hf_fin_sentiment/sent_train.csv",
+      "format": "csv",
+      "description": "zeroshot/twitter-financial-news-sentiment train split (real labeled financial tweets)",
+      "is_synthetic": false,
+      "license": "MIT",
+      "primary_keys": [
+        "record_id"
+      ],
+      "source": "https://huggingface.co/datasets/zeroshot/twitter-financial-news-sentiment",
+      "columns": [
+        "text",
+        "label"
+      ],
+      "byte_size": 858645,
+      "sha256": "71aa99d0d37feced03c999ec23b5b25302c92f39d69b6acb0a37aa076c5420e8",
+      "record_count": 9543
+    },
+    {
+      "file_path": "data/train/hf_fin_sentiment/sent_valid.csv",
+      "format": "csv",
+      "description": "zeroshot/twitter-financial-news-sentiment valid split (real labeled financial tweets)",
+      "is_synthetic": false,
+      "license": "MIT",
+      "primary_keys": [
+        "record_id"
+      ],
+      "source": "https://huggingface.co/datasets/zeroshot/twitter-financial-news-sentiment",
+      "columns": [
+        "text",
+        "label"
+      ],
+      "byte_size": 217378,
+      "sha256": "31ea8274c98b52212daa68f2fb962811bf1913c1efe51b99765c8e2311806de6",
+      "record_count": 2388
+    },
+    {
+      "file_path": "data/train/phrasebank/sample.csv",
+      "format": "csv",
+      "description": "FinancialPhraseBank stratified 600-row sample (sentiment training augmentation only)",
+      "is_synthetic": false,
+      "license": "CC BY-NC-SA 3.0",
+      "primary_keys": [
+        "record_id"
+      ],
+      "source": "https://www.kaggle.com/datasets/ankurzing/sentiment-analysis-for-financial-news",
+      "columns": [
+        "record_id",
+        "label",
+        "text"
+      ],
+      "byte_size": 92190,
+      "sha256": "4e669b93dae4cce2d6ab59dbfbd46cfd430f6d371cabb8d1d46d22ba6c2edb3e",
+      "record_count": 600
+    },
+    {
+      "file_path": "data/train/synthetic_seeds.csv",
+      "format": "csv",
+      "description": "Hand-written event seed sentences (formerly hard-coded in events.py); used only to augment CYBER/SUPPLY_CHAIN and as the degraded fallback",
       "is_synthetic": true,
-      "license": "MIT License (Project-Derived from Public Transactions Dataset)",
-      "sha256": "ec15a5275588200ddc71f994b5c7e492498e868ba5bdb061475c90679b758e20",
-      "byte_size": 1253,
-      "record_count": 8,
+      "license": "MIT License (Project-Authored Synthetic Data)",
       "primary_keys": [
-        "position_id"
-      ]
+        "record_id"
+      ],
+      "columns": [
+        "text",
+        "label",
+        "is_synthetic"
+      ],
+      "byte_size": 7297,
+      "sha256": "56f5c233f89bd782aff89ced22bd61a9a6924c47e625132b403313ce050fa4fd",
+      "record_count": 77
+    },
+    {
+      "file_path": "data/market/reaction_labels.csv",
+      "format": "csv",
+      "description": "Standardized next-day abnormal return per (Polygon article, S&P 500 company): impact labels",
+      "is_synthetic": false,
+      "license": "Derived statistics from Yahoo Finance closes (yfinance); no raw prices redistributed",
+      "primary_keys": [
+        "record_id"
+      ],
+      "source": "https://finance.yahoo.com via yfinance; data/real/polygon_news",
+      "derived_from": [
+        "data/real/polygon_news/polygon_news.csv"
+      ],
+      "columns": [
+        "record_id",
+        "ticker",
+        "reaction_date",
+        "abnormal_z"
+      ],
+      "byte_size": 103799,
+      "sha256": "81db1b0387aa5e6bd6439c396902001be94f2785f12d667a31d5a51247cfc4fa",
+      "record_count": 2617
     },
     {
       "file_path": "data/portfolio/credit_sleeve.json",
       "format": "json",
-      "description": "JSON representation of the $50M consumer and SME credit portfolio sleeve.",
+      "description": "Module B retail/SME credit sleeve: 15 sector x rating tranches aggregated from 2000 real borrowers and 13,305,915 real card transactions",
+      "is_synthetic": false,
+      "license": "Apache-2.0 (derived aggregates of computingvictor/transactions-fraud-datasets)",
+      "primary_keys": [],
+      "source": "https://www.kaggle.com/datasets/computingvictor/transactions-fraud-datasets",
+      "byte_size": 7752,
+      "sha256": "296289622faf31cf5754d2da7298ac69d31bb591312c4eaa7afa263e924be1a8",
+      "record_count": 15
+    },
+    {
+      "file_path": "data/portfolio/equity_sleeve.json",
+      "format": "json",
+      "description": "Module B equity sleeve: 15 S&P 100 names, synthetic $4M sizes, betas estimated from real prices",
       "is_synthetic": true,
-      "license": "MIT License (Project-Derived from Public Transactions Dataset)",
-      "sha256": "057a440c269318c5d7d59259414a3f3a48855960b553bfb0523dc13b02f76d9e",
-      "byte_size": 3643,
-      "record_count": 8,
+      "license": "MIT License (project-authored sizes); betas derived from Yahoo Finance closes via yfinance",
+      "primary_keys": [],
+      "source": "https://finance.yahoo.com via yfinance",
+      "byte_size": 4656,
+      "sha256": "ab0423a57c55333deaf76631b4d92c91e0f48a93c00fc1bf6199fcd77b324e0b",
+      "record_count": 15
+    },
+    {
+      "file_path": "data/market/stress_windows.json",
+      "format": "json",
+      "description": "Measured market moves over five historical stress windows (shock calibration anchors)",
+      "is_synthetic": false,
+      "license": "Derived statistics from Yahoo Finance closes (yfinance); no raw prices redistributed",
+      "primary_keys": [],
+      "source": "https://finance.yahoo.com via yfinance",
+      "byte_size": 2057,
+      "sha256": "bf1c9b21c5108f4b80cec3182d097a5ec8a2187504d7e39c15ae8b56710451d7",
+      "record_count": 1
+    },
+    {
+      "file_path": "data/scenarios/historical_covid_2020.json",
+      "format": "json",
+      "description": "Runnable historical stress scenario: COVID-19 liquidity shock",
+      "is_synthetic": false,
+      "license": "Derived statistics from Yahoo Finance closes (yfinance)",
+      "primary_keys": [],
+      "source": "data/market/stress_windows.json",
+      "byte_size": 794,
+      "sha256": "77e9c35a6e246c49bb89b396e1ca8b9e2a29031867976a039e7cb7a64b26ffd1",
+      "record_count": 1
+    },
+    {
+      "file_path": "data/scenarios/historical_russia_2022.json",
+      "format": "json",
+      "description": "Runnable historical stress scenario: Russia-Ukraine invasion",
+      "is_synthetic": false,
+      "license": "Derived statistics from Yahoo Finance closes (yfinance)",
+      "primary_keys": [],
+      "source": "data/market/stress_windows.json",
+      "byte_size": 797,
+      "sha256": "1c17439f7956a6279f327427a43ebec32c47abdd4c9af234290bc6c9960ed2f5",
+      "record_count": 1
+    },
+    {
+      "file_path": "data/scenarios/historical_fed_jun_2022.json",
+      "format": "json",
+      "description": "Runnable historical stress scenario: Fed 75 bp surprise hike",
+      "is_synthetic": false,
+      "license": "Derived statistics from Yahoo Finance closes (yfinance)",
+      "primary_keys": [],
+      "source": "data/market/stress_windows.json",
+      "byte_size": 790,
+      "sha256": "a5d01a237209694a4f693d475888a014ca723765adf0b4ea218738bd63c95a41",
+      "record_count": 1
+    },
+    {
+      "file_path": "data/scenarios/historical_svb_2023.json",
+      "format": "json",
+      "description": "Runnable historical stress scenario: Silicon Valley Bank failure",
+      "is_synthetic": false,
+      "license": "Derived statistics from Yahoo Finance closes (yfinance)",
+      "primary_keys": [],
+      "source": "data/market/stress_windows.json",
+      "byte_size": 798,
+      "sha256": "5e4fe2fca7f05a4e63e0d4f7ae4e7b129ba2d8a7628e347b5325c5c329fef005",
+      "record_count": 1
+    },
+    {
+      "file_path": "data/scenarios/historical_fed_pivot_2023.json",
+      "format": "json",
+      "description": "Runnable historical stress scenario: Fed pivot rally (easing)",
+      "is_synthetic": false,
+      "license": "Derived statistics from Yahoo Finance closes (yfinance)",
+      "primary_keys": [],
+      "source": "data/market/stress_windows.json",
+      "byte_size": 793,
+      "sha256": "5accfdd6ffa23948eb1d720fa5602cce14bf669c8f963097648e664f7b32965b",
+      "record_count": 1
+    },
+    {
+      "file_path": "data/train/sec_8k/items.csv",
+      "format": "csv",
+      "description": "Real 8-K item statements (1.05 cyber, 1.03 bankruptcy, 2.04 debt acceleration) with item-code labels",
+      "is_synthetic": false,
+      "license": "US public record (SEC EDGAR)",
       "primary_keys": [
-        "position_id"
-      ]
+        "record_id"
+      ],
+      "source": "https://efts.sec.gov/LATEST/search-index",
+      "columns": [
+        "record_id",
+        "accession",
+        "company",
+        "file_date",
+        "item",
+        "label",
+        "text",
+        "url"
+      ],
+      "byte_size": 365547,
+      "sha256": "8c9763e20617ecf24c6069148046dc67f12d9535038349539528978f433fbfd4",
+      "record_count": 704
+    },
+    {
+      "file_path": "data/universe/entities.csv",
+      "format": "csv",
+      "description": "Entity universe: real S&P 500 constituents (SEC CIKs) plus the 16 fictional demo issuers, flagged per row in is_synthetic",
+      "is_synthetic": false,
+      "license": "CC BY-SA 4.0 (Wikipedia S&P 500 constituent list) + US public domain (SEC tickers)",
+      "primary_keys": [
+        "record_id"
+      ],
+      "source": "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies; https://www.sec.gov/files/company_tickers.json",
+      "derived_from": [
+        "data/entity_aliases.csv"
+      ],
+      "columns": [
+        "ticker",
+        "canonical_name",
+        "sector",
+        "aliases",
+        "ambiguous_aliases",
+        "is_synthetic",
+        "cik"
+      ],
+      "byte_size": 34750,
+      "sha256": "4a8009cf308de32c7f0f4c12aee219afa9718ba5a232ae9224d946a6f456e4fd",
+      "record_count": 519
     }
   ],
-  "updated_at": "2026-10-09T06:43:58.433013+00:00"
+  "updated_at": "2026-10-09T18:51:16.458949+00:00"
 }

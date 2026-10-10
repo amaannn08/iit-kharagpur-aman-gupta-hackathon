@@ -68,6 +68,7 @@ sentinel.db
 data/local/
 data/signals.jsonl
 data/raw/
+data/live/
 
 # Secrets and environment files
 .env

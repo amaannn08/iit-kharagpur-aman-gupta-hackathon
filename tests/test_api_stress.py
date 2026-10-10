@@ -29,11 +29,20 @@ def test_api_get_portfolio(client: TestClient):
     data = resp.json()
     assert data["portfolio_name"] == "Synthetic Wholesale Institutional Credit & Rates Portfolio"
     assert "summary" in data
-    assert data["summary"]["total_book_value_usd"] == 500_000_000.0
-    assert len(data["loans"]) == 5
+    # Funded book = $500M synthetic wholesale + $50M retail/SME sleeve from real transactions
+    assert data["funded_value_by_sleeve_usd"]["wholesale"] == 500_000_000.0
+    assert abs(data["funded_value_by_sleeve_usd"]["retail_sme"] - 50_000_000.0) < 0.01
+    assert data["funded_value_by_sleeve_usd"]["equity"] == 60_000_000.0
+    assert abs(data["summary"]["total_book_value_usd"] - 610_000_000.0) < 0.01
+    assert len(data["equities"]) == 15
+    wholesale_loans = [p for p in data["loans"] if p["sleeve"] == "wholesale"]
+    assert len(wholesale_loans) == 5
+    assert len(data["loans"]) > 5  # retail tranches
     assert len(data["bonds"]) == 5
     assert len(data["swaps"]) == 2
     assert len(data["cash"]) == 1
+    # derivative notional is metadata, never part of funded book value (PRD 9.1)
+    assert data["summary"]["interest_rate_swaps_gross_notional_usd"] == 150_000_000.0
 
 
 def test_api_simulate_manual_stress(client: TestClient):
@@ -56,7 +65,16 @@ def test_api_simulate_manual_stress(client: TestClient):
     assert result["target_entity"] == "APEX"
     assert result["total_pnl_usd"] < 0.0
     assert result["reconciliation_passed"] is True
-    assert len(result["position_deltas"]) == 13
+    deltas = result["position_deltas"]
+    assert len([d for d in deltas if d["sleeve"] == "wholesale"]) == 13
+    portfolio = client.get("/api/stress/portfolio").json()
+    n_positions = sum(len(portfolio[k]) for k in ("loans", "bonds", "swaps", "cash", "equities"))
+    assert len(deltas) == n_positions  # every position is revalued
+    assert {s["sleeve"] for s in result["sleeve_breakdown"]} == {
+        "wholesale",
+        "retail_sme",
+        "equity",
+    }
 
     # Now verify it appears in /api/stress/runs
     list_resp = client.get("/api/stress/runs")
@@ -71,3 +89,43 @@ def test_api_simulate_manual_stress(client: TestClient):
     detail = detail_resp.json()
     assert detail["stress_id"] == result["stress_id"]
     assert detail["total_pnl_usd"] == result["total_pnl_usd"]
+
+
+def test_api_historical_scenario_and_ps_custom_shock(client: TestClient):
+    res = client.post("/api/stress/scenario/HIST-SVB_2023")
+    assert res.status_code == 200
+    svb = res.json()
+    assert svb["trigger_type"] == "SCENARIO" and svb["reconciliation_passed"] is True
+    assert svb["shock_parameters"]["benchmark_yield_shift_bps"] < 0  # flight to quality
+    assert client.post("/api/stress/scenario/NOPE").status_code == 404
+
+    ps = client.post(
+        "/api/stress/custom", json={"equity_shock_pct": -0.10, "benchmark_yield_shift_bps": 200}
+    ).json()
+    eq = next(a for a in ps["asset_class_breakdown"] if a["asset_class"] == "equity")
+    assert eq["total_pnl_usd"] < 0 and ps["total_pnl_usd"] < 0 and ps["reconciliation_passed"]
+
+
+def test_manual_stress_rejects_unknown_class_and_resolves_company_names(client: TestClient):
+    bad = client.post(
+        "/api/stress/simulate", json={"event_class": "macro_rates", "impact_score": 8}
+    )
+    assert bad.status_code == 422  # previously ran as a silent zero shock
+    by_name = client.post(
+        "/api/stress/simulate",
+        json={
+            "event_class": "credit",
+            "impact_score": 8,
+            "target_entity": "Apex Industrial Holdings",
+        },
+    ).json()
+    assert by_name["target_entity"] == "APEX" and by_name["total_pnl_usd"] < 0
+    unknown = client.post(
+        "/api/stress/simulate", json={"event_class": "CREDIT", "target_entity": "Nobody Corp"}
+    )
+    assert unknown.status_code == 400
+
+
+def test_metrics_endpoint_serves_generated_metrics(client: TestClient):
+    m = client.get("/api/datasets/metrics").json()
+    assert m["public_real"]["event"]["n"] == 4117

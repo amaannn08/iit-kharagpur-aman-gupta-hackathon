@@ -135,3 +135,13 @@ def test_api_direct_prd_aliases(client: TestClient):
     detail_resp = client.get(f"/api/stress/{stress_id}")
     assert detail_resp.status_code == 200
     assert detail_resp.json()["stress_id"] == stress_id
+
+
+def test_analyze_returns_a_signal_per_entity(client: TestClient):
+    res = client.post(
+        "/api/analyze", json={"text": "Tesla and Apple shares slump after weak quarterly sales"}
+    )
+    assert res.status_code == 200
+    body = res.json()
+    assert [s["entity"]["ticker"] for s in body["signals"]] == ["TSLA", "AAPL"]
+    assert body["signal"]["signal_id"] == body["signals"][0]["signal_id"]

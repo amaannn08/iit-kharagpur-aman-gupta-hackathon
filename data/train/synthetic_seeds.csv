@@ -1,0 +1,78 @@
+text,label,is_synthetic
+missed scheduled coupon payment default covenant breach debt restructuring,CREDIT,true
+failed to remit scheduled payment to lending syndicate triggering 30-day cure period,CREDIT,true
+downgraded to junk status credit rating cut to Baa3 by Moody's negative outlook,CREDIT,true
+credit rating agency issues negative outlook downgrade warning on heavy debt maturities,CREDIT,true
+bankruptcy protection chapter 11 filing insolvent credit lines frozen,CREDIT,true
+files emergency chapter 11 bankruptcy petition debt default insolvency,CREDIT,true
+liquidity shortfall unable to meet commercial paper redemption obligations,CREDIT,true
+bank run depositor outflows trigger emergency liquidity borrowing discount window,CREDIT,true
+default on syndicated credit facility borrower distressed debt restructuring counsel,CREDIT,true
+senior unsecured bondholders retain restructuring counsel to evaluate debt for equity swap,CREDIT,true
+creditors assemble ad hoc committee as firm enters comprehensive debt restructuring,CREDIT,true
+credit facility coupon payment missed technical default covenants triggered,CREDIT,true
+central bank affirms standing discount window will support solvent lenders facing liquidity stress,CREDIT,true
+Federal Reserve raises benchmark interest rates 50 basis points to curb inflation,MACRO,true
+Federal Reserve signals benchmark rate hike amid persistent core services inflation,MACRO,true
+central bank cuts discount rate amid slowing economic growth and disinflation easing,MACRO,true
+sovereign bond prices plummet as benchmark 10-year Treasury yields surge 14 basis points on PPI print,MACRO,true
+treasury yields invert across 2-year and 10-year curve signaling impending recession,MACRO,true
+consumer price index inflation surge forces monetary policy tightening cycle,MACRO,true
+European Central Bank signals surprise liquidity reserve requirement hikes to stabilize currency,MACRO,true
+unemployment rate rises as GDP contracts for second consecutive quarter,MACRO,true
+central bank governor confirms benchmark policy rate setting monetary committee,MACRO,true
+trade sanctions imposed on key trading partner blocking energy exports,GEOPOLITICAL,true
+tariffs enacted on steel and aluminum sparking retaliatory trade measures,GEOPOLITICAL,true
+cross-border military conflict disrupts critical shipping corridor maritime straits,GEOPOLITICAL,true
+naval skirmish closes maritime choke points driving benchmark crude oil futures up sharply,GEOPOLITICAL,true
+foreign government nationalizes corporate assets and energy concessions without compensation,GEOPOLITICAL,true
+bilateral trade negotiations collapse amid diplomatic standoff and export curbs,GEOPOLITICAL,true
+global trade pact talks stall over agricultural export subsidies deadlock,GEOPOLITICAL,true
+announced all-cash acquisition agreement valued at four billion dollars,M_AND_A,true
+hostile takeover bid launched by activist hedge fund for outstanding shares,M_AND_A,true
+merger of equals approved by boards to create industry conglomerate,M_AND_A,true
+divestiture of non-core consumer unit completed for cash consideration,M_AND_A,true
+definitive purchase agreement signed to acquire regional utility solar generator,M_AND_A,true
+board of directors approves buyout bid from private equity consortium,M_AND_A,true
+wins priority FDA approval for breakthrough oncology drug therapeutic,PRODUCT,true
+unconditional FDA approval received for novel oncology kinase inhibitor therapeutic,PRODUCT,true
+voluntary nationwide product recall issued over safety defect and battery fire hazard,PRODUCT,true
+phase 3 clinical trial fails primary efficacy endpoint in randomized clinical study,PRODUCT,true
+patent infringement injunction halts commercial distribution of flagship device,PRODUCT,true
+activates transpacific subsea fiber network ahead of schedule expanding bandwidth,PRODUCT,true
+secures multi-year direct offtake agreement to provide battery grade lithium carbonate,PRODUCT,true
+DOJ files antitrust lawsuit to block monopolistic market concentration,REGULATORY,true
+Department of Justice launches antitrust inquiry into proposed semiconductor merger,REGULATORY,true
+SEC launches formal enforcement investigation into accounting irregularities,REGULATORY,true
+Securities and Exchange Commission probes premature subscription revenue recognition,REGULATORY,true
+consumer financial protection agency levies record civil money penalty for deceptive practices,REGULATORY,true
+Federal Trade Commission files preliminary injunction to block corporate buyout,REGULATORY,true
+banking regulators issue cease-and-desist order for severe risk compliance deficiencies,REGULATORY,true
+declares force majeure after fire damages primary blast furnace facility,SUPPLY_CHAIN,true
+unexpected fire at primary rolling mill halted output indefinitely invoking force majeure,SUPPLY_CHAIN,true
+port dockworkers strike halts container freight shipping operations nationwide,SUPPLY_CHAIN,true
+critical port terminal bottleneck delays cargo container processing for manufacturing suppliers,SUPPLY_CHAIN,true
+semiconductor component shortages force automotive assembly line shutdowns,SUPPLY_CHAIN,true
+freight logistics delays double container turnaround times at key regional cargo hubs,SUPPLY_CHAIN,true
+national freight rail strike averted as union ratifies wage agreement easing logistics,SUPPLY_CHAIN,true
+raw material export embargo cuts off essential lithium battery inputs,SUPPLY_CHAIN,true
+reports record quarterly earnings as net interest margin widens thirty bps,EARNINGS,true
+slashes full year revenue guidance and profit targets due to rising operating costs,EARNINGS,true
+first quarter earnings per share beat consensus estimates by fifteen percent,EARNINGS,true
+operating profit drops sharply as operating margin compresses due to inventory discounts,EARNINGS,true
+quarterly net income surges fifty percent driven by commercial loan volume,EARNINGS,true
+lowered second-half operating margin targets citing discounted inventory foot traffic,EARNINGS,true
+beats vehicle delivery expectations by twelve percent on battery factory efficiency ramp,EARNINGS,true
+firm fixed price contract awarded to modernize defense avionics countermeasure systems,EARNINGS,true
+critical zero-day security flaw in enterprise gateway actively exploited by hackers,CYBER,true
+unpatched authentication bypass vulnerability actively exploited in enterprise firewall,CYBER,true
+ransomware attack compromises internal corporate databases and encrypted servers,CYBER,true
+localized ransomware breach confirmed on legacy payment servers internal nodes encrypted,CYBER,true
+malicious unauthorized data breach exposes customer banking credentials,CYBER,true
+distributed denial of service attacks knock online banking portals offline,CYBER,true
+supply chain software infiltration compromises downstream client networks,CYBER,true
+board of directors schedules annual general meeting of shareholders proxy vote,OTHER,true
+company updates routine corporate governance committee charter,OTHER,true
+executive appointed to non-executive board seat at industry association,OTHER,true
+regular quarterly dividend declared payable on standard record date,OTHER,true
+routine investor relations presentation slides uploaded to corporate website,OTHER,true

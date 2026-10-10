@@ -1,7 +1,0 @@
-record_id,source_id,source_type,text,author_handle,published_at,timestamp_quality,simulated_at,is_synthetic,cashtags,primary_entity_id
-tw-66a136353d,kaggle_stock_tweets,SOCIAL,$APEX massive supply chain breakdown reported at Ohio foundry. Puts printing heavy tomorrow,trader_quant,2026-03-15T14:30:00Z,DATE_ONLY,,false,$APEX,
-tw-5626fc56a3,kaggle_stock_tweets,SOCIAL,$TSTEL balance sheet looking like a fortress after today new commercial contract announcement,trader_quant,2026-03-15T14:30:00Z,DATE_ONLY,,false,$TSTEL,
-tw-0ca850c8e5,kaggle_stock_tweets,SOCIAL,$QSEM chip wafer allocation issues look worse than guided. Fab capacity constrained,trader_quant,2026-03-15T14:30:00Z,DATE_ONLY,,false,$QSEM,
-tw-588615715d,kaggle_stock_tweets,SOCIAL,$GLOG shipping volumes rebounding strongly through west coast terminals,trader_quant,2026-03-15T14:30:00Z,DATE_ONLY,,false,$GLOG,
-tw-46f1209dcf,kaggle_stock_tweets,SOCIAL,$VAUTO suppliers delaying parts shipments again. Tough quarter ahead for deliveries,trader_quant,2026-03-15T14:30:00Z,DATE_ONLY,,false,$VAUTO,
-tw-851cad878a,kaggle_stock_tweets,SOCIAL,$SLEN commercial solar power plant goes online 2 weeks early. Solid execution,trader_quant,2026-03-15T14:30:00Z,DATE_ONLY,,false,$SLEN,

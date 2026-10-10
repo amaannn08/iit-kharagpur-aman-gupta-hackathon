@@ -92,9 +92,15 @@ def check_forbidden_files() -> bool:
         "__pycache__",
         ".runtime",
     }
+    # Gitignored download cache for real public datasets (scripts/data/fetch_real.py).
+    # Never committed, so its multi-GB files are exempt like .runtime/.
+    ignored_rel_dirs = {Path("data") / "raw"}
 
     for root, dirs, files in os.walk(REPO_ROOT):
-        dirs[:] = [d for d in dirs if d not in ignored_dirs]
+        rel_root = Path(root).relative_to(REPO_ROOT)
+        dirs[:] = [
+            d for d in dirs if d not in ignored_dirs and rel_root / d not in ignored_rel_dirs
+        ]
         for fname in files:
             file_path = Path(root) / fname
             rel_path = file_path.relative_to(REPO_ROOT)
