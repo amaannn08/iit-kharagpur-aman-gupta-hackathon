@@ -14,11 +14,11 @@
     "REGULATORY"
    ],
    "macro_f1_model": 0.7948,
-   "macro_f1_runtime_with_gates_and_abstention": 0.5223,
-   "precision_when_fired": 0.9379,
-   "fired_rate": 0.2269,
+   "macro_f1_runtime_with_gates_and_abstention": 0.5083,
+   "precision_when_fired": 0.942,
+   "fired_rate": 0.222,
    "baseline_keyword_macro_f1": 0.2863,
-   "baseline_seed_classifier_macro_f1": 0.0605,
+   "baseline_seed_classifier_macro_f1": 0.0583,
    "per_class_f1_model": {
     "CREDIT": 0.6358,
     "EARNINGS": 0.9516,
@@ -476,20 +476,20 @@
  },
  "perf": {
   "records": 2000,
-  "records_per_s": 88.2,
-  "latency_p50_s": 0.0105,
-  "latency_p95_s": 0.0159,
-  "peak_rss_gb": 0.282,
+  "records_per_s": 127.6,
+  "latency_p50_s": 0.0073,
+  "latency_p95_s": 0.011,
+  "peak_rss_gb": 0.366,
   "note": "single process, CPU, full pipeline (linking, sentiment, event, impact)"
  },
  "synthetic_regression": {
   "warning": "author-written synthetic set (same fictional universe as the demo); regression check only, never a quality claim",
   "n": 105,
-  "event_macro_f1": 0.4602,
+  "event_macro_f1": 0.4045,
   "sentiment_macro_f1": 0.3477,
-  "severity_mae": 2.79
+  "severity_mae": 2.99
  },
- "generated_at": "2026-10-10T15:26:11+00:00",
+ "generated_at": "2026-10-10T15:57:40+00:00",
  "targets": {
   "event_macro_f1": 0.7,
   "sentiment_macro_f1": 0.75,
@@ -506,9 +506,9 @@
   "train_window": "2023-01..2023-09",
   "holdout_window": "2023-10..2023-12",
   "holdout_articles": 1336,
-  "total_signals": 1510,
+  "total_signals": 1511,
   "actionable_signals": 109,
-  "actionable_rate": 0.0722,
+  "actionable_rate": 0.0721,
   "trigger_rate_per_1k_records": 0.0,
   "high_impact_recall": 0.5152,
   "high_impact_recall_ci95": [

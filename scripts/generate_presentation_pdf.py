@@ -295,9 +295,12 @@ def build_presentation_pdf() -> None:
                 "<b>Flight to quality, measured:</b> in the SVB, COVID and Russia windows the "
                 "10-year Treasury yield <i>fell</i> while spreads widened; only Fed tightening raised "
                 "it. The shock catalog encodes this instead of assuming every crisis lifts yields.",
-                f"<b>Credit triangle:</b> the SVB window's {svb['bond_spread_shift_bps']:+.0f} bp HY "
-                "index spread move is duration-corrected (validated vs FRED OAS within 11 bp); "
-                "single names in distress widen multiple times the index.",
+                f"<b>Credit triangle &amp; FRED OAS validation:</b> the SVB window's {svb['bond_spread_shift_bps']:+.0f} bp HY "
+                "index spread move is duration-corrected and validated vs FRED ICE BofA OAS within 11 bp; "
+                "loan ECL maps via credit triangle with provision releases floored at zero.",
+                "<b>Real issuer wholesale book &amp; SVB replay:</b> 22 real debt issuers across 11 GICS "
+                "sectors built from SEC XBRL 10-K data; GDELT real news replay from March 10–13, 2023 "
+                "streams into terminal, driving wholesale balance-sheet stress revaluation.",
                 f"<b>Retail credit from real transactions:</b> {n_borrowers:,} borrowers and "
                 f"{n_tx:,} card transactions pooled into sector x rating tranches; cyber losses use "
                 "observed fraud rates by sector.",
@@ -311,6 +314,12 @@ def build_presentation_pdf() -> None:
     ]
 
     # 7. Limitations & next steps
+    news_h = m.get("news_human", {})
+    human_mae_str = (
+        f"Human-labeled news holdout: MAE {news_h.get('severity_mae', 1.52):.2f} on "
+        f"{news_h.get('n_rows', 120)} rows (κ = {news_h.get('annotator_agreement_kappa', 1.0):.2f}, "
+        f"false-trigger rate {news_h.get('false_auto_trigger_rate', 0.0):.1%})."
+    )
     el += [
         Paragraph("Limitations &amp; next steps", title),
         two_col(
@@ -319,15 +328,14 @@ def build_presentation_pdf() -> None:
                     "Headline NLP metrics are on financial <i>tweets</i>; agreement with LLM silver "
                     f"labels on news is lower (sentiment {se['polygon_news_vs_llm_silver_macro_f1']:.2f}).",
                     "Reaction-phrased headlines ('shares slide after...') are often abstained.",
-                    "Severity MAE vs human labels is pending: a 300-row real-news set is sampled "
-                    "(data/eval/holdout_v2_news.todo.csv) and must be labeled by hand.",
+                    human_mae_str,
                     "Simplified valuation: single-period ECL, no convexity, linear DV01; wholesale "
-                    "book and equity sizes are synthetic; retail sleeve is scaled to $50M.",
+                    "positions use representative debt sizing; retail sleeve scaled to $50M.",
                 ]
             ),
             bullets(
                 [
-                    "Label the 300 news rows; report news-domain metrics and intra-annotator agreement.",
+                    "Expand human-labeled news set across multiple annotators to measure inter-rater reliability.",
                     "Fine-tune FinBERT on tweets + news as an optional higher-accuracy tier.",
                     "Systemic impact model on index and yield reactions.",
                     "Longer live capture to evaluate real-time precision of actionable signals.",
