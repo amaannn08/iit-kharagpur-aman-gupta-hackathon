@@ -60,6 +60,18 @@ def _resolve_target(target: Optional[str]) -> Optional[str]:
     return companies[0] if companies else None
 
 
+def _sector_of(target: Optional[str]) -> Optional[str]:
+    if not target:
+        return None
+    ent = _linker.entities.get(target.upper())
+    if ent and ent.sector:
+        return ent.sector
+    for p in stress_engine.portfolio.all_positions():
+        if p.entity_id.upper() == target.upper():
+            return p.sector
+    return None
+
+
 class CustomStressRequest(BaseModel):
     """Explicit systemic shock set (PS Module B example: equities -10%, rates +2%)."""
 
@@ -103,6 +115,13 @@ def simulate_stress(
                 status_code=400,
                 detail=f"Unknown target entity '{req.target_entity}' for entity scope",
             )
+    sector = (
+        _sector_of(target)
+        if req.target_scope == "entity"
+        else req.target_entity
+        if req.target_scope == "sector"
+        else None
+    )
     result = stress_engine.run_manual_stress(
         event_class=req.event_class,
         impact_score=req.impact_score,
@@ -110,6 +129,7 @@ def simulate_stress(
         target_scope=req.target_scope,
         is_easing=req.is_easing,
         run_id=req.run_id,
+        target_sector=sector,
     )
 
     repo = ReplayRepository(db)

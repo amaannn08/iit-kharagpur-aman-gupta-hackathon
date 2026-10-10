@@ -129,3 +129,19 @@ def test_manual_stress_rejects_unknown_class_and_resolves_company_names(client: 
 def test_metrics_endpoint_serves_generated_metrics(client: TestClient):
     m = client.get("/api/datasets/metrics").json()
     assert m["public_real"]["event"]["n"] == 4117
+
+
+def test_manual_cyber_books_operational_loss(client: TestClient):
+    r = client.post(
+        "/api/stress/simulate",
+        json={
+            "event_class": "CYBER",
+            "impact_score": 9,
+            "target_entity": "JPM",
+            "target_scope": "entity",
+        },
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["shock_parameters"]["target_sector"] == "Financials"
+    assert sum(p["operational_loss_usd"] for p in body["position_deltas"]) > 0

@@ -143,6 +143,7 @@ class StressEngine:
         is_easing: bool = False,
         enable_contagion: bool = False,
         run_id: str = "manual-run",
+        target_sector: Optional[str] = None,
     ) -> StressRunResult:
         """Execute a user-triggered / sandbox stress simulation with custom shock parameters."""
         shock = build_scaled_shock(
@@ -151,9 +152,10 @@ class StressEngine:
             target_entity=target_entity,
             target_scope=target_scope,
             is_easing=is_easing,
+            target_sector=target_sector,
         )
 
-        return self.valuation_engine.run_stress_test(
+        result = self.valuation_engine.run_stress_test(
             shock=shock,
             run_id=run_id,
             trigger_type="USER_TRIGGERED",
@@ -162,6 +164,7 @@ class StressEngine:
             impact_score=impact_score,
             enable_contagion=enable_contagion,
         )
+        return self._mark_exposure(result)
 
     @staticmethod
     def _mark_exposure(result: StressRunResult) -> StressRunResult:
