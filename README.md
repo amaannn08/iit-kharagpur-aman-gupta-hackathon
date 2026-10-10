@@ -49,7 +49,7 @@ All real datasets are public; synthetic data is labeled `is_synthetic: true` in 
 | yfinance closes (S&P 500, SPY, IEF, LQD, HYG, ^TNX, ^VIX) | Impact labels, shock calibration, equity betas | Derived statistics only (`data/market/`) | Yahoo terms (raw prices not redistributed) |
 | Synthetic demo feeds, wholesale book, contagion graph, scenarios | Deterministic demo scenario | `data/*.csv`, `data/wholesale_positions.json` | MIT, `is_synthetic: true` |
 
-**Not used:** Salad Money open-banking data (GeoDS "Secure": UK trusted research environment only); GDELT DOC API (rate-limited; the raw 15-minute files are used instead).
+**Not used:** Salad Money open-banking data (GeoDS "Secure": UK trusted research environment only); News API (needs an API key, and the free developer plan delays articles by 24 hours, so GDELT and SEC EDGAR 8-K filings provide the live feeds); Alpha Vantage (listed in the PS as an alternative to yfinance, which already covers every price series used); GDELT DOC API (rate-limited; the raw 15-minute files are used instead).
 
 **Assumptions** (details in [docs/assumptions.md](docs/assumptions.md)): retail EAD = total debt + 30% CCF on card limits, PD by credit-score band, LGD 80%, sleeve scaled to $50M; HY spread change from HYG vs IEF with duration 3.7; PD shock via the credit triangle (spread ~ PD x LGD, LGD 60%); impact label = |abnormal next-day return| / 30-day volatility; wholesale positions and equity sizes are synthetic.
 

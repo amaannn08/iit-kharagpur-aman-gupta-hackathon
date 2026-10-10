@@ -13,6 +13,7 @@ Every assumption below is implemented in code; the file that owns it is named so
 | Tweets are dated only (`timestamp_quality = date_only`) | converters | Replay orders them by date then id |
 | GDELT GKG themes are never used as labels or classifier input | `convert_real.parse_gkg_rows` | Themes are article-level and often do not match the headline |
 | The 105-row author-written set is a regression check, not a benchmark | `data/eval/synthetic_regression.csv` | Same fictional issuers as the demo |
+| PS resources not used: Salad Money (UK trusted research environment only), News API (API key required; free plan delays articles 24 h), Alpha Vantage (yfinance covers every price series) | `scripts/data/fetch_real.py` | Live feeds come from GDELT GKG and SEC EDGAR 8-K, which need no key and are real-time |
 
 ## NLP
 

@@ -15,7 +15,7 @@ Status of every requirement, with the evidence that shows it. Measured values ar
 | Module A: 10-20 S&P 100 stocks, sentiment up/down, weights-over-time dashboard | Done | `sentinel.rebalance`, `GET /api/index/history`, terminal "Index Rebalancer" tab; back-test in `docs/module_a_backtest.json` |
 | Module B: portfolio from sample transaction data with loans/bonds/derivatives | Done | Retail/SME sleeve from 13.3M real transactions + wholesale loans, bonds, swaps + equities |
 | Module B: trigger on high-impact events, shock set, before/after dashboard | Done | `StressEngine.should_trigger` (impact > 7, supported class, confidence); calibrated shocks; terminal before/after + waterfall |
-| Use of PS data sources | Done | GDELT, Kaggle financial news sentiment, Kaggle stock tweets, Kaggle financial transactions, yfinance; Salad Money excluded (UK-only secure environment) |
+| Use of PS data sources | Done | GDELT, Kaggle financial news sentiment, Kaggle stock tweets, Kaggle financial transactions, yfinance; Salad Money excluded (UK-only secure environment); News API and Alpha Vantage not needed (GDELT + SEC 8-K are the live feeds, yfinance covers prices) |
 | Live demo <= 5 min, deck <= 7 slides | Deck done; demo TODO | `docs/presentation.pdf` (7 pages); demo script in `docs/presentation-outline.md` |
 
 ## Guidelines
