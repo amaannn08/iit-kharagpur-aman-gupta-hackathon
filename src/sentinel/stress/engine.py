@@ -1,4 +1,4 @@
-"""Event-triggered stress testing orchestrator conforming to PRD Section 9.3."""
+"""Event-triggered stress testing: trigger rules, shock selection and runs."""
 
 import json
 from pathlib import Path
@@ -126,8 +126,8 @@ class StressEngine:
         event_class = signal.event.label.upper()
         impact = signal.impact.score
 
-        # Correct Scope assignment (conforming to PRD Section 9.3 & Bug B1 fix):
-        # Systemic macro and geopolitical events must shock the entire benchmark curve
+        # Scope assignment:
+        # Systemic macro and geopolitical events shock the entire benchmark curve
         # or broad market. Sector events shock sector-specific loans and bonds.
         # Single entity shocks require a valid ticker.
         if (

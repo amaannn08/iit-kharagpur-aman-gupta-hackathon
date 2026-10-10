@@ -1,4 +1,4 @@
-"""Replay run controller and state machine conforming to PRD Section 8."""
+"""Replay run controller and state machine."""
 
 import asyncio
 from datetime import datetime

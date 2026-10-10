@@ -1,4 +1,4 @@
-"""Unit tests for StressEngine trigger policy and sandbox execution (PRD 9.3)."""
+"""Unit tests for StressEngine trigger policy and sandbox execution."""
 
 from datetime import datetime
 
@@ -62,7 +62,7 @@ def make_signal(
 
 
 def test_stress_engine_trigger_criteria(stress_engine: StressEngine):
-    """PRD 9.3: Only eligible signals with supported event class and impact > 7 trigger stress."""
+    """Only eligible signals with supported event class and impact > 7 trigger stress."""
     # Eligible signal, impact 8 -> Should trigger
     sig_eligible = make_signal(signal_id="sig-1", impact_score=8)
     assert stress_engine.should_trigger(sig_eligible) is True
@@ -85,7 +85,7 @@ def test_stress_engine_trigger_criteria(stress_engine: StressEngine):
 
 
 def test_duplicate_signal_does_not_retrigger(stress_engine: StressEngine):
-    """PRD 9.3 & 13.3: Duplicate events do not create additional stress runs."""
+    """Duplicate events do not create additional stress runs."""
     sig = make_signal(signal_id="sig-uniq-100", impact_score=8)
     assert stress_engine.should_trigger(sig) is True
 
@@ -99,7 +99,7 @@ def test_duplicate_signal_does_not_retrigger(stress_engine: StressEngine):
 
 
 def test_manual_sandbox_stress_simulation(stress_engine: StressEngine):
-    """PRD 9.3: Manual user-triggered sandbox stress is labeled User-Triggered."""
+    """Manual user-triggered sandbox stress is labeled User-Triggered."""
     result = stress_engine.run_manual_stress(
         event_class="MACRO",
         impact_score=8,

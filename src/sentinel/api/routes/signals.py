@@ -1,4 +1,4 @@
-"""Risk signals inspection API endpoints (PRD Section 6.2)."""
+"""Risk signals inspection API endpoints."""
 
 import json
 from datetime import datetime

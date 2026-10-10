@@ -1,4 +1,4 @@
-"""Evaluation outputs (docs/metrics.json) meet the PRD targets on real held-out data."""
+"""Evaluation outputs (docs/metrics.json) meet accuracy targets on real held-out data."""
 
 import importlib.util
 import json

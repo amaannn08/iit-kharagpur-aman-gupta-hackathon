@@ -1,4 +1,4 @@
-"""Risk signal contracts conforming to PRD Section 6.2."""
+"""Risk signal contracts for the NLP pipeline."""
 
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -75,7 +75,7 @@ class ImpactOutput(BaseModel):
 
 
 class RiskSignal(BaseModel):
-    """Auditable risk signal emitted by the NLP engine (PRD Section 6.2)."""
+    """Auditable risk signal emitted by the NLP engine."""
 
     schema_version: str = Field(default="1.0")
     signal_id: str = Field(..., description="Stable unique signal identifier")

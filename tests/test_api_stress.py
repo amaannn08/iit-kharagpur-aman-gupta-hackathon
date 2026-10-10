@@ -41,7 +41,7 @@ def test_api_get_portfolio(client: TestClient):
     assert len(data["bonds"]) == 5
     assert len(data["swaps"]) == 2
     assert len(data["cash"]) == 1
-    # derivative notional is metadata, never part of funded book value (PRD 9.1)
+    # derivative notional is metadata, never part of funded book value
     assert data["summary"]["interest_rate_swaps_gross_notional_usd"] == 150_000_000.0
 
 

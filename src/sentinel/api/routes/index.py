@@ -1,4 +1,4 @@
-"""Module A API: sentiment-driven mock index weights (PS Section 3, PRD Section 10)."""
+"""Module A API: sentiment-driven mock index weights."""
 
 from dataclasses import asdict
 from typing import Any, Dict, List

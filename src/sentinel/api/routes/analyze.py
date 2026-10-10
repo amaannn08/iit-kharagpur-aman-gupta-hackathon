@@ -1,4 +1,4 @@
-"""Manual text analysis endpoint conforming to PRD Section 11.1 & 12."""
+"""Manual text analysis endpoint."""
 
 import uuid
 from datetime import datetime
@@ -43,7 +43,7 @@ async def analyze_manual_text(
     req: AnalyzeRequest,
     db: Session = Depends(get_db),
 ) -> AnalyzeResponse:
-    """Analyze single financial news or social text through the offline pipeline (PRD 12)."""
+    """Analyze single financial news or social text through the offline pipeline."""
     text_clean = req.text.strip()
 
     if not text_clean:

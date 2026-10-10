@@ -1,4 +1,4 @@
-"""Counterparty & Supply Chain Contagion Graph Engine (PRD Section 9.3 & Bug B6 fix).
+"""Counterparty & Supply Chain Contagion Graph Engine.
 
 Loads data/graph_edges.csv and computes second-order multi-hop shock propagation
 across customer-supplier and credit linkages using transmission factors and hop decay.

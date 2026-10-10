@@ -21,7 +21,7 @@ class TimestampQuality(str, Enum):
 
 
 class InputRecord(BaseModel):
-    """Normalized input text record conforming to PRD Section 6.1."""
+    """Normalized input text record for the ingestion pipeline."""
 
     record_id: str = Field(..., description="Unique immutable record identifier")
     source_id: str = Field(..., description="Source dataset identifier e.g. news_demo")

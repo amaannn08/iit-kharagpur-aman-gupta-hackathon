@@ -1,4 +1,4 @@
-"""Versioned stress shock catalog and scaling engine (PRD Section 9.2), version shocks_v2.
+"""Versioned stress shock catalog and scaling engine, version shocks_v2.
 
 Systemic shocks at impact 8 are the measured market moves of real historical windows
 (scripts/data/calibrate_shocks.py -> data/market/stress_windows.json): S&P 500 move, 10-year
@@ -66,7 +66,7 @@ GEOPOLITICAL_SYSTEMIC = ShockParameters(
     anchor="russia_2022",
 )
 
-# Primary (single-name / sector) shocks per class: PRD assumptions.
+# Primary (single-name / sector) shocks per class: baseline calibrated assumptions.
 DEFAULT_SHOCK_CATALOG: Dict[str, ShockParameters] = {
     "CREDIT": ShockParameters(
         bond_spread_shift_bps=150.0,

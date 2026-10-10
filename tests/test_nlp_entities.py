@@ -1,4 +1,4 @@
-"""Tests for EntityLinker resolution and disambiguation (PRD Section 7.1)."""
+"""Tests for EntityLinker resolution and disambiguation."""
 
 from sentinel.nlp.entities import EntityLinker
 

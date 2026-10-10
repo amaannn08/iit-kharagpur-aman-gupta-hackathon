@@ -1,4 +1,4 @@
-"""Entity recognition and resolution engine conforming to PRD Section 7.1.
+"""Entity recognition and resolution engine.
 
 Universe: data/universe/entities.csv (real S&P 500 constituents + flagged synthetic demo
 issuers, built by scripts/data/build_universe.py). Falls back to data/entity_aliases.csv.
@@ -318,7 +318,7 @@ class EntityLinker:
     def resolve_all(
         self, text: str, hint_entity_id: Optional[str] = None
     ) -> List[Tuple[EntityReference, List[EvidenceSpan]]]:
-        """Every resolved company (PRD 6.2: one signal per entity/event association).
+        """Every resolved company (one signal per entity/event association).
 
         Falls back to sector phrases, the macro entity, then a valid hint (without fabricated
         spans), then a single unresolved reference.

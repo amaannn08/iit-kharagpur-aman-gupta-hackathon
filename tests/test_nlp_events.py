@@ -1,4 +1,4 @@
-"""Tests for EventClassifier and abstention logic (PRD Section 7.3)."""
+"""Tests for EventClassifier and abstention logic."""
 
 from sentinel.nlp.events import EventClassifier
 

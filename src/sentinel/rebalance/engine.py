@@ -4,7 +4,7 @@ Subscribes to the NLP engine's sentiment score. For each stock in the mock index
   - positive sentiment increases its weight, negative sentiment decreases it (PS);
   - sentiment is a time-decayed exponential moving average of signal scores per ticker;
   - target weight = base x (1 + k x EMA), long-only, capped at 20% per name and 40% per
-    sector, renormalized to sum to 1 (PRD Section 10).
+    sector, renormalized to sum to 1.
 Every rebalance is recorded with turnover = 0.5 x sum |w_new - w_old| and a reason per name.
 This is a mock index for demonstration, not an S&P product.
 """

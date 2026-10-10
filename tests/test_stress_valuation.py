@@ -1,4 +1,4 @@
-"""Unit tests for wholesale banking stress valuation engine (PRD 9.4 & 13.3)."""
+"""Unit tests for wholesale banking stress valuation engine."""
 
 import pytest
 
@@ -23,7 +23,7 @@ def engine(portfolio: WholesalePortfolio) -> ValuationEngine:
 
 
 def test_portfolio_funded_and_derivative_segregation(portfolio: WholesalePortfolio):
-    """PRD 9.1: Verify funded exposure is $500M and derivative notional is segregated."""
+    """Verify funded exposure is $500M and derivative notional is segregated."""
     assert portfolio.total_funded_exposure == 500_000_000.0
     # Swap gross notional is $150M ($75M + $75M)
     assert portfolio.total_derivative_notional == 150_000_000.0
@@ -33,7 +33,7 @@ def test_portfolio_funded_and_derivative_segregation(portfolio: WholesalePortfol
 
 
 def test_bond_duration_valuation_and_bps_conversion(engine: ValuationEngine):
-    """PRD 9.4 & 13.3: Verify delta = -duration * value * shift with exact bps conversion."""
+    """Verify delta = -duration * value * shift with exact bps conversion."""
     bond = BondPosition(
         position_id="TEST-BOND-1",
         asset_class=AssetClass.BOND,
@@ -71,7 +71,7 @@ def test_bond_duration_valuation_and_bps_conversion(engine: ValuationEngine):
 
 
 def test_loan_ecl_valuation_and_clamping(engine: ValuationEngine):
-    """PRD 9.4 & 13.3: Incremental ECL = EAD * delta_PD * LGD and PD/LGD clamped."""
+    """Incremental ECL = EAD * delta_PD * LGD and PD/LGD clamped."""
     loan = LoanPosition(
         position_id="TEST-LOAN-1",
         asset_class=AssetClass.LOAN,
@@ -111,7 +111,7 @@ def test_loan_ecl_valuation_and_clamping(engine: ValuationEngine):
 
 
 def test_swap_sign_convention_pay_fixed_loses_on_rate_increase(engine: ValuationEngine):
-    """PRD 13.3 Invariant: Pay-fixed loses value under rate increase, and gains under rate cut."""
+    """Invariant: Pay-fixed loses value under rate increase, and gains under rate cut."""
     # SWAP-002 is pay-fixed with signed_dv01 = -34,500
     pay_fixed_swap = next(s for s in engine.portfolio.swaps if s.pay_receive == "pay_fixed")
 
@@ -148,7 +148,7 @@ def test_swap_sign_convention_pay_fixed_loses_on_rate_increase(engine: Valuation
 
 
 def test_cash_zero_delta(engine: ValuationEngine):
-    """PRD 9.4: Cash has zero market or credit delta under stress."""
+    """Cash has zero market or credit delta under stress."""
     cash = engine.portfolio.cash[0]
     shock = ScaledShock(
         bond_spread_shift_bps=200.0,
@@ -166,7 +166,7 @@ def test_cash_zero_delta(engine: ValuationEngine):
 
 
 def test_zero_shock_zero_change(engine: ValuationEngine):
-    """PRD 13.3 Invariant: Zero shock produces exactly zero P&L."""
+    """Invariant: Zero shock produces exactly zero P&L."""
     zero_shock = ScaledShock(
         bond_spread_shift_bps=0.0,
         loan_pd_increment=0.0,
@@ -185,7 +185,7 @@ def test_zero_shock_zero_change(engine: ValuationEngine):
 
 
 def test_unrelated_entity_exposure_unchanged(engine: ValuationEngine):
-    """PRD 13.3 Invariant: Unrelated exposure remains unchanged under entity-scoped shock."""
+    """Invariant: Unrelated exposure remains unchanged under entity-scoped shock."""
     apex_shock = build_scaled_shock(
         "CREDIT", impact_score=8, target_entity="APEX", target_scope="entity"
     )
@@ -203,7 +203,7 @@ def test_unrelated_entity_exposure_unchanged(engine: ValuationEngine):
 
 
 def test_full_portfolio_reconciliation_invariants(engine: ValuationEngine):
-    """PRD 13.3 Invariant: Sum of position P&L equals total P&L, before + P&L = after."""
+    """Invariant: Sum of position P&L equals total P&L, before + P&L = after."""
     systemic_shock = build_scaled_shock("CREDIT", impact_score=9, target_scope="systemic")
     result = engine.run_stress_test(systemic_shock)
 
@@ -232,7 +232,7 @@ def test_full_portfolio_reconciliation_invariants(engine: ValuationEngine):
 
 
 def test_contagion_propagates_to_downstream_counterparties(engine: ValuationEngine):
-    """PRD 9.3 & Bug B6 fix: Verify contagion propagates shocks to connected counterparties."""
+    """Verify contagion propagates shocks to connected counterparties."""
     apex_shock = build_scaled_shock(
         "CREDIT", impact_score=8, target_entity="APEX", target_scope="entity"
     )

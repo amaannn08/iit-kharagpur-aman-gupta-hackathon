@@ -1,4 +1,4 @@
-"""Impact severity scoring conforming to PRD Section 7.4.
+"""Impact severity scoring engine.
 
 The additive rubric (base + scope + explicit severity) always runs and supplies the
 explainable components and evidence spans. When the engine passes the classified event:

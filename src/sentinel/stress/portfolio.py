@@ -1,4 +1,4 @@
-"""Wholesale banking portfolio loader and validator conforming to PRD Section 9.1."""
+"""Wholesale banking portfolio loader and validator."""
 
 import json
 from pathlib import Path

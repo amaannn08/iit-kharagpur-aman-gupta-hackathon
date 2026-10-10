@@ -1,4 +1,4 @@
-"""Wholesale banking stress testing contracts conforming to PRD Section 10."""
+"""Wholesale banking stress testing contracts."""
 
 from datetime import date
 from enum import Enum
@@ -197,7 +197,7 @@ class StressRunResult(BaseModel):
     position_deltas: List[PositionStressDelta]
     reconciliation_passed: bool
     sleeve_breakdown: List[SleeveStressSummary] = Field(default_factory=list)
-    # PRD 9.1: funded balance-sheet value and derivative MTM are reported separately.
+    # Funded balance-sheet value and derivative MTM are reported separately.
     funded_baseline_value_usd: float = 0.0
     funded_stressed_value_usd: float = 0.0
     derivative_mtm_change_usd: float = 0.0

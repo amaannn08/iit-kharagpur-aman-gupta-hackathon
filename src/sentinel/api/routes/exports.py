@@ -1,4 +1,4 @@
-"""Export API routes conforming to PRD Section 9.5 & 12."""
+"""Export API routes for stress testing results and audit records."""
 
 import csv
 import io

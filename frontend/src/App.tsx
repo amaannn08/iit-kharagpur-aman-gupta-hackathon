@@ -832,7 +832,7 @@ export function App() {
             {/* Top Summary Segregation Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="bg-[#111827] p-4 rounded-lg border border-gray-800">
-                <div className="text-xs text-gray-400 font-medium">Funded Book Value (PRD §9.1)</div>
+                <div className="text-xs text-gray-400 font-medium">Funded Book Value</div>
                 <div className="text-xl font-bold text-emerald-400 font-mono mt-1">
                   ${(portfolio?.summary.total_book_value_usd ?? 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}
                 </div>
@@ -1126,7 +1126,7 @@ export function App() {
 
               {/* Pre-filled Scenarios */}
               <div className="space-y-1.5">
-                <label className="text-xs text-gray-400 font-medium">Test Scenario Presets (PRD Scenarios):</label>
+                <label className="text-xs text-gray-400 font-medium">Test Scenario Presets:</label>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <button
                     type="button"
@@ -1497,7 +1497,7 @@ export function App() {
             <div className="border-b border-gray-800 pb-4">
               <h2 className="text-base font-bold text-white flex items-center gap-2">
                 <FileCheck className="w-5 h-5 text-cyan-400" />
-                Evaluation Framework & Release Gates (PRD Section 2.3 & 14)
+                Evaluation Framework & Release Gates
               </h2>
               <p className="text-xs text-gray-400 mt-0.5">
                 Strict distinction between verified release gates and aspirational quality targets.
@@ -1528,14 +1528,14 @@ export function App() {
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
-                    Funded book value and derivative notional/MTM reported separately (PRD §9.1)
+                    Funded book value and derivative notional/MTM reported separately
                   </li>
                 </ul>
               </div>
 
               <div className="bg-[#0B0F17] p-4 rounded border border-gray-800 space-y-3">
                 <div className="text-cyan-400 font-semibold uppercase tracking-wider text-[11px]">
-                  NLP Quality Targets (PRD §13.1)
+                  NLP Quality Targets
                 </div>
                 <div className="space-y-2 text-gray-300 font-mono text-[11px]">
                   <div className="flex justify-between">

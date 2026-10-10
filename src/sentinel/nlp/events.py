@@ -1,4 +1,4 @@
-"""Event classification engine (PRD Section 7.3).
+"""Event classification engine.
 
 Primary model: models/event_v2.joblib, trained by scripts/models/train_event.py on committed
 real labeled data (HF twitter-financial-news topic, SEC 8-K item statements, weak-labeled real

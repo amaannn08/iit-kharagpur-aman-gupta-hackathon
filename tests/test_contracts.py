@@ -1,4 +1,4 @@
-"""Unit tests for Pydantic v2 data contracts conforming to PRD Section 6 & 10."""
+"""Unit tests for Pydantic v2 data contracts."""
 
 from datetime import date, datetime, timezone
 
@@ -67,7 +67,7 @@ def test_sentiment_probabilities_sum_validation():
 
 
 def test_risk_signal_contract_integrity():
-    """Verify end-to-end RiskSignal structure matches PRD Section 6.2."""
+    """Verify end-to-end RiskSignal structure integrity."""
     signal = RiskSignal(
         signal_id="sig-001",
         run_id="run-local-001",

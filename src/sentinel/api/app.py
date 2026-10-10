@@ -78,7 +78,7 @@ def create_app() -> FastAPI:
     app.include_router(exports_router, prefix="/api")
     app.include_router(index_router, prefix="/api")
 
-    # Direct aliases conforming to exact PRD Section 12 specifications
+    # Direct aliases for API route compatibility
     app.add_api_route("/api/portfolio", get_portfolio, methods=["GET"], tags=["Portfolio"])
     app.add_api_route("/api/stress", simulate_stress, methods=["POST"], tags=["Stress"])
     app.add_api_route(

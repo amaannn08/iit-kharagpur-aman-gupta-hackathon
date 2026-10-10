@@ -1,4 +1,4 @@
-"""Tests for FinBERTSentimentAnalyzer and fallback mode (PRD Section 7.2)."""
+"""Tests for FinBERTSentimentAnalyzer and fallback mode."""
 
 from sentinel.nlp.sentiment import FinBERTSentimentAnalyzer
 

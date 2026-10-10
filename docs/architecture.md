@@ -33,4 +33,8 @@
 
 ## Runtime boundary
 
-The API process reads only local files and makes no network calls (`scripts/verify_hygiene.py` checks the source). All downloads and live capture happen in scripts that write local files.
+The application enforces a strict runtime boundary conforming to hackathon guidelines:
+- **100% Offline Localhost Execution:** The backend API process reads only local files and makes zero runtime network calls (`scripts/verify_hygiene.py` enforces this via code inspection).
+- **No External Cloud Dependencies:** No paid cloud services, proprietary APIs, or external hosted LLMs are contacted during runtime.
+- **Zero Hardcoded Secrets:** All execution operates without external API tokens or credentials.
+- **Decoupled Live Ingestion:** Live capture (GDELT 2.0 GKG and SEC EDGAR 8-K) is handled exclusively by independent offline recorder scripts (`scripts/live/record_live.py`) writing to local CSV files that the backend tails incrementally.

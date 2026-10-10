@@ -55,7 +55,7 @@ class Settings(BaseSettings):
     ]
 
     # Replay sources: name -> (path relative to data_dir, adapter kind, badge).
-    # Badges follow AGENTS.md: replay data is labeled Synthetic Scenario or Historical Replay;
+    # Source badges: replay data is labeled Synthetic Scenario or Historical Replay;
     # LIVE CAPTURE files are written by scripts/live/record_live.py (the app itself stays offline).
     replay_sources: Dict[str, Tuple[str, str, str]] = {
         "news_demo": ("news_demo.csv", "news", "SYNTHETIC SCENARIO"),

@@ -1,4 +1,4 @@
-"""Syndication-aware deduplication for financial streaming text (PRD Section 8.1).
+"""Syndication-aware deduplication for financial streaming text.
 
 1. Exact match on the SHA-256 of normalized text.
 2. Near-duplicates (wire syndication, quote re-posts): MinHash-LSH retrieves a small candidate

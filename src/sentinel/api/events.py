@@ -1,4 +1,4 @@
-"""Server-Sent Events (SSE) broadcaster conforming to PRD Section 11.3 & 12."""
+"""Server-Sent Events (SSE) broadcaster."""
 
 import asyncio
 import json

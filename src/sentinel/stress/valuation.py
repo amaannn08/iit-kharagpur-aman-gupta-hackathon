@@ -1,4 +1,4 @@
-"""Multi-asset wholesale banking valuation engine conforming to PRD Section 9.4 and 13.3."""
+"""Multi-asset wholesale banking valuation engine."""
 
 import uuid
 from collections import defaultdict
@@ -580,7 +580,7 @@ class ValuationEngine:
                 )
             )
 
-        # PRD Section 13.3 Invariants Reconciliation Check:
+        # Valuation Invariants Reconciliation Check:
         # 1. sum of position PnL equals total_pnl
         # 2. for each position: baseline + pnl == stressed
         # 3. for each position: sum(components) == pnl
@@ -671,7 +671,7 @@ class ValuationEngine:
             "top_positions": top_positions,
         }
 
-        # PRD 9.1: funded balance-sheet value vs derivative MTM, and per-sleeve subtotals
+        # Funded balance-sheet value vs derivative MTM, and per-sleeve subtotals
         derivative_mtm = sum(p.pnl_usd for p in position_deltas if p.asset_class == AssetClass.SWAP)
         funded_pnl = total_pnl - derivative_mtm
         sleeve_breakdown = []

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Live capture recorder: append real GDELT and SEC EDGAR 8-K records to local CSV files.
 
-The application never calls external services (AGENTS.md). Real-time ingestion works by
+The backend application never calls external services directly. Real-time ingestion works by
 running this recorder alongside it: every cycle it appends records it has not seen before to
   data/live/gdelt_live.csv   GDELT 2.0 GKG finance headlines (15-minute files, no API key)
   data/live/sec_8k_live.csv  new Form 8-K filings by S&P 500 issuers (data.sec.gov)

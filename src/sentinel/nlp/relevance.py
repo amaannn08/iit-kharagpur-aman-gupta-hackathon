@@ -1,4 +1,4 @@
-"""Relevance screening for social posts (PRD Section 8.1).
+"""Relevance screening for social posts.
 
 Social records are stored and audited like any other, but a post only becomes actionable if it
 is not commercial spam and carries financial context. On a 5,000-tweet real sample, ~10% were

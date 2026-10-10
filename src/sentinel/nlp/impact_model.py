@@ -1,4 +1,4 @@
-"""Market-calibrated impact model (PRD Section 7.4, plan WS5).
+"""Market-calibrated impact model.
 
 The additive rubric explains a score, but on 1,402 real 2023 article-ticker events it had no
 relationship with the next-day market reaction (Spearman -0.04). This model is trained by

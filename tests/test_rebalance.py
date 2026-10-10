@@ -1,4 +1,4 @@
-"""Module A: sentiment-driven mock index rebalancer (PS Section 3, PRD Section 10)."""
+"""Module A: sentiment-driven mock index rebalancer."""
 
 from datetime import datetime, timedelta
 

@@ -6,7 +6,7 @@ metrics come from held-out real data (scripts/run_evaluation.py --suite public_r
 
 Original description: frozen 105-row NLP evaluation holdout dataset.
 
-Conforms to PRD Section 4.2 & 13.1 and Review Plan P0-3:
+Conforms to evaluation specification:
 - Independent of seed training examples (no leakage).
 - Stratified across 10 event classes (10-12 samples each).
 - Includes adversarial and edge-case samples.

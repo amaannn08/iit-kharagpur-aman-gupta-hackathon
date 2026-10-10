@@ -1,4 +1,4 @@
-"""Wholesale banking stress testing API routes conforming to PRD Section 9 & 12."""
+"""Wholesale banking stress testing API routes."""
 
 import json
 from typing import Any, Dict, List, Optional
@@ -112,7 +112,7 @@ def simulate_stress(
     req: ManualStressRequest,
     db: Session = Depends(get_db),
 ) -> StressRunResult:
-    """Execute a user-triggered / sandbox multi-asset stress simulation (PRD 9.3)."""
+    """Execute a user-triggered / sandbox multi-asset stress simulation."""
     target = req.target_entity
     if req.target_scope == "entity":
         target = _resolve_target(target)

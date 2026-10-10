@@ -321,7 +321,7 @@ describe('S&P Sentinel Risk Terminal', () => {
     const stressTabButton = screen.getByRole('button', { name: /Wholesale Stress/i });
     fireEvent.click(stressTabButton);
 
-    expect(screen.getByText('Funded Book Value (PRD §9.1)')).toBeInTheDocument();
+    expect(screen.getByText('Funded Book Value')).toBeInTheDocument();
     expect(screen.getByText('Derivative Gross Notional (Segregated)')).toBeInTheDocument();
     // funded book value is rendered from /api/portfolio data (no longer hardcoded)
     expect(await screen.findByText('$500,000,000')).toBeInTheDocument();

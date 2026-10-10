@@ -87,7 +87,7 @@ async def emit_signal(
     # Module A: every signal updates the mock index sentiment (blocked/duplicate ones are ignored)
     rebalancer.on_signal(sig)
 
-    # Module B automated stress test trigger on eligible high-impact signals (PRD 9.3)
+    # Module B automated stress test trigger on eligible high-impact signals
     stress_result = None
     if stress_engine.should_trigger(sig):
         source_meta = settings.replay_sources.get(record.source_id)

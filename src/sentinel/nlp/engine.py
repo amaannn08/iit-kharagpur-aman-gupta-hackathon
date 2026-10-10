@@ -1,4 +1,4 @@
-"""NLP pipeline orchestrator producing auditable RiskSignals (PRD Section 6.2 & 7)."""
+"""NLP pipeline orchestrator producing auditable RiskSignals."""
 
 from datetime import datetime
 from typing import List, Optional
@@ -71,7 +71,7 @@ class NLPEngine:
         run_id: str,
         dedup_decision: Optional[DedupDecision] = None,
     ) -> List[RiskSignal]:
-        """Emit one auditable RiskSignal per resolved entity (PRD Section 6.2).
+        """Emit one auditable RiskSignal per resolved entity.
 
         Sentiment and event classification are computed once per record; impact and action
         eligibility are computed per entity because scope (company vs macro) changes them.
@@ -88,7 +88,7 @@ class NLPEngine:
         # 3. Event Classification
         event = self.event_classifier.predict(record.text)
 
-        # Directional macro policy tagging (PRD 9.2: a cut and a hike map to opposite shocks)
+        # Directional macro policy tagging: a cut and a hike map to opposite shocks
         if event.label.upper() == "MACRO":
             event.macro_direction, _ = policy_direction(record.text)
             # Policy/indicator direction for a credit and rates book: a rate cut or "inflation
@@ -136,7 +136,7 @@ class NLPEngine:
                 seen_spans.add(key)
                 all_spans.append(span)
 
-        # 5. Action Eligibility Gating (PRD Section 7.3 & 9.3)
+        # 5. Action Eligibility Gating (event class and confidence thresholds)
         eligible = True
         block_reasons: List[str] = []
 

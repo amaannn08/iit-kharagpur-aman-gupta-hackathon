@@ -96,3 +96,9 @@ Thumbs.db
 *.swp
 *.swo
 *~
+
+# Process docs and review notes (untracked per compliance policy)
+AGENTS.md
+docs/PRD.md
+docs/PRD.original.md
+docs/CODEBASE_AUDIT_AND_PS_REVIEW_REPORT.md
