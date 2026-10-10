@@ -49,8 +49,10 @@ def scored_ticker_days() -> pd.DataFrame:
     return daily
 
 
-def run(daily: pd.DataFrame, closes: pd.DataFrame, k: float) -> dict:
-    idx = IndexRebalancer(k=k)
+def run(
+    daily: pd.DataFrame, closes: pd.DataFrame, k: float, no_trade_band: float = 0.0025
+) -> dict:
+    idx = IndexRebalancer(k=k, no_trade_band=no_trade_band)
     names = list(DEFAULT_UNIVERSE)
     ret = closes[names].pct_change()
     trading_days = ret.loc[daily.day.min() : daily.day.max()].index
@@ -64,23 +66,70 @@ def run(daily: pd.DataFrame, closes: pd.DataFrame, k: float) -> dict:
         turnover.append(0.5 * sum(abs(idx.weights[t] - before[t]) for t in names))
     w = pd.DataFrame(weights)
     nxt = ret.shift(-1).loc[w.index, names]  # weights at close t earn the return of t+1
-    tilt = (w * nxt).sum(axis=1, min_count=1).dropna()
-    eq = nxt.mean(axis=1).loc[tilt.index]
-    active = tilt - eq
+    gross_tilt = (w * nxt).sum(axis=1, min_count=1).dropna()
+    eq = nxt.mean(axis=1).loc[gross_tilt.index]
+    t_turnover = pd.Series(turnover, index=w.index).loc[gross_tilt.index]
+
+    # Costs and net returns for cost_bps in {0, 5, 10}
+    costs_dict = {}
+    for bps in (0, 5, 10):
+        cost_series = t_turnover * (bps / 10000.0)
+        net_tilt = gross_tilt - cost_series
+        net_active = net_tilt - eq
+        net_te = net_active.std() * np.sqrt(252)
+        costs_dict[f"cost_{bps}bps"] = {
+            "net_tilt_annual_return": round(float(net_tilt.mean() * 252), 4),
+            "net_active_annual_return": round(float(net_active.mean() * 252), 4),
+            "net_tracking_error": round(float(net_te), 4),
+            "net_information_ratio": round(float(net_active.mean() * 252 / net_te), 3)
+            if net_te > 0
+            else None,
+        }
+
+    active = gross_tilt - eq
     te = active.std() * np.sqrt(252)
+    ann_turnover = float(np.mean(turnover) * 252)
+    active_ann = float(active.mean() * 252)
+    be_cost_bps = round(float((active_ann / ann_turnover) * 10000), 2) if ann_turnover > 0 else 0.0
+
+    # Stationary circular block bootstrap for active return (block 20 days, 2,000 resamples, seed 42)
+    rng = np.random.default_rng(42)
+    n_days = len(active)
+    block_len = 20
+    n_blocks = int(np.ceil(n_days / block_len))
+    boot_active_ann = []
+    active_arr = active.values
+    for _ in range(2000):
+        start_indices = rng.integers(0, n_days, size=n_blocks)
+        sampled = []
+        for s in start_indices:
+            block = [active_arr[(s + j) % n_days] for j in range(block_len)]
+            sampled.extend(block)
+        sampled = sampled[:n_days]
+        boot_active_ann.append(np.mean(sampled) * 252)
+
+    ci95 = [
+        round(float(np.percentile(boot_active_ann, 2.5)), 4),
+        round(float(np.percentile(boot_active_ann, 97.5)), 4),
+    ]
+
     return {
         "k": k,
-        "trading_days": int(len(tilt)),
-        "tilt_annual_return": round(float(tilt.mean() * 252), 4),
+        "no_trade_band": no_trade_band,
+        "trading_days": int(len(gross_tilt)),
+        "tilt_annual_return": round(float(gross_tilt.mean() * 252), 4),
         "equal_weight_annual_return": round(float(eq.mean() * 252), 4),
-        "active_annual_return": round(float(active.mean() * 252), 4),
+        "active_annual_return": round(active_ann, 4),
+        "active_annual_return_ci95": ci95,
         "tracking_error": round(float(te), 4),
-        "information_ratio": round(float(active.mean() * 252 / te), 3) if te > 0 else None,
-        # t-statistic of mean daily active return: is the tilt distinguishable from zero?
+        "information_ratio": round(float(active_ann / te), 3) if te > 0 else None,
         "active_return_t_stat": round(
             float(active.mean() / active.std() * np.sqrt(len(active))), 3
         ),
         "avg_daily_turnover": round(float(np.mean(turnover)), 5),
+        "annual_turnover": round(ann_turnover, 4),
+        "break_even_cost_bps": be_cost_bps,
+        "net_costs": costs_dict,
         "max_weight": round(float(w.max().max()), 4),
         "mean_abs_tilt_from_equal": round(float((w - 1 / len(names)).abs().mean().mean()), 5),
     }

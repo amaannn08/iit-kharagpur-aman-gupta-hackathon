@@ -29,6 +29,7 @@ def get_current_index() -> Dict[str, Any]:
             "sector_cap": rebalancer.sector_cap,
             "k": rebalancer.k,
             "halflife_days": rebalancer.halflife_days,
+            "no_trade_band": rebalancer.no_trade_band,
             "long_only": True,
         },
         "rebalances": len(rebalancer.history) - 1,
