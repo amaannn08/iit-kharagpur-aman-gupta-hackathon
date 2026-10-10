@@ -86,7 +86,7 @@ def build_model():
             ngram_range=(1, 2), min_df=2, sublinear_tf=True, max_features=60_000, dtype=np.float32
         ),
         CalibratedClassifierCV(
-            LogisticRegression(C=8, max_iter=3000, class_weight="balanced", random_state=SEED),
+            LogisticRegression(C=10, max_iter=3000, class_weight="balanced", random_state=SEED),
             method="isotonic",
             cv=3,
         ),
@@ -144,14 +144,28 @@ def main() -> None:
     weak["text"] = weak.text.map(clean_for_classifier)
     seeds = pd.read_csv(seeds_path)
     seeds = seeds[seeds.label.isin(["CYBER", "SUPPLY_CHAIN"])].rename(columns={"label": "y"})
+    seeds["text"] = seeds.text.map(clean_for_classifier)
 
-    train_all = pd.concat(
-        [tr[["text", "y"]], sec_train[["text", "y"]], weak, pd.concat([seeds[["text", "y"]]] * 5)],
-        ignore_index=True,
+    base = pd.concat([tr[["text", "y"]], sec_train[["text", "y"]], weak], ignore_index=True)
+    base = base.drop_duplicates("text")  # finding F
+    n_overlap = int(base.text.isin(set(va.text)).sum())
+    base = base[~base.text.isin(set(va.text))]  # no exact overlap with test
+
+    counts = base.y.value_counts()
+    singletons = base[base.y.isin(counts[counts < 2].index)]
+    stratifiable = base[~base.y.isin(counts[counts < 2].index)]
+    fit_base, dev_df = train_test_split(
+        stratifiable, test_size=0.1, random_state=SEED, stratify=stratifiable.y
     )
-    fit_df, dev_df = train_test_split(
-        train_all, test_size=0.1, random_state=SEED, stratify=train_all.y
+    fit_base = pd.concat([fit_base, singletons], ignore_index=True)
+
+    seed_fit, seed_dev = train_test_split(
+        seeds[["text", "y"]], test_size=0.2, random_state=SEED, stratify=seeds.y
     )
+    fit_df = pd.concat([fit_base] + [seed_fit] * 5, ignore_index=True)  # oversample fit only
+    dev_df = pd.concat([dev_df, seed_dev], ignore_index=True)  # each dev seed once
+
+    assert not set(fit_df.text) & set(dev_df.text), "fit/dev text overlap"
 
     model = build_model().fit(fit_df.text, fit_df.y)
     threshold = choose_threshold(model, dev_df.text, dev_df.y)
@@ -201,6 +215,13 @@ def main() -> None:
         "algorithm": "TF-IDF (1-2 gram, 60k) + isotonic-calibrated logistic regression",
         "classes": list(model.classes_),
         "abstain_threshold": threshold,
+        "threshold_previous": 0.55,
+        "leakage_checks": {
+            "fit_dev_overlap": int(len(set(fit_df.text) & set(dev_df.text))),
+            "train_test_exact_overlap_removed": n_overlap,
+            "seed_rows_fit": int(len(seed_fit)),
+            "seed_rows_dev": int(len(seed_dev)),
+        },
         "reproducibility": "metrics reproduce to 4 d.p.; artifact bytes can differ between runs "
         "because multithreaded BLAS changes float rounding in the solver",
         "threshold_selection": f"smallest threshold with precision >= {TARGET_PRECISION} on a 10% dev split of training data",
