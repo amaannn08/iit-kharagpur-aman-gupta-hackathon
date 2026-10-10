@@ -485,3 +485,13 @@ export const runCustomStress = (params: {
 }) => postJson<StressRunResult>('/stress/custom', params);
 
 export const fetchMetrics = () => getJson<Record<string, any>>('/datasets/metrics');
+
+export interface LiveStatusResponse {
+  mode: 'LIVE' | 'STALE' | 'REPLAY' | 'SYNTHETIC' | 'IDLE';
+  last_record_at: string | null;
+  last_fetch_at: string | null;
+  lag_seconds: number | null;
+  recorder_alive: boolean;
+}
+
+export const fetchLiveStatus = () => getJson<LiveStatusResponse>('/replay/live_status');

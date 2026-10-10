@@ -237,6 +237,43 @@ describe('S&P Sentinel Risk Terminal', () => {
               ),
           } as Response);
         }
+        if (url.includes('/api/replay/live_status')) {
+          return Promise.resolve({
+            ok: true,
+            json: () =>
+              Promise.resolve({
+                mode: 'SYNTHETIC',
+                last_record_at: null,
+                last_fetch_at: null,
+                lag_seconds: null,
+                recorder_alive: false,
+              }),
+          } as Response);
+        }
+        if (url.includes('/api/datasets/metrics')) {
+          return Promise.resolve({
+            ok: true,
+            json: () =>
+              Promise.resolve({
+                stress: {
+                  'ps_example_equities_-10pct_rates_+200bp': {
+                    total_pnl_usd: -23300600.0,
+                    funded_baseline_usd: 610000000.0,
+                    funded_stressed_usd: 588240467.2,
+                    by_sleeve_usd: { equity: -5470600.0, wholesale: -18130000.0 },
+                    derivative_mtm_change_usd: 300000.0,
+                    top_drivers: [],
+                  },
+                },
+              }),
+          } as Response);
+        }
+        if (url.includes('/api/stress/scenarios')) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ scenarios: [] }),
+          } as Response);
+        }
         return Promise.reject(new Error(`Unhandled URL: ${url}`));
       })
     );
@@ -341,5 +378,14 @@ describe('S&P Sentinel Risk Terminal', () => {
     expect(screen.queryByText('data/news_demo.csv')).not.toBeInTheDocument();
     expect(screen.queryByText('data/social_demo.csv')).not.toBeInTheDocument();
     expect(screen.queryByText('data/wholesale_positions.json')).not.toBeInTheDocument();
+  });
+
+  it('renders dynamic live status badge in replay footer', async () => {
+    render(<App />);
+    await waitFor(() => {
+      const badge = screen.getByTestId('live-status-badge');
+      expect(badge).toBeInTheDocument();
+      expect(badge.textContent).toBe('SYNTHETIC');
+    });
   });
 });

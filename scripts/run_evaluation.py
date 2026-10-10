@@ -253,9 +253,13 @@ def suite_stress() -> Dict[str, Any]:
     ps = engine.run_custom_stress(equity_shock_pct=-0.10, benchmark_yield_shift_bps=200)
     out["ps_example_equities_-10pct_rates_+200bp"] = {
         "total_pnl_usd": ps.total_pnl_usd,
+        "funded_baseline_usd": ps.funded_baseline_value_usd,
+        "funded_stressed_usd": ps.funded_stressed_value_usd,
         "by_sleeve_usd": {x.sleeve: x.total_pnl_usd for x in ps.sleeve_breakdown},
         "derivative_mtm_change_usd": ps.derivative_mtm_change_usd,
         "reconciled": ps.reconciliation_passed,
+        "top_drivers": ps.attribution.get("top_positions", [])[:3] if ps.attribution else [],
+        "by_component": ps.attribution.get("by_component", {}) if ps.attribution else {},
     }
     return out
 

@@ -20,6 +20,7 @@ from sentinel.replay.controller import (
     ReplayStatus,
     ReplayStepResult,
 )
+from sentinel.replay.live_tail import LiveTailer
 from sentinel.storage.db import get_db
 from sentinel.storage.repository import ReplayRepository
 
@@ -30,6 +31,9 @@ router = APIRouter(prefix="/replay", tags=["Replay Controller"])
 # Singleton controller and NLP engine instances for backend runtime
 replay_controller = ReplayController()
 nlp_engine = NLPEngine()
+live_tailer = LiveTailer(
+    replay_controller, settings.data_dir / "live", poll_interval=settings.live_poll_seconds
+)
 
 
 class LoadScenarioRequest(BaseModel):
@@ -120,6 +124,12 @@ async def emit_signal(
 def get_replay_status() -> ReplayStatus:
     """Return live status of the logical replay clock and run queue."""
     return replay_controller.get_status()
+
+
+@router.get("/live_status")
+def get_live_status() -> dict:
+    """Return live capture ingestion status, lag seconds, and recorder process liveness."""
+    return live_tailer.get_live_status()
 
 
 def _load_source(name: str) -> List[InputRecord]:

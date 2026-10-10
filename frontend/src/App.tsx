@@ -44,6 +44,8 @@ import {
   stepReplay,
   StressRunResult,
   WholesalePortfolio,
+  fetchLiveStatus,
+  LiveStatusResponse,
 } from './api/client';
 import { IndexPanel } from './components/IndexPanel';
 import { MetricsPanel } from './components/MetricsPanel';
@@ -79,6 +81,25 @@ export function App() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [showDuplicates, setShowDuplicates] = useState<boolean>(true);
   const [sseConnected, setSseConnected] = useState<boolean>(false);
+  const [liveStatus, setLiveStatus] = useState<LiveStatusResponse | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    const pollLive = async () => {
+      try {
+        const s = await fetchLiveStatus();
+        if (active) setLiveStatus(s);
+      } catch {
+        // ignore
+      }
+    };
+    pollLive();
+    const interval = setInterval(pollLive, 15000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, []);
 
   // Stress State
   const [stressRuns, setStressRuns] = useState<StressRunResult[]>([]);
@@ -1560,11 +1581,47 @@ export function App() {
                 </option>
               ))}
             </select>
-            {(replayStatus?.source_badges ?? []).map((b) => (
-              <span key={b} className="px-1.5 py-0.5 rounded border border-amber-700/50 text-amber-300 font-mono text-[10px]">
-                {b}
-              </span>
-            ))}
+            {(() => {
+              const isLive = Boolean(SOURCE_PRESETS[selectedScenario]?.live || (replayStatus?.source_badges ?? []).includes('LIVE CAPTURE') || liveStatus?.mode === 'LIVE');
+              const isSynthetic = Boolean((replayStatus?.source_badges ?? []).includes('SYNTHETIC SCENARIO') || selectedScenario === 'demo' || liveStatus?.mode === 'SYNTHETIC');
+              let badge = 'REPLAY';
+              let badgeCls = 'border-gray-700 bg-gray-800 text-gray-300';
+
+              if (isLive) {
+                const lag = liveStatus?.lag_seconds;
+                const alive = liveStatus?.recorder_alive ?? false;
+                if (lag !== null && lag !== undefined && lag < 600 && alive) {
+                  badge = 'LIVE';
+                  badgeCls = 'border-emerald-600 bg-emerald-950/80 text-emerald-300 animate-pulse';
+                } else {
+                  badge = 'STALE';
+                  badgeCls = 'border-amber-600 bg-amber-950/80 text-amber-300';
+                }
+              } else if (isSynthetic) {
+                badge = 'SYNTHETIC';
+                badgeCls = 'border-purple-700 bg-purple-950/80 text-purple-300';
+              }
+
+              const lagText = (() => {
+                if (!liveStatus?.last_fetch_at) return null;
+                const lagSec = liveStatus.lag_seconds ?? 0;
+                if (lagSec < 60) return 'last fetch just now';
+                return `last fetch ${Math.round(lagSec / 60)} min ago`;
+              })();
+
+              return (
+                <div className="flex items-center gap-1.5" data-testid="live-status-container">
+                  <span className={`px-1.5 py-0.5 rounded border font-mono text-[10px] font-bold ${badgeCls}`} data-testid="live-status-badge">
+                    {badge}
+                  </span>
+                  {isLive && lagText && (
+                    <span className="text-gray-400 font-mono text-[10px] hidden sm:inline" data-testid="live-lag-text">
+                      {lagText}
+                    </span>
+                  )}
+                </div>
+              );
+            })()}
             {SOURCE_PRESETS[selectedScenario]?.live && (
               <button
                 onClick={handleAppendLive}

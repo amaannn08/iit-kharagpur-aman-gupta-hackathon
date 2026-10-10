@@ -1,6 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, Cell, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { fetchStressScenarios, runCustomStress, runStressScenario, StressRunResult, StressScenario } from '../api/client';
+import {
+  fetchMetrics,
+  fetchStressScenarios,
+  runCustomStress,
+  runStressScenario,
+  StressRunResult,
+  StressScenario,
+} from '../api/client';
 
 const usd = (v: number) => `${v < 0 ? '-' : ''}$${Math.abs(v / 1e6).toFixed(2)}M`;
 const ASSET_ORDER = ['loan', 'bond', 'equity', 'cash'];
@@ -58,12 +65,20 @@ interface Props {
 /** Module B dashboard: before vs after by sleeve, loss waterfall, and one-click scenarios. */
 export function StressCharts({ result, onResult }: Props) {
   const [scenarios, setScenarios] = useState<StressScenario[]>([]);
+  const [psBenchmark, setPsBenchmark] = useState<any | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
   useEffect(() => {
     fetchStressScenarios()
       .then((s) => setScenarios(s.filter((x) => x.scenario_id.startsWith('HIST-'))))
       .catch(() => setScenarios([]));
+
+    fetchMetrics()
+      .then((m) => {
+        const ps = m?.stress?.['ps_example_equities_-10pct_rates_+200bp'];
+        if (ps) setPsBenchmark(ps);
+      })
+      .catch(() => {});
   }, []);
 
   const run = async (key: string, fn: () => Promise<StressRunResult>) => {
@@ -84,6 +99,65 @@ export function StressCharts({ result, onResult }: Props) {
 
   return (
     <div className="bg-[#111827] border border-gray-800 rounded-lg p-4 space-y-4" data-testid="stress-charts">
+      {/* PS Benchmark Reference Card (Item 18) */}
+      {psBenchmark && (
+        <div
+          className="bg-gray-900/90 border border-cyan-800/50 rounded-lg p-3 text-xs space-y-2"
+          data-testid="ps-benchmark-card"
+        >
+          <div className="flex items-center justify-between">
+            <span className="font-semibold text-cyan-300">
+              Problem Statement Benchmark: &ldquo;Geopolitical event, impact 8 &rarr; equities -10%, rates +200 bp&rdquo;
+            </span>
+            <button
+              onClick={() => run('ps', () => runCustomStress({ equity_shock_pct: -0.1, benchmark_yield_shift_bps: 200 }))}
+              disabled={busy !== null}
+              className="px-2.5 py-1 rounded bg-cyan-950 border border-cyan-600 text-cyan-200 hover:bg-cyan-900 font-medium transition-colors"
+            >
+              Run live
+            </button>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-gray-300 font-mono">
+            <div>
+              <span className="text-gray-500 block text-[10px] uppercase">Funded Baseline</span>
+              ${((psBenchmark.funded_baseline_usd ?? 610000000) / 1e6).toFixed(1)}M
+            </div>
+            <div>
+              <span className="text-gray-500 block text-[10px] uppercase">Funded Stressed</span>
+              ${((psBenchmark.funded_stressed_usd ?? 588240467.2) / 1e6).toFixed(1)}M
+            </div>
+            <div>
+              <span className="text-gray-500 block text-[10px] uppercase">Total P&L</span>
+              <span className="text-rose-400 font-bold">{usd(psBenchmark.total_pnl_usd)}</span>
+            </div>
+            <div>
+              <span className="text-gray-500 block text-[10px] uppercase">Derivative MTM</span>
+              <span className="text-emerald-400">+${(psBenchmark.derivative_mtm_change_usd / 1e3).toFixed(0)}k</span>
+            </div>
+          </div>
+          {psBenchmark.by_sleeve_usd && (
+            <div className="flex flex-wrap gap-3 pt-1 border-t border-gray-800 text-[11px]">
+              <span className="text-gray-400">P&L by sleeve:</span>
+              {Object.entries(psBenchmark.by_sleeve_usd).map(([sleeve, pnl]: [string, any]) => (
+                <span key={sleeve} className="text-gray-300">
+                  <span className="capitalize text-gray-500">{sleeve}:</span> {usd(Number(pnl))}
+                </span>
+              ))}
+            </div>
+          )}
+          {psBenchmark.top_drivers && psBenchmark.top_drivers.length > 0 && (
+            <div className="flex flex-wrap gap-2 text-[10px] text-gray-400 pt-1 border-t border-gray-800/60">
+              <span className="text-gray-500">Top loss drivers:</span>
+              {psBenchmark.top_drivers.slice(0, 3).map((d: any, idx: number) => (
+                <span key={idx} className="bg-gray-800/80 px-1.5 py-0.5 rounded text-gray-300">
+                  {d.counterparty_name || d.position_id} ({d.dominant_component}): {usd(d.pnl_usd)}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center gap-2 text-xs">
         <span className="text-gray-400 font-medium mr-1">Run scenario:</span>
         <button

@@ -72,5 +72,9 @@ class Settings(BaseSettings):
     action_impact_threshold: int = 7  # signals with score > 7 trigger portfolio action
     action_confidence_threshold: float = 0.50  # minimum model confidence for action eligibility
 
+    # Live capture tailer parameters
+    live_tail_enabled: bool = True
+    live_poll_seconds: float = 30.0
+
 
 settings = Settings()

@@ -12,6 +12,7 @@ from sentinel.api.routes.events import router as events_router
 from sentinel.api.routes.exports import router as exports_router
 from sentinel.api.routes.health import router as health_router
 from sentinel.api.routes.index import router as index_router
+from sentinel.api.routes.replay import live_tailer
 from sentinel.api.routes.replay import router as replay_router
 from sentinel.api.routes.signals import router as signals_router
 from sentinel.api.routes.stress import (
@@ -28,9 +29,15 @@ from sentinel.storage.db import init_db
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Lifecycle events: initialize SQLite database on startup."""
+    """Lifecycle events: initialize SQLite database on startup, start live tailer."""
     init_db()
-    yield
+    if settings.live_tail_enabled:
+        live_tailer.start()
+    try:
+        yield
+    finally:
+        if settings.live_tail_enabled:
+            live_tailer.stop()
 
 
 def create_app() -> FastAPI:

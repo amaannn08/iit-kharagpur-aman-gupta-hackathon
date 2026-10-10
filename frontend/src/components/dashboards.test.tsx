@@ -2,7 +2,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { IndexPanel } from './IndexPanel';
 import { MetricsPanel } from './MetricsPanel';
-import { waterfallData } from './StressCharts';
+import { StressCharts, waterfallData } from './StressCharts';
 import { WhyThisLossPanel } from './WhyThisLossPanel';
 import type { StressRunResult } from '../api/client';
 
@@ -173,5 +173,41 @@ describe('WhyThisLossPanel', () => {
     expect(rows.some((r) => r.name === 'Loan PD')).toBe(true);
     expect(rows[rows.length - 1].name).toBe('After stress');
     expect(rows[rows.length - 1].delta).toBeCloseTo(485e6, 0);
+  });
+});
+
+describe('PS benchmark card in StressCharts', () => {
+  beforeEach(() => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string) => {
+        if (url.includes('/stress/scenarios')) return ok({ scenarios: [] });
+        if (url.includes('/datasets/metrics'))
+          return ok({
+            stress: {
+              'ps_example_equities_-10pct_rates_+200bp': {
+                total_pnl_usd: -23300600.0,
+                funded_baseline_usd: 610000000.0,
+                funded_stressed_usd: 588240467.2,
+                derivative_mtm_change_usd: 300000.0,
+                by_sleeve_usd: { equity: -5470600.0, retail_sme: 0.0, wholesale: -18130000.0 },
+                top_drivers: [
+                  { counterparty_name: 'Global Clearing House', dominant_component: 'rates', pnl_usd: -6900000.0 },
+                ],
+              },
+            },
+          });
+        return ok({});
+      }),
+    );
+  });
+
+  it('renders the PS benchmark card with metrics from /api/datasets/metrics', async () => {
+    render(<StressCharts result={null} onResult={() => {}} />);
+    await waitFor(() => expect(screen.getByTestId('ps-benchmark-card')).toBeInTheDocument());
+    expect(screen.getByText(/Problem Statement Benchmark/)).toBeInTheDocument();
+    expect(screen.getByText('-$23.30M')).toBeInTheDocument();
+    expect(screen.getByText('$610.0M')).toBeInTheDocument();
+    expect(screen.getByText('Run live')).toBeInTheDocument();
   });
 });
