@@ -30,6 +30,7 @@ class KnownEntity:
     aliases: List[str]
     ambiguous_aliases: Set[str] = field(default_factory=set)
     is_synthetic: bool = False
+    is_historical: bool = False
 
 
 FINANCIAL_CONTEXT = re.compile(
@@ -125,12 +126,14 @@ class EntityLinker:
                     aliases = [a for a in row["aliases"].split("|") if a]
                     ambiguous = {a for a in row["ambiguous_aliases"].split("|") if a}
                     synthetic = row.get("is_synthetic", "false").lower() == "true"
+                    historical = row.get("is_historical", "false").lower() == "true"
                 else:  # legacy data/entity_aliases.csv format
                     aliases = [a.strip() for a in row.get("aliases", "").split(",") if a.strip()]
                     aliases.append(canonical)
                     flag = row.get("is_ambiguous", "false").strip().lower() == "true"
                     ambiguous = set(aliases) if flag else set()
                     synthetic = False
+                    historical = False
                 entity = KnownEntity(
                     ticker=ticker,
                     canonical_name=canonical,
@@ -138,6 +141,7 @@ class EntityLinker:
                     aliases=aliases,
                     ambiguous_aliases=ambiguous,
                     is_synthetic=synthetic,
+                    is_historical=historical,
                 )
                 self.entities[ticker] = entity
                 for alias in aliases:

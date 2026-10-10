@@ -54,6 +54,7 @@ const SOURCE_PRESETS: Record<string, { label: string; sources: string[]; live?: 
   demo: { label: 'Synthetic demo scenario (news + social)', sources: ['news_demo', 'social_demo'] },
   polygon_2023: { label: 'Real news: Polygon 2023 (5,548 articles)', sources: ['polygon_2023'] },
   gdelt_snapshot: { label: 'Real news: GDELT 2-hour snapshot', sources: ['gdelt_snapshot'] },
+  gdelt_svb_2023: { label: 'Real replay: SVB weekend bank run 2023', sources: ['gdelt_svb_2023'] },
   stock_tweets: { label: 'Real social: stock tweets 2017-18 sample', sources: ['stock_tweets'] },
   live: { label: 'Live capture: GDELT + SEC 8-K', sources: ['gdelt_live', 'sec_8k_live'], live: true },
 };

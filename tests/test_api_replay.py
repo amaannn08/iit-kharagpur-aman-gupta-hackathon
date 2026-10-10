@@ -114,3 +114,13 @@ def test_append_queues_only_new_live_records(client, tmp_path, monkeypatch):
     assert after["total_records"] == 2 and after["pending_records"] == 2
     again = client.post("/api/replay/append", json={"source": "test_live"}).json()
     assert again["total_records"] == 2  # nothing new
+
+
+def test_load_real_gdelt_svb_weekend_source(client):
+    client.post("/api/replay/reset")
+    status = client.post(
+        "/api/replay/load", json={"scenario_id": "svb-2023", "sources": ["gdelt_svb_2023"]}
+    ).json()
+    assert status["total_records"] >= 2000
+    assert status["source_badges"] == ["HISTORICAL REPLAY"]
+

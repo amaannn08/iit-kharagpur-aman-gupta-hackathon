@@ -63,6 +63,7 @@ class Settings(BaseSettings):
         "polygon_2023": ("real/polygon_news/polygon_news.csv", "news", "HISTORICAL REPLAY"),
         "stock_tweets": ("real/stock_tweets/sample.csv", "social", "HISTORICAL REPLAY"),
         "gdelt_snapshot": ("real/gdelt/snapshot.csv", "news", "HISTORICAL REPLAY"),
+        "gdelt_svb_2023": ("real/gdelt/svb_weekend.csv", "news", "HISTORICAL REPLAY"),
         "gdelt_live": ("live/gdelt_live.csv", "news", "LIVE CAPTURE"),
         "sec_8k_live": ("live/sec_8k_live.csv", "news", "LIVE CAPTURE"),
     }

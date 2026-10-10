@@ -29,6 +29,7 @@ _spec.loader.exec_module(convert_real)
             TimestampQuality.ORIGINAL,
         ),
         ("real/gdelt/snapshot.csv", NewsAdapter, SourceType.NEWS, TimestampQuality.ORIGINAL),
+        ("real/gdelt/svb_weekend.csv", NewsAdapter, SourceType.NEWS, TimestampQuality.ORIGINAL),
         (
             "real/stock_tweets/sample.csv",
             SocialAdapter,

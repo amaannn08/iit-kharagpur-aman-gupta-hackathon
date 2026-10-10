@@ -336,6 +336,100 @@ def xbrl() -> None:
     print(f"ok xbrl ({len(list(d.glob('*.json')))} filers)")
 
 
+def gdelt_hist(start: str = "2023-03-09", end: str = "2023-03-14") -> None:
+    """Fetch GDELT 2.0 GKG slices across the 2023 SVB bank run window and build svb_weekend.csv."""
+    import importlib.util
+
+    import pandas as pd
+
+    d_raw = RAW / "gdelt_hist"
+    d_raw.mkdir(parents=True, exist_ok=True)
+    out_dir = REPO_ROOT / "data" / "real" / "gdelt"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_path = out_dir / "svb_weekend.csv"
+
+    spec = importlib.util.spec_from_file_location(
+        "convert_real", REPO_ROOT / "scripts" / "data" / "convert_real.py"
+    )
+    convert_real = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(convert_real)
+
+    # 22 slices sampled across 2023-03-09 through 2023-03-14
+    stamps = [
+        "20230309140000", "20230309180000", "20230309220000",
+        "20230310140000", "20230310160000", "20230310180000", "20230310200000", "20230310220000",
+        "20230311140000", "20230311180000", "20230311220000",
+        "20230312140000", "20230312180000", "20230312220000",
+        "20230313120000", "20230313140000", "20230313160000", "20230313180000", "20230313220000",
+        "20230314140000", "20230314180000", "20230314220000",
+    ]
+
+    all_rows = []
+    for s in stamps:
+        cached = d_raw / f"{s}.gkg.csv"
+        if cached.exists():
+            lines = cached.read_text(encoding="utf-8", errors="replace").splitlines()
+        else:
+            url = f"https://data.gdeltproject.org/gdeltv2/{s}.gkg.csv.zip"
+            try:
+                data = get(url, tries=2)
+                archive = zipfile.ZipFile(io.BytesIO(data))
+                content = archive.read(archive.namelist()[0]).decode("utf-8", errors="replace")
+                cached.write_text(content, encoding="utf-8")
+                lines = content.splitlines()
+            except Exception as exc:
+                print(f"  skip gdelt_hist {s}: {exc}")
+                continue
+        rows = convert_real.parse_gkg_rows(lines)
+        for r in rows:
+            r["source_id"] = "gdelt_svb_2023"
+        all_rows.extend(rows)
+
+    df = pd.DataFrame(all_rows).drop_duplicates("headline").sort_values(["published_at", "record_id"])
+
+    # Filter: retain all SVB/FRC/SBNY headlines + banking/markets/deposit/fed headlines
+    svb_mask = df.headline.str.contains(
+        r"Silicon Valley Bank|SVB|First Republic|Signature Bank|Silvergate|FDIC|bank run|deposit flight|bailout|systemic risk",
+        case=False,
+        regex=True,
+    )
+    bank_mask = df.headline.str.contains(
+        r"bank|lender|credit|default|liquidity|treasury|fed|rates|yield|contagion",
+        case=False,
+        regex=True,
+    )
+    market_mask = df.headline.str.contains(
+        r"stocks?|shares?|bonds?|markets?|rally|slump|drop|fall|plunge|rout|soar|crisis|funds?|debts?|finance|invest|economy|inflation",
+        case=False,
+        regex=True,
+    )
+    keep_mask = svb_mask | bank_mask | market_mask
+    filtered = df[keep_mask].copy()
+    if len(filtered) > 3000:
+        svb_part = filtered[svb_mask]
+        other_part = filtered[~svb_mask].sample(n=3000 - len(svb_part), random_state=42)
+        filtered = pd.concat([svb_part, other_part]).sort_values(["published_at", "record_id"])
+
+    cols = convert_real.NEWS_COLS + ["source_url"]
+    filtered[cols].to_csv(out_path, index=False)
+    print(f"ok gdelt_hist: wrote {out_path} with {len(filtered)} rows ({svb_mask.sum()} SVB/banking-crisis specific)")
+
+    spec_m = importlib.util.spec_from_file_location(
+        "build_manifest", REPO_ROOT / "scripts" / "data" / "build_manifest.py"
+    )
+    build_manifest = importlib.util.module_from_spec(spec_m)
+    spec_m.loader.exec_module(build_manifest)
+
+    build_manifest.register_dataset(
+        str(out_path.relative_to(REPO_ROOT)),
+        "Real GDELT 2.0 headlines from the March 9-14 2023 SVB weekend bank run and regional banking contagion",
+        "GDELT Project (Public domain / open research)",
+        is_synthetic=False,
+        source="https://data.gdeltproject.org/gdeltv2/",
+        columns=cols,
+    )
+
+
 STEPS = {
     "kaggle": kaggle,
     "hf": hf,
@@ -343,6 +437,7 @@ STEPS = {
     "sec_8k": sec_8k,
     "market": market,
     "gdelt": gdelt,
+    "gdelt_hist": gdelt_hist,
     "fred": fred,
     "xbrl": xbrl,
 }

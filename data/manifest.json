@@ -468,32 +468,6 @@
       "record_count": 704
     },
     {
-      "file_path": "data/universe/entities.csv",
-      "format": "csv",
-      "description": "Entity universe: real S&P 500 constituents (SEC CIKs) plus the 16 fictional demo issuers, flagged per row in is_synthetic",
-      "is_synthetic": false,
-      "license": "CC BY-SA 4.0 (Wikipedia S&P 500 constituent list) + US public domain (SEC tickers)",
-      "primary_keys": [
-        "record_id"
-      ],
-      "source": "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies; https://www.sec.gov/files/company_tickers.json",
-      "derived_from": [
-        "data/entity_aliases.csv"
-      ],
-      "columns": [
-        "ticker",
-        "canonical_name",
-        "sector",
-        "aliases",
-        "ambiguous_aliases",
-        "is_synthetic",
-        "cik"
-      ],
-      "byte_size": 34750,
-      "sha256": "4a8009cf308de32c7f0f4c12aee219afa9718ba5a232ae9224d946a6f456e4fd",
-      "record_count": 519
-    },
-    {
       "file_path": "data/market/stress_windows.json",
       "format": "json",
       "description": "Measured market moves over five historical stress windows (shock calibration anchors)",
@@ -604,7 +578,61 @@
       "byte_size": 1236,
       "sha256": "d23e1032c12b83428e6aa750ed008d1616c06f4c66cf2e591d11f5e644df2ae1",
       "record_count": 10
+    },
+    {
+      "file_path": "data/universe/entities.csv",
+      "format": "csv",
+      "description": "Entity universe: real S&P 500 constituents (SEC CIKs) plus the 16 fictional demo issuers, flagged per row in is_synthetic",
+      "is_synthetic": false,
+      "license": "CC BY-SA 4.0 (Wikipedia S&P 500 constituent list) + US public domain (SEC tickers)",
+      "primary_keys": [
+        "record_id"
+      ],
+      "source": "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies; https://www.sec.gov/files/company_tickers.json",
+      "derived_from": [
+        "data/entity_aliases.csv"
+      ],
+      "columns": [
+        "ticker",
+        "canonical_name",
+        "sector",
+        "aliases",
+        "ambiguous_aliases",
+        "is_synthetic",
+        "cik",
+        "is_historical"
+      ],
+      "byte_size": 38136,
+      "sha256": "233f23946fe530ceb384a613da85264a9b94661bf9d226026f55d3aee41bd5e6",
+      "record_count": 522
+    },
+    {
+      "file_path": "data/real/gdelt/svb_weekend.csv",
+      "format": "csv",
+      "description": "Real GDELT 2.0 headlines from the March 9-14 2023 SVB weekend bank run and regional banking contagion",
+      "is_synthetic": false,
+      "license": "GDELT Project (Public domain / open research)",
+      "primary_keys": [
+        "record_id"
+      ],
+      "source": "https://data.gdeltproject.org/gdeltv2/",
+      "columns": [
+        "record_id",
+        "source_id",
+        "source_type",
+        "headline",
+        "body",
+        "published_at",
+        "timestamp_quality",
+        "simulated_at",
+        "is_synthetic",
+        "primary_entity_id",
+        "source_url"
+      ],
+      "byte_size": 698506,
+      "sha256": "ddd52d5e598527f38c16ddeadf0c3e7f2d9d4c8948156ed7a4452a46e1e62fa4",
+      "record_count": 2643
     }
   ],
-  "updated_at": "2026-10-10T10:07:41.878825+00:00"
+  "updated_at": "2026-10-10T10:16:31.130591+00:00"
 }
