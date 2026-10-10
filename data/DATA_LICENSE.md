@@ -16,9 +16,9 @@ The following datasets bundled in `data/` were authored directly by Aman Gupta s
 - `data/scenarios/credit_crunch.json` (Authored credit deterioration scenario)
 - `data/scenarios/rate_shock.json` (Authored yield curve parallel shock scenario)
 - `data/scenarios/supply_disruption.json` (Authored industrial force majeure scenario)
-- `data/eval/holdout_seed.csv` (Curated gold-standard evaluation holdout seed)
+- `data/eval/synthetic_regression.csv` (105 author-written regression rows; not a benchmark)
 - `data/eval/synthetic_regression.csv` (105-row author-written regression suite)
-- `data/eval/holdout_v2_news.csv` (120-row human-annotated financial news holdout authored by the candidate)
+- `data/eval/holdout_v2_news.csv` (120 real news rows; labels written by an AI agent, not human-reviewed; see `holdout_v2_news.provenance.json`)
 
 ### License Grant
 These authored synthetic datasets are released under the terms of the project's **MIT License** (consistent with the root repository `LICENSE`). You are free to use, modify, distribute, and reproduce these datasets provided that the copyright and permission notice are preserved.
@@ -46,7 +46,7 @@ These files contain factual public market reference identifiers (such as ticker 
 
 ## 4. Synthetic Contagion Relationships & Banking Exposures
 
-- `data/graph_edges.csv`, `data/graph_edges_demo.csv` (Directed customer-supplier and creditor transmission linkages)
+- `data/graph_edges_demo.csv` (fictional supplier and creditor linkages for the synthetic demo). `data/graph_edges.csv` is derived from real prices (same-sector residual return correlations), see section 6
 - `data/wholesale_positions.json`, `data/portfolio/wholesale_real.json` (Counterparty facility allocations and notional amounts)
 
 ### Factual Distinction
@@ -80,4 +80,5 @@ Real public datasets are downloaded by `scripts/data/fetch_real.py` into the git
 | `data/market/*.json\|csv` | Statistics derived from Yahoo Finance closes via yfinance | Derived statistics only | Beta, volatility, and stress calibration windows |
 | **FRED / ICE BofA OAS Rating Series** | Federal Reserve Bank of St. Louis (FRED): BAMLC0A1CAAA, BAMLC0A2CAA, BAMLC0A3CA, BAMLC0A4CBBB, BAMLH0A1HYBB, BAMLH0A2HYB, BAMLH0A3HYC | Public domain / Open macro series (derived statistics only) | Rating-tiered spread calibration and validation anchors |
 | **SEC EDGAR XBRL companyfacts** | U.S. Securities and Exchange Commission (SEC EDGAR API: `data.sec.gov/api/xbrl/companyfacts`) | U.S. public record (non-copyrightable public financial statements) | Extracting total debt, operating income, and interest expense for 22 real debt issuers across 11 GICS sectors |
-| **S&P Global Ratings Default Study** | S&P Global Ratings, *Annual Global Corporate Default and Rating Transition Study* (1981–2024) | Publicly cited benchmark statistics | Historical 1-year corporate default probabilities by rating grade (AAA 0.00% to CCC 26.0%) |
+| **S&P Global Ratings Default Study** | S&P Global Ratings, *Default, Transition, and Recovery: 2020 Annual Global Corporate Default And Rating Transition Study*, Table 3 (weighted long-term average, 1981-2020) | Seven cited statistics | Baseline one-year PD by rating (AAA 0.00% ... CCC/C 28.30%) |
+| **yfinance closes (S&P 500)** | Yahoo Finance via yfinance | Derived statistics only | `data/graph_edges.csv`: residual return correlations, 2023-03-01 to 2024-02-29 |

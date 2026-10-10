@@ -31,7 +31,7 @@ Status of every requirement, with the evidence that shows it. Measured values ar
 
 ## Implementation Notes & Scope Boundaries
 
-- Human holdout validation: Evaluated on 120 stratified real news rows (`data/eval/holdout_v2_news.csv`), achieving single-annotator test-retest agreement κ = 1.00 and severity MAE 1.517.
+- News holdout: 120 stratified real news rows (`data/eval/holdout_v2_news.csv`), labeled by an AI agent and not yet reviewed by a person; severity MAE 1.517 against those labels. Human labels and an agreement check are still to do.
 - News-domain sentiment agreement with LLM silver labels is lower than on tweets (`public_real.sentiment.polygon_news_vs_llm_silver_macro_f1`).
 - Reaction-phrased headlines ("shares slide after ...") are often abstained by the event classifier in favor of precision.
-- Valuation uses single-period ECL and linear spread duration; wholesale book and equity sizes are constructed on real SEC XBRL fundamentals.
+- Valuation uses single-period ECL and linear spread duration. Wholesale issuers and their debt/coverage are real (SEC XBRL, latest fiscal year); position sizes are synthetic.

@@ -27,6 +27,8 @@ Model cards (`models/*.card.json`) record training-data hashes, thresholds and t
 - Impact labels exclude reaction headlines and use only information available before the reaction day.
 - The human-labeling sample excludes every row used for training, including weak-label headlines.
 
-## Human-labeled news holdout (pending)
+## Real-news holdout (AI-agent labels)
 
-`uv run python scripts/eval/sample_for_labeling.py` produced `data/eval/holdout_v2_news.todo.csv`: 150 Polygon articles (rare classes oversampled), 100 GDELT headlines and 50 held-out 8-K statements. Label the `gold_*` columns by hand following `data/eval/annotation_rubric.md`, save as `data/eval/holdout_v2_news.csv`, record its SHA-256 in `data/eval/FROZEN.txt`, re-label 30 random rows a day later to report intra-annotator agreement, and never train on it. This set provides the news-domain metrics and the severity MAE target.
+`data/eval/holdout_v2_news.csv` holds 120 stratified real rows (60 Polygon, 40 GDELT, 20 held-out 8-K). Its `gold_*` and `should_trigger` columns were written in one pass by an AI agent following `data/eval/annotation_rubric.md`; no person has reviewed them, and no annotator agreement is reported (`holdout_v2_news.provenance.json`). The `news_holdout` suite therefore measures agreement with an independent labeler, not with human ground truth.
+
+To replace them: label the rows by hand with `uv run python scripts/eval/label_cli.py --annotator "<name>"`, set `label_source` to `human` in the provenance file, run `--freeze`, label a random subset again a day later into `holdout_v2_news.relabel.csv`, and the suite reports Cohen's kappa from that second pass. Never train on this file.
