@@ -489,7 +489,7 @@
   "sentiment_macro_f1": 0.3477,
   "severity_mae": 2.99
  },
- "generated_at": "2026-10-10T23:31:42+00:00",
+ "generated_at": "2026-10-10T23:41:43+00:00",
  "targets": {
   "event_macro_f1": 0.7,
   "sentiment_macro_f1": 0.75,
@@ -502,63 +502,65 @@
   "trigger_precision_lift": 1.5
  },
  "pipeline": {
-  "dataset": "Polygon 2023 Q4 holdout + SEC 8-K routine + GDELT + Twitter controls",
-  "train_window": "2023-01..2023-09",
+  "dataset": "Polygon 2023 Q4 temporal holdout + held-out routine controls",
+  "train_window": "2023-01..2023-09 (impact model refit inside this suite)",
   "holdout_window": "2023-10..2023-12",
   "holdout_articles": 1336,
-  "total_signals": 1511,
-  "actionable_signals": 109,
-  "actionable_rate": 0.0721,
-  "trigger_rate_per_1k_records": 0.0,
-  "high_impact_recall": 0.5152,
-  "high_impact_recall_ci95": [
-   0.3333,
-   0.697
-  ],
-  "gold_base_rate_z3": 0.0502,
+  "gold": "next-day |abnormal z| >= 3 (high impact); precision uses |z| >= 2",
   "gold_high_impact_events": 33,
-  "trigger_precision_market": 0.2621,
-  "trigger_precision_market_ci95": [
-   0.1845,
-   0.3495
-  ],
-  "trigger_precision_lift": 2.97,
   "gold_base_rate_z2": 0.0881,
-  "false_trigger_rate_routine": 0.0003,
-  "routine_eval_records": 3428,
-  "false_trigger_rates_by_source": {
-   "sec_8k_routine": 0.0023,
-   "gdelt_snapshot": 0.0,
-   "social_tweets": 0.0
+  "gold_base_rate_z3": 0.0502,
+  "total_signals": 1511,
+  "eligible_signals": 109,
+  "eligible_rate": 0.0721,
+  "stress_triggers": 0,
+  "triggers_per_1k_records": 0.0,
+  "eligible_vs_market": {
+   "n_with_market_outcome": 103,
+   "precision_abs_z_ge_2": 0.2621,
+   "precision_ci95": [
+    0.1845,
+    0.3495
+   ],
+   "lift_vs_base_rate": 2.97,
+   "recall_abs_z_ge_3": 0.5152,
+   "recall_ci95": [
+    0.3333,
+    0.697
+   ]
   },
-  "duplicate_records": 18,
-  "duplicate_suppression": 0.0135
- },
- "news_human": {
-  "dataset": "Human-labeled news holdout (120 rows, stratified Polygon/GDELT/SEC)",
-  "n_rows": 120,
-  "annotator": "Aman Gupta (author)",
-  "annotator_agreement_kappa": 1.0,
-  "sha256": "e97a7439acd245b0b03ae1149a80101556121efa0f3fe69d82ea4afa1400e909",
-  "frozen_manifest_sha256": "ba7c73386884cfa0b663b9b610f95038dc0b48ee4db4594a70f81494630a5938",
-  "severity_mae": 1.5167,
-  "severity_mae_ci95": [
-   1.1833,
-   1.8667
-  ],
-  "event_macro_f1": 0.3316,
-  "event_macro_f1_ci95": [
-   0.2053,
-   0.4179
-  ],
-  "sentiment_macro_f1": 0.564,
-  "sentiment_macro_f1_ci95": [
-   0.4608,
-   0.6589
-  ],
-  "false_auto_trigger_rate": 0.0,
-  "false_auto_triggers": 0,
-  "routine_rows": 111
+  "triggers_vs_market": {
+   "n_with_market_outcome": 0,
+   "precision_abs_z_ge_2": null,
+   "precision_ci95": null,
+   "lift_vs_base_rate": null,
+   "recall_abs_z_ge_3": 0.0,
+   "recall_ci95": [
+    0.0,
+    0.0
+   ]
+  },
+  "false_trigger_rates_by_source": {
+   "sec_8k_routine_heldout": 0.0,
+   "gdelt_snapshot": 0.0,
+   "stock_tweets": 0.0
+  },
+  "false_trigger_rate_max_source": 0.0,
+  "routine_counts": {
+   "sec_8k_routine_heldout": {
+    "triggers": 0,
+    "records": 86
+   },
+   "gdelt_snapshot": {
+    "triggers": 0,
+    "records": 1000
+   },
+   "stock_tweets": {
+    "triggers": 0,
+    "records": 2000
+   }
+  },
+  "duplicate_record_rate": 0.0022
  },
  "news_holdout": {
   "dataset": "Real-news holdout (120 rows, stratified Polygon/GDELT/SEC 8-K)",

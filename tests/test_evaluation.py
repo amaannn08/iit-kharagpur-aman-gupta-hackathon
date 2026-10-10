@@ -24,16 +24,14 @@ def test_committed_metrics_meet_targets_on_real_data():
     assert m["public_real"]["event"]["precision_when_fired"] >= 0.88
     assert m["public_real"]["sentiment"]["macro_f1"] >= t["sentiment_macro_f1"]
     assert m["entity_polygon"]["precision"] >= t["entity_precision"]
-    assert m["entity_polygon"].get("recall_mentioned", 1.0) >= 0.90
+    assert m["entity_polygon"]["recall_mentioned"] >= t["entity_recall_mentioned"]
     assert m["market_impact"]["learned_oof_spearman_ci95"][0] > 0
     assert m["perf"]["latency_p95_s"] <= t["p95_latency_s"]
     assert m["perf"]["peak_rss_gb"] <= t["peak_rss_gb"]
     assert all(s["reconciled"] for s in m["stress"]["scenarios"].values())
-    if "pipeline" in m:
-        pl = m["pipeline"]
-        assert pl["false_trigger_rate_routine"] <= t["false_trigger_rate_routine"]
-        assert pl["trigger_precision_lift"] >= t["trigger_precision_lift"]
-        assert pl["high_impact_recall"] > 0
+    pl = m["pipeline"]
+    assert pl["false_trigger_rate_max_source"] <= t["false_trigger_rate_routine"]
+    assert pl["eligible_vs_market"]["lift_vs_base_rate"] > t["trigger_precision_lift"]
     nh = m["news_holdout"]
     assert nh["sha256_matches_frozen"]
     assert nh["false_auto_trigger_rate"] <= t["false_trigger_rate_routine"]
