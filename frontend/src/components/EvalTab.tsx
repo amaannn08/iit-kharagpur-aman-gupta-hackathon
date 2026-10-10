@@ -63,8 +63,8 @@ export const EvalTab: React.FC = () => {
               <span className="text-white font-bold">≥ 0.90</span>
             </div>
             <div className="flex justify-between">
-              <span>Severity MAE vs human labels</span>
-              <span className="text-amber-300 font-bold">≤ 1.5 pts · pending human-labeled news set</span>
+              <span>Severity MAE vs holdout labels</span>
+              <span className="text-amber-300 font-bold">≤ 1.5 pts · holdout labels are AI-generated, not yet human-reviewed</span>
             </div>
             <p className="text-gray-500 font-sans pt-1">
               Measured values are in the table above, generated from docs/metrics.json on real held-out data.

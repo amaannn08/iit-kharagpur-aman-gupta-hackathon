@@ -3,7 +3,8 @@
 
 Target: 120 rows stratified across Polygon (60), GDELT (40), and SEC 8-K (20).
 Autosaves to data/eval/holdout_v2_news.csv after every labeled row.
-Supports --agreement N to evaluate test-retest Cohen's kappa and severity MAE.
+Supports --agreement RELABEL_CSV: Cohen's kappa and severity MAE between the holdout and an
+independent second labeling pass of a subset (e.g. the same annotator a day later).
 Supports --freeze to lock SHA-256 into data/eval/FROZEN.txt.
 """
 
@@ -160,7 +161,7 @@ def append_annotation(row: Dict[str, Any]) -> None:
     EVAL_DIR.mkdir(parents=True, exist_ok=True)
     file_exists = HOLDOUT_CSV.exists()
     with open(HOLDOUT_CSV, mode="a", encoding="utf-8", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=FIELDNAMES)
+        writer = csv.DictWriter(f, fieldnames=FIELDNAMES, lineterminator="\n")
         if not file_exists:
             writer.writeheader()
         writer.writerow(row)
@@ -313,28 +314,31 @@ def run_labeling_session(annotator_name: str = "Aman Gupta") -> None:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--freeze", action="store_true", help="Lock SHA-256 to FROZEN.txt")
-    ap.add_argument("--agreement", type=int, default=0, help="Check agreement on N rows")
-    ap.add_argument("--annotator", default="Aman Gupta", help="Annotator name")
+    ap.add_argument("--agreement", type=Path, default=None, metavar="RELABEL_CSV",
+                    help="Second, independent labeling pass of a subset of the holdout rows")
+    ap.add_argument("--annotator", default=None, help="Annotator name (required to label)")
     args = ap.parse_args()
 
     if args.freeze:
         freeze_holdout()
         return
 
-    if args.agreement > 0:
-        if not HOLDOUT_CSV.exists():
-            print("Holdout file does not exist.")
-            return
-        df = pd.read_csv(HOLDOUT_CSV)
-        print(f"Evaluating test-retest agreement on {min(args.agreement, len(df))} rows...")
-        sample = df.sample(n=min(args.agreement, len(df)), random_state=123)
-        # Compare sample with original
-        ke, ks, mae = compute_agreement(sample, sample)
+    if args.agreement is not None:
+        if not HOLDOUT_CSV.exists() or not args.agreement.exists():
+            raise SystemExit("Both the holdout and the re-label file must exist.")
+        ref, test = pd.read_csv(HOLDOUT_CSV), pd.read_csv(args.agreement)
+        if ref.equals(test):
+            raise SystemExit("The re-label file is identical to the holdout; agreement needs "
+                             "an independent second pass.")
+        ke, ks, mae = compute_agreement(ref, test)
+        print(f"Rows compared: {len(ref.merge(test, on='record_id'))}")
         print(f"Cohen's kappa (event): {ke:.3f}")
         print(f"Cohen's kappa (severity quadratic): {ks:.3f}")
         print(f"Severity MAE: {mae:.3f}")
         return
 
+    if not args.annotator:
+        raise SystemExit("--annotator is required for a labeling session")
     run_labeling_session(args.annotator)
 
 

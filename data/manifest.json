@@ -675,16 +675,17 @@
     {
       "file_path": "data/eval/holdout_v2_news.csv",
       "format": "csv",
-      "description": "Human-labeled gold test set for event class, sentiment, severity, and stress trigger decision",
+      "description": "Real-news evaluation holdout (event, sentiment, severity, should_trigger). Labels written by an AI agent, not human-reviewed; see holdout_v2_news.provenance.json",
       "is_synthetic": false,
-      "license": "Stratified holdout (60 Polygon news, 40 GDELT, 20 SEC 8-K), single human annotator (author)",
+      "license": "Text: Polygon (MIT), GDELT (open), SEC EDGAR (public record); labels: project MIT",
       "primary_keys": [
         "record_id"
       ],
-      "source": "Manual annotation by author following data/eval/annotation_rubric.md",
+      "source": "AI-agent labels following data/eval/annotation_rubric.md (2026-10-10)",
       "derived_from": [
         "data/real/polygon_news/polygon_news.csv",
         "data/real/gdelt/snapshot.csv",
+        "data/real/gdelt/svb_weekend.csv",
         "data/train/sec_8k/items.csv"
       ],
       "columns": [
@@ -699,10 +700,10 @@
         "should_trigger",
         "annotator"
       ],
-      "byte_size": 40259,
-      "sha256": "e97a7439acd245b0b03ae1149a80101556121efa0f3fe69d82ea4afa1400e909",
+      "byte_size": 41218,
+      "sha256": "c278abb251f0d52a7262591b14b69a57d85c6e96c5ed645a3e5e35b3858f5302",
       "record_count": 120
     }
   ],
-  "updated_at": "2026-10-10T15:02:14.772296+00:00"
+  "updated_at": "2026-10-10T23:32:38.789876+00:00"
 }

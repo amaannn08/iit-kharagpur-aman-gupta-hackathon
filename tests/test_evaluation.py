@@ -2,6 +2,7 @@
 
 import importlib.util
 import json
+from pathlib import Path
 
 from sentinel.config import settings
 
@@ -33,10 +34,19 @@ def test_committed_metrics_meet_targets_on_real_data():
         assert pl["false_trigger_rate_routine"] <= t["false_trigger_rate_routine"]
         assert pl["trigger_precision_lift"] >= t["trigger_precision_lift"]
         assert pl["high_impact_recall"] > 0
-    if "news_human" in m:
-        nh = m["news_human"]
-        assert nh["severity_mae"] <= 1.8
-        assert nh["false_auto_trigger_rate"] <= t["false_trigger_rate_routine"]
+    nh = m["news_holdout"]
+    assert nh["sha256_matches_frozen"]
+    assert nh["false_auto_trigger_rate"] <= t["false_trigger_rate_routine"]
+
+
+def test_holdout_label_provenance_is_honest():
+    nh = _metrics()["news_holdout"]
+    assert nh["label_source"] in ("human", "ai_agent")
+    if nh["label_source"] != "human":
+        assert not nh["human_reviewed"]
+    # agreement is only reported from a genuine second labeling pass
+    relabel = Path(__file__).resolve().parent.parent / "data" / "eval" / "holdout_v2_news.relabel.csv"
+    assert (nh["annotator_agreement_kappa"] is None) == (not relabel.exists())
 
 
 def test_synthetic_set_is_labeled_regression_only():

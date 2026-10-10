@@ -485,7 +485,7 @@ def suite_pipeline() -> Dict[str, Any]:
     }
 
 
-def suite_news_human() -> Dict[str, Any]:
+def suite_news_holdout() -> Dict[str, Any]:
     from sentinel.stress.engine import StressEngine
 
     path = DATA / "eval" / "holdout_v2_news.csv"
@@ -582,17 +582,30 @@ def suite_news_human() -> Dict[str, Any]:
     false_auto_trigs = sum(1 for g, m in zip(gold_should_trig, model_should_trig) if not g and m)
     false_auto_rate = round(false_auto_trigs / n_gold_routine, 4) if n_gold_routine else 0.0
 
-    frozen_hash = (
-        sha256(DATA / "eval" / "FROZEN.txt") if (DATA / "eval" / "FROZEN.txt").exists() else ""
-    )
+    prov_path = DATA / "eval" / "holdout_v2_news.provenance.json"
+    prov = json.loads(prov_path.read_text()) if prov_path.exists() else {}
+    label_source = prov.get("label_source", "unknown")
+    frozen = (DATA / "eval" / "FROZEN.txt").read_text() if (DATA / "eval" / "FROZEN.txt").exists() else ""
+    # agreement only from a genuine second labeling pass, never assumed
+    relabel = DATA / "eval" / "holdout_v2_news.relabel.csv"
+    kappa = None
+    if relabel.exists():
+        rl = pd.read_csv(relabel).merge(df, on="record_id", suffixes=("_test", "_ref"))
+        if len(rl):
+            from sklearn.metrics import cohen_kappa_score
+
+            kappa = round(float(cohen_kappa_score(rl.gold_event_class_ref,
+                                                  rl.gold_event_class_test)), 3)  # fmt: skip
 
     return {
-        "dataset": "Human-labeled news holdout (120 rows, stratified Polygon/GDELT/SEC)",
+        "dataset": "Real-news holdout (120 rows, stratified Polygon/GDELT/SEC 8-K)",
         "n_rows": n_rows,
-        "annotator": "Aman Gupta (author)",
-        "annotator_agreement_kappa": 1.0,
+        "label_source": label_source,
+        "human_reviewed": bool(prov.get("human_reviewed", False)),
+        "label_note": prov.get("description", ""),
+        "annotator_agreement_kappa": kappa,
         "sha256": sha256(path),
-        "frozen_manifest_sha256": frozen_hash,
+        "sha256_matches_frozen": sha256(path) in frozen,
         "severity_mae": mae,
         "severity_mae_ci95": ci_mae,
         "event_macro_f1": f1_event,
@@ -611,7 +624,7 @@ SUITES = {
     "market_impact": suite_market_impact,
     "sec_8k": suite_sec_8k,
     "pipeline": suite_pipeline,
-    "news_human": suite_news_human,
+    "news_holdout": suite_news_holdout,
     "stress": suite_stress,
     "module_a": suite_module_a,
     "perf": suite_perf,
@@ -667,10 +680,11 @@ def headline_rows(m: Dict[str, Any]) -> List[List[str]]:
             f"<= {TARGETS['false_trigger_rate_routine']:.0%}",
             f"8-K {pl['false_trigger_rates_by_source']['sec_8k_routine']:.1%}, social {pl['false_trigger_rates_by_source']['social_tweets']:.1%}, gdelt {pl['false_trigger_rates_by_source']['gdelt_snapshot']:.1%}",
         ])
-    if nh := m.get("news_human"):
+    if nh := m.get("news_holdout"):
         mae_ci = nh["severity_mae_ci95"]
+        who = "human labels" if nh["label_source"] == "human" else "AI-agent labels, not human-reviewed"
         rows.append([
-            f"Human holdout ({nh['n_rows']} rows, kappa {nh['annotator_agreement_kappa']:.2f}), news",
+            f"Real-news holdout ({nh['n_rows']} rows; {who})",
             f"Severity MAE {nh['severity_mae']:.3f} [{mae_ci[0]:.3f}, {mae_ci[1]:.3f}], false trigger {nh['false_auto_trigger_rate']:.1%}",
             f"MAE <= {TARGETS['severity_mae']}, false trig <= {TARGETS['false_trigger_rate_routine']:.0%}",
             f"Event F1 {nh['event_macro_f1']:.3f}, Sent F1 {nh['sentiment_macro_f1']:.3f}",
@@ -714,6 +728,7 @@ def main() -> None:
     args = ap.parse_args()
     out_path = DOCS / "metrics.json"
     metrics: Dict[str, Any] = json.loads(out_path.read_text()) if out_path.exists() else {}
+    metrics.pop("news_human", None)  # renamed to news_holdout (labels are not human)
     for name in args.suite.split(","):
         t0 = time.time()
         metrics[name] = SUITES[name]()

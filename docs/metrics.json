@@ -489,7 +489,7 @@
   "sentiment_macro_f1": 0.3477,
   "severity_mae": 2.99
  },
- "generated_at": "2026-10-10T15:57:40+00:00",
+ "generated_at": "2026-10-10T23:31:42+00:00",
  "targets": {
   "event_macro_f1": 0.7,
   "sentiment_macro_f1": 0.75,
@@ -541,6 +541,34 @@
   "annotator_agreement_kappa": 1.0,
   "sha256": "e97a7439acd245b0b03ae1149a80101556121efa0f3fe69d82ea4afa1400e909",
   "frozen_manifest_sha256": "ba7c73386884cfa0b663b9b610f95038dc0b48ee4db4594a70f81494630a5938",
+  "severity_mae": 1.5167,
+  "severity_mae_ci95": [
+   1.1833,
+   1.8667
+  ],
+  "event_macro_f1": 0.3316,
+  "event_macro_f1_ci95": [
+   0.2053,
+   0.4179
+  ],
+  "sentiment_macro_f1": 0.564,
+  "sentiment_macro_f1_ci95": [
+   0.4608,
+   0.6589
+  ],
+  "false_auto_trigger_rate": 0.0,
+  "false_auto_triggers": 0,
+  "routine_rows": 111
+ },
+ "news_holdout": {
+  "dataset": "Real-news holdout (120 rows, stratified Polygon/GDELT/SEC 8-K)",
+  "n_rows": 120,
+  "label_source": "ai_agent",
+  "human_reviewed": false,
+  "label_note": "The gold_* and should_trigger columns were written in one pass by an AI coding agent (2026-10-10), not by a person. They are independent of the repository's models (agreement with the pipeline: event 67%, sentiment 60%) but are NOT human ground truth.",
+  "annotator_agreement_kappa": null,
+  "sha256": "c278abb251f0d52a7262591b14b69a57d85c6e96c5ed645a3e5e35b3858f5302",
+  "sha256_matches_frozen": true,
   "severity_mae": 1.5167,
   "severity_mae_ci95": [
    1.1833,

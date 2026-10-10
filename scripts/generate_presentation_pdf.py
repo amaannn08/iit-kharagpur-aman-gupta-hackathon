@@ -314,11 +314,11 @@ def build_presentation_pdf() -> None:
     ]
 
     # 7. Limitations & next steps
-    news_h = m.get("news_human", {})
+    news_h = m["news_holdout"]
     human_mae_str = (
-        f"Human-labeled news holdout: MAE {news_h.get('severity_mae', 1.52):.2f} on "
-        f"{news_h.get('n_rows', 120)} rows (κ = {news_h.get('annotator_agreement_kappa', 1.0):.2f}, "
-        f"false-trigger rate {news_h.get('false_auto_trigger_rate', 0.0):.1%})."
+        f"Real-news holdout ({news_h['n_rows']} rows): labels written by an AI agent, not yet "
+        f"human-reviewed; severity MAE vs those labels {news_h['severity_mae']:.2f}, "
+        f"false-trigger rate {news_h['false_auto_trigger_rate']:.1%}."
     )
     el += [
         Paragraph("Limitations &amp; next steps", title),
@@ -335,7 +335,7 @@ def build_presentation_pdf() -> None:
             ),
             bullets(
                 [
-                    "Expand human-labeled news set across multiple annotators to measure inter-rater reliability.",
+                    "Replace the AI-agent holdout labels with human labels and a second-pass agreement check.",
                     "Fine-tune FinBERT on tweets + news as an optional higher-accuracy tier.",
                     "Systemic impact model on index and yield reactions.",
                     "Longer live capture to evaluate real-time precision of actionable signals.",

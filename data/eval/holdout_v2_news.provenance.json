@@ -1,0 +1,8 @@
+{
+  "dataset": "data/eval/holdout_v2_news.csv",
+  "label_source": "ai_agent",
+  "human_reviewed": false,
+  "description": "The gold_* and should_trigger columns were written in one pass by an AI coding agent (2026-10-10), not by a person. They are independent of the repository's models (agreement with the pipeline: event 67%, sentiment 60%) but are NOT human ground truth.",
+  "inter_annotator_agreement": null,
+  "how_to_replace": "Label the same rows by hand with `uv run python scripts/eval/label_cli.py --annotator \"<name>\"`, set label_source to 'human' here, and measure agreement on a second pass with `--agreement <relabel.csv>`."
+}
