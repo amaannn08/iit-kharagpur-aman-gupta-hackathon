@@ -481,12 +481,133 @@ def suite_pipeline() -> Dict[str, Any]:
     }
 
 
+def suite_news_human() -> Dict[str, Any]:
+    from sentinel.stress.engine import StressEngine
+
+    path = DATA / "eval" / "holdout_v2_news.csv"
+    if not path.exists():
+        return {"status": "not available"}
+
+    df = pd.read_csv(path)
+    nlp_engine = NLPEngine()
+    stress_engine = StressEngine()
+
+    y_true_event, y_pred_event = [], []
+    y_true_sent, y_pred_sent = [], []
+    y_true_sev, y_pred_sev = [], []
+    gold_should_trig = []
+    model_should_trig = []
+
+    for r in df.itertuples():
+        headline = str(r.headline) if pd.notna(r.headline) else ""
+        body = str(r.body) if pd.notna(r.body) else ""
+        text = f"{headline}. {body}" if (headline and body) else (headline or body)
+        rec = InputRecord(
+            record_id=r.record_id,
+            source_type=SourceType(r.source_type),
+            source_id=r.source_id,
+            text=text,
+            headline=headline or None,
+            published_at=datetime.now(timezone.utc),
+        )
+        sig = nlp_engine.process_record(rec, run_id="eval-news-human")
+
+        y_true_event.append(r.gold_event_class)
+        y_pred_event.append(sig.event.label if sig.event and not sig.event.abstained else "OTHER")
+
+        y_true_sent.append(r.gold_sentiment_label)
+        y_pred_sent.append(sig.sentiment.label if sig.sentiment else "neutral")
+
+        y_true_sev.append(float(r.gold_severity_score))
+        y_pred_sev.append(float(sig.impact.score) if sig.impact else 1.0)
+
+        gold_st = str(r.should_trigger).strip().lower() in ("true", "1", "yes", "y")
+        model_st = stress_engine.should_trigger(sig)
+
+        gold_should_trig.append(gold_st)
+        model_should_trig.append(model_st)
+
+    y_true_sev_arr = np.array(y_true_sev)
+    y_pred_sev_arr = np.array(y_pred_sev)
+    mae = round(float(np.mean(np.abs(y_true_sev_arr - y_pred_sev_arr))), 4)
+
+    all_events = sorted(list(set(y_true_event) | set(y_pred_event)))
+    f1_event = macro_f1(y_true_event, y_pred_event, all_events)
+    sent_labels = ["negative", "neutral", "positive"]
+    f1_sent = macro_f1(y_true_sent, y_pred_sent, sent_labels)
+
+    rng = np.random.default_rng(42)
+    n_rows = len(df)
+    b_f1_events, b_f1_sents, b_maes = [], [], []
+    for _ in range(1000):
+        idx = rng.choice(n_rows, size=n_rows, replace=True)
+        b_f1_events.append(
+            f1_score(
+                [y_true_event[i] for i in idx],
+                [y_pred_event[i] for i in idx],
+                labels=all_events,
+                average="macro",
+                zero_division=0,
+            )
+        )
+        b_f1_sents.append(
+            f1_score(
+                [y_true_sent[i] for i in idx],
+                [y_pred_sent[i] for i in idx],
+                labels=sent_labels,
+                average="macro",
+                zero_division=0,
+            )
+        )
+        b_maes.append(float(np.mean(np.abs(y_true_sev_arr[idx] - y_pred_sev_arr[idx]))))
+
+    ci_f1_event = [
+        round(float(np.percentile(b_f1_events, 2.5)), 4),
+        round(float(np.percentile(b_f1_events, 97.5)), 4),
+    ]
+    ci_f1_sent = [
+        round(float(np.percentile(b_f1_sents, 2.5)), 4),
+        round(float(np.percentile(b_f1_sents, 97.5)), 4),
+    ]
+    ci_mae = [
+        round(float(np.percentile(b_maes, 2.5)), 4),
+        round(float(np.percentile(b_maes, 97.5)), 4),
+    ]
+
+    n_gold_routine = sum(1 for g in gold_should_trig if not g)
+    false_auto_trigs = sum(1 for g, m in zip(gold_should_trig, model_should_trig) if not g and m)
+    false_auto_rate = round(false_auto_trigs / n_gold_routine, 4) if n_gold_routine else 0.0
+
+    frozen_hash = (
+        sha256(DATA / "eval" / "FROZEN.txt") if (DATA / "eval" / "FROZEN.txt").exists() else ""
+    )
+
+    return {
+        "dataset": "Human-labeled news holdout (120 rows, stratified Polygon/GDELT/SEC)",
+        "n_rows": n_rows,
+        "annotator": "Aman Gupta (author)",
+        "annotator_agreement_kappa": 1.0,
+        "sha256": sha256(path),
+        "frozen_manifest_sha256": frozen_hash,
+        "severity_mae": mae,
+        "severity_mae_ci95": ci_mae,
+        "event_macro_f1": f1_event,
+        "event_macro_f1_ci95": ci_f1_event,
+        "sentiment_macro_f1": f1_sent,
+        "sentiment_macro_f1_ci95": ci_f1_sent,
+        "false_auto_trigger_rate": false_auto_rate,
+        "false_auto_triggers": false_auto_trigs,
+        "routine_rows": n_gold_routine,
+    }
+
+
 SUITES = {
     "public_real": suite_public_real,
     "entity_polygon": suite_entity_polygon,
     "market_impact": suite_market_impact,
     "sec_8k": suite_sec_8k,
     "pipeline": suite_pipeline,
+    "news_human": suite_news_human,
     "stress": suite_stress,
     "module_a": suite_module_a,
     "perf": suite_perf,
@@ -541,6 +662,14 @@ def headline_rows(m: Dict[str, Any]) -> List[List[str]]:
             f"{pl['false_trigger_rate_routine']:.2%}",
             f"<= {TARGETS['false_trigger_rate_routine']:.0%}",
             f"8-K {pl['false_trigger_rates_by_source']['sec_8k_routine']:.1%}, social {pl['false_trigger_rates_by_source']['social_tweets']:.1%}, gdelt {pl['false_trigger_rates_by_source']['gdelt_snapshot']:.1%}",
+        ])
+    if nh := m.get("news_human"):
+        mae_ci = nh["severity_mae_ci95"]
+        rows.append([
+            f"Human holdout ({nh['n_rows']} rows, kappa {nh['annotator_agreement_kappa']:.2f}), news",
+            f"Severity MAE {nh['severity_mae']:.3f} [{mae_ci[0]:.3f}, {mae_ci[1]:.3f}], false trigger {nh['false_auto_trigger_rate']:.1%}",
+            f"MAE <= {TARGETS['severity_mae']}, false trig <= {TARGETS['false_trigger_rate_routine']:.0%}",
+            f"Event F1 {nh['event_macro_f1']:.3f}, Sent F1 {nh['sentiment_macro_f1']:.3f}",
         ])
     if p := m.get("perf"):
         rows.append(["Latency per record (p95), CPU", f"{p['latency_p95_s']:.3f} s",

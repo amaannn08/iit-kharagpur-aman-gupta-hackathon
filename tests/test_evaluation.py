@@ -33,6 +33,10 @@ def test_committed_metrics_meet_targets_on_real_data():
         assert pl["false_trigger_rate_routine"] <= t["false_trigger_rate_routine"]
         assert pl["trigger_precision_lift"] >= t["trigger_precision_lift"]
         assert pl["high_impact_recall"] > 0
+    if "news_human" in m:
+        nh = m["news_human"]
+        assert nh["severity_mae"] <= 1.8
+        assert nh["false_auto_trigger_rate"] <= t["false_trigger_rate_routine"]
 
 
 def test_synthetic_set_is_labeled_regression_only():

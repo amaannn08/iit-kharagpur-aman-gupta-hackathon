@@ -671,7 +671,38 @@
       "byte_size": 128154,
       "sha256": "b287d44aca43f25dfdc0a21ae417eade671237d730ebe4fba11820329b60242e",
       "record_count": 1
+    },
+    {
+      "file_path": "data/eval/holdout_v2_news.csv",
+      "format": "csv",
+      "description": "Human-labeled gold test set for event class, sentiment, severity, and stress trigger decision",
+      "is_synthetic": false,
+      "license": "Stratified holdout (60 Polygon news, 40 GDELT, 20 SEC 8-K), single human annotator (author)",
+      "primary_keys": [
+        "record_id"
+      ],
+      "source": "Manual annotation by author following data/eval/annotation_rubric.md",
+      "derived_from": [
+        "data/real/polygon_news/polygon_news.csv",
+        "data/real/gdelt/snapshot.csv",
+        "data/train/sec_8k/items.csv"
+      ],
+      "columns": [
+        "record_id",
+        "source_type",
+        "source_id",
+        "headline",
+        "body",
+        "gold_event_class",
+        "gold_sentiment_label",
+        "gold_severity_score",
+        "should_trigger",
+        "annotator"
+      ],
+      "byte_size": 40259,
+      "sha256": "e97a7439acd245b0b03ae1149a80101556121efa0f3fe69d82ea4afa1400e909",
+      "record_count": 120
     }
   ],
-  "updated_at": "2026-10-10T14:42:55.351643+00:00"
+  "updated_at": "2026-10-10T15:02:14.772296+00:00"
 }
