@@ -301,6 +301,41 @@ def fred() -> None:
     print(f"ok fred ({len(list(d.glob('*.csv')))} series)")
 
 
+def xbrl() -> None:
+    import pandas as pd
+
+    d = RAW / "sec" / "xbrl"
+    d.mkdir(parents=True, exist_ok=True)
+    tickers_path = RAW / "sec" / "company_tickers.json"
+    if not tickers_path.exists():
+        sec()
+    tickers = json.loads(tickers_path.read_text())
+    cik_by_ticker = {v["ticker"]: v["cik_str"] for v in tickers.values()}
+    sp100_path = RAW / "sec" / "sp100.csv"
+    if not sp100_path.exists():
+        _sp100()
+    sp = pd.read_csv(sp100_path)
+    for t in sp.ticker:
+        out = d / f"{t}.json"
+        if out.exists():
+            continue
+        cik = cik_by_ticker.get(t) or cik_by_ticker.get(t.replace("-", "."))
+        if not cik:
+            sub = RAW / "sec" / "submissions" / f"{t}.json"
+            if sub.exists():
+                cik = int(json.loads(sub.read_text()).get("cik"))
+        if not cik:
+            continue
+        url = f"https://data.sec.gov/api/xbrl/companyfacts/CIK{cik:010d}.json"
+        try:
+            out.write_bytes(get(url))
+        except Exception as exc:
+            print(f"  skip xbrl {t}: {exc}")
+            continue
+        time.sleep(0.15)
+    print(f"ok xbrl ({len(list(d.glob('*.json')))} filers)")
+
+
 STEPS = {
     "kaggle": kaggle,
     "hf": hf,
@@ -309,6 +344,7 @@ STEPS = {
     "market": market,
     "gdelt": gdelt,
     "fred": fred,
+    "xbrl": xbrl,
 }
 
 if __name__ == "__main__":

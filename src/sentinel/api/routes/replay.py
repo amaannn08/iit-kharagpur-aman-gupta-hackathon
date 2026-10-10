@@ -86,7 +86,22 @@ async def emit_signal(
     # Module B automated stress test trigger on eligible high-impact signals (PRD 9.3)
     stress_result = None
     if stress_engine.should_trigger(sig):
-        stress_result = stress_engine.trigger_from_signal(sig)
+        source_meta = settings.replay_sources.get(record.source_id)
+        if source_meta:
+            badge = source_meta[2]
+            profile = "synthetic_demo" if badge == "SYNTHETIC SCENARIO" else "real_issuers"
+        else:
+            demo_engine = stress_engine.profiles.get("synthetic_demo", stress_engine.portfolio)
+            real_engine = stress_engine.profiles.get("real_issuers", stress_engine.portfolio)
+            if (
+                sig.entity.ticker
+                and sig.entity.ticker.upper() in demo_engine.held_tickers
+                and sig.entity.ticker.upper() not in real_engine.held_tickers
+            ):
+                profile = "synthetic_demo"
+            else:
+                profile = "synthetic_demo" if record.is_synthetic else "real_issuers"
+        stress_result = stress_engine.trigger_from_signal(sig, profile=profile)
         if stress_result:
             repo.save_stress_run(stress_result)
 

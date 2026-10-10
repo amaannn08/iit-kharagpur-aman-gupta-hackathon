@@ -2,7 +2,7 @@
 
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Union
+from typing import Any, Dict, List, Optional, Sequence, Set, Union
 
 from sentinel.contracts.stress import (
     BondPosition,
@@ -153,6 +153,13 @@ class WholesalePortfolio:
             interest_rate_swaps_gross_notional_usd=self.total_derivative_notional,
             equities_value_usd=sum(p.market_value for p in self.equities),
         )
+
+    def all_positions(self) -> List[Any]:
+        return [*self.loans, *self.bonds, *self.swaps, *self.cash, *self.equities]
+
+    @property
+    def held_tickers(self) -> Set[str]:
+        return {p.entity_id.upper() for p in [*self.loans, *self.bonds, *self.equities]}
 
     def sleeve_totals(self) -> Dict[str, float]:
         totals: Dict[str, float] = {}

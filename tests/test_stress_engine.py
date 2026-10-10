@@ -157,3 +157,22 @@ def test_easing_word_without_rate_context_does_not_flip_shock(stress_engine: Str
     res = stress_engine.trigger_from_signal(sig)
     assert res is not None
     assert res.shock_parameters["benchmark_yield_shift_bps"] > 0
+
+
+def test_real_news_signal_on_held_issuer_triggers_stress(stress_engine: StressEngine):
+    sig = make_signal(signal_id="sig-aapl-stress", ticker="AAPL", event_label="CREDIT", impact_score=8)
+    res = stress_engine.trigger_from_signal(sig, profile="real_issuers")
+    assert res is not None
+    assert res.portfolio_profile == "real_issuers"
+    assert res.status != "NO_EXPOSURE"
+    assert res.total_pnl_usd < 0.0
+
+
+def test_signal_on_non_held_issuer_returns_no_exposure(stress_engine: StressEngine):
+    sig = make_signal(signal_id="sig-unheld-stress", ticker="NONEXISTENT_TICKER", event_label="CREDIT", impact_score=8)
+    res = stress_engine.trigger_from_signal(sig, profile="real_issuers")
+    assert res is not None
+    assert res.portfolio_profile == "real_issuers"
+    assert res.status == "NO_EXPOSURE"
+    assert res.total_pnl_usd == 0.0
+

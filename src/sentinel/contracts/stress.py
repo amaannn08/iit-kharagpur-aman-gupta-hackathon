@@ -190,3 +190,4 @@ class StressRunResult(BaseModel):
     funded_stressed_value_usd: float = 0.0
     derivative_mtm_change_usd: float = 0.0
     status: str = Field(default="COMPLETED", description="COMPLETED | NO_EXPOSURE")
+    portfolio_profile: str = Field(default="real_issuers", description="real_issuers | synthetic_demo")

@@ -1,0 +1,426 @@
+#!/usr/bin/env python3
+"""Build data/portfolio/wholesale_real.json: a synthetic book on real S&P 100 issuers.
+
+Inputs (all real, build time):
+- SEC XBRL companyfacts (debt, interest, EBIT, assets, equity) in data/raw/real/sec/xbrl/
+- data/universe/entities.csv (GICS sectors and canonical names)
+- FRED ICE BofA rating-bucket OAS (baseline spreads) in data/raw/real/fred/
+- S&P Global Ratings Annual Corporate Default Study (baseline PD by rating)
+- FRED DGS5 (5-year Treasury yield for bond yield and duration calibration)
+
+Positions (sizes, tenors, coupons) are a constructed book and flagged is_synthetic: true.
+"""
+
+import json
+import sys
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
+import numpy as np
+import pandas as pd
+
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(REPO_ROOT))
+
+from sentinel.stress.ratings import rating_bucket  # noqa: E402
+from sentinel.stress.sectors import normalize_sector  # noqa: E402
+
+DATA_DIR = REPO_ROOT / "data"
+RAW_DIR = DATA_DIR / "raw" / "real"
+SEC_XBRL_DIR = RAW_DIR / "sec" / "xbrl"
+FRED_DIR = RAW_DIR / "fred"
+PORTFOLIO_DIR = DATA_DIR / "portfolio"
+OUTPUT_REAL_PATH = PORTFOLIO_DIR / "wholesale_real.json"
+OUTPUT_DEMO_PATH = PORTFOLIO_DIR / "demo_book.json"
+
+COVERAGE_TO_RATING: List[Tuple[float, str]] = [
+    (8.5, "AAA"),
+    (6.5, "AA"),
+    (5.5, "A+"),
+    (4.25, "A"),
+    (3.0, "A-"),
+    (2.5, "BBB"),
+    (2.25, "BB+"),
+    (2.0, "BB"),
+    (1.75, "B+"),
+    (1.5, "B"),
+    (1.25, "B-"),
+    (0.8, "CCC"),
+    (-1e9, "CC"),
+]
+
+# S&P Global Ratings, Annual Global Corporate Default and Rating Transition Study (1981-2024)
+# One-year average corporate default rates by rating category (decimal probabilities)
+PD_BY_BUCKET: Dict[str, float] = {
+    "AAA": 0.0000,
+    "AA": 0.0002,
+    "A": 0.0005,
+    "BBB": 0.0015,
+    "BB": 0.0060,
+    "B": 0.0300,
+    "CCC": 0.2600,
+}
+
+OAS_SERIES: Dict[str, str] = {
+    "AAA": "BAMLC0A1CAAA",
+    "AA": "BAMLC0A2CAA",
+    "A": "BAMLC0A3CA",
+    "BBB": "BAMLC0A4CBBB",
+    "BB": "BAMLH0A1HYBB",
+    "B": "BAMLH0A2HYB",
+    "CCC": "BAMLH0A3HYC",
+}
+
+LGD_SENIOR_UNSECURED = 0.45  # Basel F-IRB senior unsecured benchmark
+TOTAL_BOOK_USD = 500_000_000.0
+CASH_USD = 80_000_000.0
+CREDIT_BOOK_USD = TOTAL_BOOK_USD - CASH_USD  # $420,000,000.0
+NAME_CAP_RATIO = 0.08  # Max 8% of total book ($40,000,000) per issuer
+
+
+def latest_fact(facts: Dict[str, Any], tag: str, unit: str = "USD", forms: Tuple[str, ...] = ("10-K",)) -> Optional[float]:
+    """Most recent annual value for a us-gaap tag, or None."""
+    vals = facts.get("facts", {}).get("us-gaap", {}).get(tag, {}).get("units", {}).get(unit, [])
+    vals = [v for v in vals if v.get("form") in forms and v.get("fp") == "FY"]
+    if not vals:
+        return None
+    latest = max(vals, key=lambda v: v["end"])
+    return float(latest["val"])
+
+
+def load_fred_series(series_name: str) -> float:
+    path = FRED_DIR / f"{series_name}.csv"
+    if not path.exists():
+        raise FileNotFoundError(f"FRED series file not found: {path}")
+    df = pd.read_csv(path)
+    df = df[df.iloc[:, 1] != "."].dropna()
+    return float(df.iloc[-1, 1])
+
+
+def synthetic_rating(cov: Optional[float], equity_to_assets: Optional[float], sector: str) -> str:
+    if sector == "Financials":
+        e2a = equity_to_assets or 0.0
+        return "A" if e2a >= 0.08 else "BBB" if e2a >= 0.06 else "BB"
+    if cov is None:
+        return "BBB"  # documented conservative default for unmeasured interest coverage
+    for lim, r in COVERAGE_TO_RATING:
+        if cov >= lim:
+            return r
+    return "BBB"
+
+
+def build_wholesale_book() -> Dict[str, Any]:
+    PORTFOLIO_DIR.mkdir(parents=True, exist_ok=True)
+
+    # 1. Load universe and S&P 100 constituent metadata
+    universe_path = DATA_DIR / "universe" / "entities.csv"
+    if universe_path.exists():
+        uni_df = pd.read_csv(universe_path)
+    else:
+        uni_df = pd.read_csv(DATA_DIR / "entity_aliases.csv")
+    uni_map = {r["ticker"].upper(): r for _, r in uni_df.iterrows()}
+
+    sp100_path = RAW_DIR / "sec" / "sp100.csv"
+    if not sp100_path.exists():
+        raise FileNotFoundError(f"S&P 100 constituent table not found: {sp100_path}")
+    sp100_df = pd.read_csv(sp100_path)
+
+    # 2. Extract balance-sheet and coverage stats from SEC XBRL
+    issuer_records = []
+    for ticker in sp100_df.ticker.unique():
+        t = ticker.upper()
+        xbrl_file = SEC_XBRL_DIR / f"{t}.json"
+        if not xbrl_file.exists():
+            continue
+        try:
+            facts = json.loads(xbrl_file.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+
+        lt_debt = (
+            latest_fact(facts, "LongTermDebt")
+            or latest_fact(facts, "LongTermDebtNoncurrent")
+            or latest_fact(facts, "LongTermDebtAndCapitalLeaseObligations")
+            or 0.0
+        )
+        st_debt = latest_fact(facts, "DebtCurrent") or 0.0
+        total_debt = lt_debt + st_debt
+        if total_debt <= 0.0:
+            continue
+
+        ebit = latest_fact(facts, "OperatingIncomeLoss")
+        interest = (
+            latest_fact(facts, "InterestExpense")
+            or latest_fact(facts, "InterestAndDebtExpense")
+        )
+        assets = latest_fact(facts, "Assets")
+        equity = (
+            latest_fact(facts, "StockholdersEquity")
+            or latest_fact(facts, "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest")
+        )
+
+        cov = (ebit / interest) if (ebit is not None and interest is not None and interest > 0) else None
+        e2a = (equity / assets) if (equity is not None and assets is not None and assets > 0) else None
+
+        uni_meta = uni_map.get(t)
+        raw_sector = (
+            uni_meta["sector"] if uni_meta is not None
+            else sp100_df.loc[sp100_df.ticker == ticker, "sector"].values[0]
+        )
+        canonical_name = (
+            uni_meta["canonical_name"] if uni_meta is not None
+            else sp100_df.loc[sp100_df.ticker == ticker, "name"].values[0]
+        )
+
+        sector = normalize_sector(raw_sector)
+        synth_rat = synthetic_rating(cov, e2a, sector)
+
+        issuer_records.append({
+            "ticker": t,
+            "name": canonical_name,
+            "sector": sector,
+            "total_debt": total_debt,
+            "coverage": cov,
+            "equity_to_assets": e2a,
+            "rating": synth_rat,
+            "rating_bucket": rating_bucket(synth_rat),
+        })
+
+    df = pd.DataFrame(issuer_records)
+
+    # 3. Rule-based selection: 2 largest debt issuers per GICS sector
+    df_sorted = df.sort_values(["sector", "total_debt"], ascending=[True, False]).copy()
+    df_sorted["sector_rank"] = df_sorted.groupby("sector").cumcount() + 1
+    picks = df_sorted[df_sorted["sector_rank"] <= 2].copy().reset_index(drop=True)
+
+    # 4. Exposure sizing: w_i proportional to sqrt(total_debt_i), strictly capped at 8% of total book ($40M)
+    max_single_exposure = round(NAME_CAP_RATIO * TOTAL_BOOK_USD, 2)  # $40,000,000.00
+    raw_w = np.sqrt(picks.total_debt.values)
+    allocated = np.zeros(len(picks))
+    remaining_budget = CREDIT_BOOK_USD
+    active = np.ones(len(picks), dtype=bool)
+
+    while active.any():
+        w = raw_w * active
+        if w.sum() == 0:
+            break
+        w = w / w.sum()
+        proposal = w * remaining_budget
+        capped = (proposal >= max_single_exposure) & active
+        if not capped.any():
+            allocated[active] = proposal[active]
+            break
+        allocated[capped] = max_single_exposure
+        remaining_budget -= max_single_exposure * capped.sum()
+        active[capped] = False
+
+    picks["allocated_exposure"] = np.round(allocated, 2)
+    # Adjust a non-capped pick for exact penny rounding to $420,000,000.0
+    exposure_diff = round(CREDIT_BOOK_USD - picks["allocated_exposure"].sum(), 2)
+    non_capped_indices = np.where(picks["allocated_exposure"].values < max_single_exposure)[0]
+    if len(non_capped_indices) > 0:
+        picks.loc[non_capped_indices[-1], "allocated_exposure"] += exposure_diff
+
+    # 5. Baseline market parameters from FRED
+    oas_bps_by_bucket = {b: round(load_fred_series(s) * 100, 1) for b, s in OAS_SERIES.items()}
+    treasury_5y_pct = load_fred_series("DGS5")  # in percent, e.g. 4.99
+
+    # 6. Build positions
+    positions = []
+    total_loans = 0.0
+    total_bonds = 0.0
+
+    pos_idx = 1
+    for _, row in picks.iterrows():
+        t = row["ticker"]
+        name = row["name"]
+        sec = row["sector"]
+        rat = row["rating"]
+        bucket = row["rating_bucket"]
+        exp = float(row["allocated_exposure"])
+        rank = int(row["sector_rank"])
+
+        # Split: Rank 1 gets 60% loan / 40% bond; Rank 2 gets 40% loan / 60% bond
+        loan_share = 0.60 if rank == 1 else 0.40
+
+        loan_exp = round(exp * loan_share, 2)
+        bond_exp = round(exp - loan_exp, 2)
+
+        # Tenors: IG 5y, HY 3y
+        is_ig = bucket in ("AAA", "AA", "A", "BBB")
+        tenor_years = 5.0 if is_ig else 3.0
+        mat_year = 2026 + int(tenor_years)
+        maturity_date = f"{mat_year:04d}-03-01"
+
+        # Loan Position
+        positions.append({
+            "position_id": f"L-{pos_idx:03d}",
+            "asset_class": "loan",
+            "entity_id": t,
+            "counterparty_name": name,
+            "sector": sec,
+            "currency": "USD",
+            "market_value": loan_exp,
+            "ead": loan_exp,
+            "baseline_pd": PD_BY_BUCKET.get(bucket, 0.006),
+            "lgd": LGD_SENIOR_UNSECURED,
+            "rating": rat,
+            "sleeve": "wholesale",
+            "maturity_date": maturity_date,
+        })
+        total_loans += loan_exp
+
+        # Bond Position
+        spread_bps = oas_bps_by_bucket.get(bucket, 150.0)
+        yield_val = round((treasury_5y_pct + spread_bps / 100.0) / 100.0, 4)
+        duration = round((1.0 - (1.0 + yield_val) ** (-tenor_years)) / yield_val, 2)
+
+        positions.append({
+            "position_id": f"B-{pos_idx:03d}",
+            "asset_class": "bond",
+            "entity_id": t,
+            "counterparty_name": name,
+            "sector": sec,
+            "currency": "USD",
+            "market_value": bond_exp,
+            "notional": bond_exp,
+            "coupon": yield_val,
+            "yield": yield_val,
+            "spread_bps": spread_bps,
+            "modified_duration": duration,
+            "rating": rat,
+            "sleeve": "wholesale",
+            "maturity_date": maturity_date,
+        })
+        total_bonds += bond_exp
+        pos_idx += 1
+
+    # Standard rates swaps and cash reserves
+    positions.extend([
+        {
+            "position_id": "SWAP-001",
+            "asset_class": "swap",
+            "entity_id": "MACRO",
+            "counterparty_name": "Global Clearing House",
+            "sector": "Rates",
+            "currency": "USD",
+            "market_value": 0.0,
+            "notional": 75000000.0,
+            "pay_receive": "receive_fixed",
+            "fixed_rate": 0.041,
+            "floating_benchmark": "SOFR",
+            "signed_dv01": 36000.0,
+            "maturity_years": 5.0,
+            "sleeve": "wholesale",
+            "maturity_date": "2031-03-01",
+        },
+        {
+            "position_id": "SWAP-002",
+            "asset_class": "swap",
+            "entity_id": "MACRO",
+            "counterparty_name": "Global Clearing House",
+            "sector": "Rates",
+            "currency": "USD",
+            "market_value": 0.0,
+            "notional": 75000000.0,
+            "pay_receive": "pay_fixed",
+            "fixed_rate": 0.0425,
+            "floating_benchmark": "SOFR",
+            "signed_dv01": -34500.0,
+            "maturity_years": 7.0,
+            "sleeve": "wholesale",
+            "maturity_date": "2033-03-01",
+        },
+        {
+            "position_id": "CASH-001",
+            "asset_class": "cash",
+            "entity_id": "TREASURY",
+            "counterparty_name": "Federal Reserve Overnight Facility",
+            "sector": "Government / Cash",
+            "currency": "USD",
+            "market_value": CASH_USD,
+            "notional": CASH_USD,
+            "yield": 0.045,
+            "modified_duration": 0.0,
+            "rating": "AAA",
+            "sleeve": "wholesale",
+            "maturity_date": "2026-03-02",
+        },
+    ])
+
+    summary = {
+        "total_book_value_usd": round(total_loans + total_bonds + CASH_USD, 2),
+        "corporate_loans_value_usd": round(total_loans, 2),
+        "corporate_bonds_value_usd": round(total_bonds, 2),
+        "cash_reserves_usd": round(CASH_USD, 2),
+        "interest_rate_swaps_mtm_usd": 0.0,
+        "interest_rate_swaps_gross_notional_usd": 150000000.0,
+    }
+
+    out = {
+        "portfolio_name": "Wholesale book on real S&P 100 issuers (synthetic positions)",
+        "profile": "real_issuers",
+        "is_synthetic": True,
+        "provenance": {
+            "issuers": "S&P 100 constituents (Wikipedia, CC BY-SA 4.0)",
+            "financials": "SEC EDGAR XBRL companyfacts (debt, interest, EBIT, assets, equity)",
+            "pd": "S&P Global Ratings Annual Corporate Default Study 1981-2024 (Table 1)",
+            "spreads": "FRED ICE BofA OAS rating-bucket series (latest derived)",
+            "lgd": "Basel F-IRB senior unsecured benchmark (0.45)",
+            "benchmark_rates": "FRED DGS5 (5-year Treasury yield)",
+        },
+        "selection_rule": "2 largest debt issuers per GICS sector among S&P 100 constituents",
+        "base_currency": "USD",
+        "valuation_date": "2026-03-01",
+        "summary": summary,
+        "positions": positions,
+    }
+
+    OUTPUT_REAL_PATH.write_text(json.dumps(out, indent=2) + "\n", encoding="utf-8")
+    print(f"Wrote {OUTPUT_REAL_PATH} with {len(picks)} issuers, {len(positions)} positions, total=${summary['total_book_value_usd']:,.2f}")
+
+    # Also ensure demo_book.json exists (profile: synthetic_demo)
+    source_demo_path = DATA_DIR / "wholesale_positions.json"
+    if source_demo_path.exists():
+        demo_data = json.loads(source_demo_path.read_text(encoding="utf-8"))
+        demo_data["profile"] = "synthetic_demo"
+        OUTPUT_DEMO_PATH.write_text(json.dumps(demo_data, indent=2) + "\n", encoding="utf-8")
+        print(f"Wrote {OUTPUT_DEMO_PATH} (profile: synthetic_demo)")
+
+    # Ensure fictional graph is copied to graph_edges_demo.csv
+    demo_graph_src = DATA_DIR / "graph_edges.csv"
+    demo_graph_dst = DATA_DIR / "graph_edges_demo.csv"
+    if demo_graph_src.exists() and not demo_graph_dst.exists():
+        demo_graph_dst.write_bytes(demo_graph_src.read_bytes())
+        print(f"Wrote {demo_graph_dst}")
+
+    # Register in manifest
+    from scripts.data.build_manifest import register_dataset
+
+    register_dataset(
+        "data/portfolio/wholesale_real.json",
+        description="Synthetic wholesale book constructed on real S&P 100 debt issuers",
+        license_name="CC-BY-4.0",
+        is_synthetic=True,
+        derived_from=["data/raw/real/sec/xbrl", "data/raw/real/fred", "data/universe/entities.csv"],
+    )
+    register_dataset(
+        "data/portfolio/demo_book.json",
+        description="Fictional wholesale book for synthetic demo scenarios",
+        license_name="MIT",
+        is_synthetic=True,
+        derived_from=[],
+    )
+    register_dataset(
+        "data/graph_edges_demo.csv",
+        description="Synthetic demo supply-chain and counterparty contagion graph",
+        license_name="MIT",
+        is_synthetic=True,
+        derived_from=[],
+    )
+
+    return out
+
+
+if __name__ == "__main__":
+    build_wholesale_book()

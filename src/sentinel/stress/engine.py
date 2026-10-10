@@ -2,7 +2,7 @@
 
 import json
 from pathlib import Path
-from typing import List, Optional, Set, Union
+from typing import Dict, List, Optional, Set, Tuple, Union
 
 from sentinel.config import settings
 from sentinel.contracts.signals import RiskSignal
@@ -30,12 +30,30 @@ class StressEngine:
         confidence_threshold: Optional[float] = None,
         impact_threshold: Optional[int] = None,
     ) -> None:
+        self.profiles: Dict[str, WholesalePortfolio] = {}
+        self.valuation_engines: Dict[str, ValuationEngine] = {}
+
         if portfolio_path is not None:  # a single explicit file (tests, sandbox)
-            self.portfolio = WholesalePortfolio.load_from_json(portfolio_path)
+            custom_p = WholesalePortfolio.load_from_json(portfolio_path)
+            self.portfolio = custom_p
+            self.valuation_engine = ValuationEngine(self.portfolio)
+            self.profiles["custom"] = custom_p
+            self.valuation_engines["custom"] = self.valuation_engine
         else:
-            files = [settings.data_dir / f for f in settings.portfolio_files]
-            self.portfolio = WholesalePortfolio.load_many([f for f in files if f.exists()])
-        self.valuation_engine = ValuationEngine(self.portfolio)
+            for prof_name, rel_paths in settings.portfolio_profiles.items():
+                files = [settings.data_dir / f for f in rel_paths]
+                existing = [f for f in files if f.exists()]
+                if existing:
+                    prof_port = WholesalePortfolio.load_many(existing)
+                    self.profiles[prof_name] = prof_port
+                    self.valuation_engines[prof_name] = ValuationEngine(prof_port)
+
+            default_prof = settings.default_portfolio_profile
+            self.portfolio = self.profiles.get(default_prof) or next(iter(self.profiles.values()))
+            self.valuation_engine = self.valuation_engines.get(default_prof) or next(
+                iter(self.valuation_engines.values())
+            )
+
         self.confidence_threshold = (
             confidence_threshold
             if confidence_threshold is not None
@@ -45,6 +63,12 @@ class StressEngine:
             impact_threshold if impact_threshold is not None else settings.action_impact_threshold
         )
         self.acted_signal_ids: Set[str] = set()
+
+    def get_valuation_engine(self, profile: Optional[str] = None) -> Tuple[ValuationEngine, str]:
+        prof_name = profile or settings.default_portfolio_profile
+        if prof_name in self.valuation_engines:
+            return self.valuation_engines[prof_name], prof_name
+        return self.valuation_engine, prof_name
 
     def _macro_is_easing(self, signal: RiskSignal) -> Optional[bool]:
         """True = easing/benign, False = tightening/adverse, None = no direction (skip)."""
@@ -79,7 +103,9 @@ class StressEngine:
 
         return True
 
-    def trigger_from_signal(self, signal: RiskSignal) -> Optional[StressRunResult]:
+    def trigger_from_signal(
+        self, signal: RiskSignal, profile: Optional[str] = None
+    ) -> Optional[StressRunResult]:
         """Automatically execute stress test against baseline portfolio for eligible signal."""
         if not self.should_trigger(signal):
             return None
@@ -125,7 +151,8 @@ class StressEngine:
 
         enable_contagion = scope == "entity" and event_class in {"CREDIT", "SUPPLY_CHAIN"}
 
-        result = self.valuation_engine.run_stress_test(
+        val_engine, prof_name = self.get_valuation_engine(profile)
+        result = val_engine.run_stress_test(
             shock=shock,
             run_id=signal.run_id,
             trigger_type="EVENT_TRIGGERED",
@@ -134,6 +161,7 @@ class StressEngine:
             impact_score=impact,
             enable_contagion=enable_contagion,
         )
+        result.portfolio_profile = prof_name
 
         self.acted_signal_ids.add(signal.signal_id)
         return self._mark_exposure(result)
@@ -148,6 +176,7 @@ class StressEngine:
         enable_contagion: bool = False,
         run_id: str = "manual-run",
         target_sector: Optional[str] = None,
+        profile: Optional[str] = None,
     ) -> StressRunResult:
         """Execute a user-triggered / sandbox stress simulation with custom shock parameters."""
         shock = build_scaled_shock(
@@ -159,7 +188,8 @@ class StressEngine:
             target_sector=target_sector,
         )
 
-        result = self.valuation_engine.run_stress_test(
+        val_engine, prof_name = self.get_valuation_engine(profile)
+        result = val_engine.run_stress_test(
             shock=shock,
             run_id=run_id,
             trigger_type="USER_TRIGGERED",
@@ -168,6 +198,7 @@ class StressEngine:
             impact_score=impact_score,
             enable_contagion=enable_contagion,
         )
+        result.portfolio_profile = prof_name
         return self._mark_exposure(result)
 
     @staticmethod
@@ -183,13 +214,19 @@ class StressEngine:
             out.append(json.loads(path.read_text(encoding="utf-8")))
         return out
 
-    def run_scenario(self, scenario_id: str, run_id: str = "scenario-run") -> StressRunResult:
+    def run_scenario(
+        self,
+        scenario_id: str,
+        run_id: str = "scenario-run",
+        profile: Optional[str] = None,
+    ) -> StressRunResult:
         """Run a named scenario file (e.g. HIST-SVB_2023: the measured SVB-window market move)."""
         scenario = next((s for s in self.list_scenarios() if s["scenario_id"] == scenario_id), None)
         if scenario is None:
             raise KeyError(scenario_id)
         contagion = scenario.get("contagion", {})
-        result = self.valuation_engine.run_stress_test(
+        val_engine, prof_name = self.get_valuation_engine(profile)
+        result = val_engine.run_stress_test(
             shock=shock_from_scenario(scenario),
             run_id=run_id,
             trigger_type="SCENARIO",
@@ -199,6 +236,7 @@ class StressEngine:
             max_hops=int(contagion.get("max_hops", 2) or 2),
             hop_decay=float(contagion.get("hop_decay", 0.6) or 0.6),
         )
+        result.portfolio_profile = prof_name
         return self._mark_exposure(result)
 
     def run_custom_stress(
@@ -211,6 +249,7 @@ class StressEngine:
         run_id: str = "custom-run",
         pd_from_spread: bool = False,
         rating_tiered: bool = True,
+        profile: Optional[str] = None,
     ) -> StressRunResult:
         """Explicit systemic shock set, e.g. the PS example: equities -10%, rates +200 bp."""
         shock = ScaledShock(
@@ -226,9 +265,11 @@ class StressEngine:
             pd_from_spread=pd_from_spread,
             rating_tiered=rating_tiered,
         )
-        result = self.valuation_engine.run_stress_test(
+        val_engine, prof_name = self.get_valuation_engine(profile)
+        result = val_engine.run_stress_test(
             shock=shock, run_id=run_id, trigger_type="USER_TRIGGERED", event_class="CUSTOM"
         )
+        result.portfolio_profile = prof_name
         return self._mark_exposure(result)
 
     def reset_triggers(self) -> None:

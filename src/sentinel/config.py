@@ -34,9 +34,22 @@ class Settings(BaseSettings):
     default_replay_speed: str = "1x"
     max_queue_size: int = 1000
 
-    # Module B portfolio: wholesale book first, then sleeves (relative to data_dir)
+    # Module B portfolio profiles: real_issuers (default) vs synthetic_demo
+    portfolio_profiles: Dict[str, List[str]] = {
+        "real_issuers": [
+            "portfolio/wholesale_real.json",
+            "portfolio/credit_sleeve.json",
+            "portfolio/equity_sleeve.json",
+        ],
+        "synthetic_demo": [
+            "portfolio/demo_book.json",
+            "portfolio/credit_sleeve.json",
+            "portfolio/equity_sleeve.json",
+        ],
+    }
+    default_portfolio_profile: str = "real_issuers"
     portfolio_files: List[str] = [
-        "wholesale_positions.json",
+        "portfolio/wholesale_real.json",
         "portfolio/credit_sleeve.json",
         "portfolio/equity_sleeve.json",
     ]
