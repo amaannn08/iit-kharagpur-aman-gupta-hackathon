@@ -86,7 +86,7 @@ def build_model():
             ngram_range=(1, 2), min_df=2, sublinear_tf=True, max_features=60_000, dtype=np.float32
         ),
         CalibratedClassifierCV(
-            LogisticRegression(C=10, max_iter=3000, class_weight="balanced", random_state=SEED),
+            LogisticRegression(C=8, max_iter=3000, class_weight="balanced", random_state=SEED),
             method="isotonic",
             cv=3,
         ),

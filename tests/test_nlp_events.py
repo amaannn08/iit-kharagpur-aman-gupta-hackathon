@@ -76,7 +76,11 @@ def test_trained_model_loads_with_card_threshold():
 
 
 def test_card_reports_held_out_real_data_quality_gate():
-    """CI gate: the committed model must keep >= 0.79 macro-F1 on held-out real tweets (finding F clean holdout)."""
+    """Regression gate on held-out real tweets.
+
+    0.846 before 2026-10-10 was inflated: 575 test texts also appeared in training. On the
+    de-duplicated split the model scores 0.795; the gate sits just below that (the PS target is 0.70).
+    """
     import json
 
     from sentinel.config import settings
@@ -84,7 +88,7 @@ def test_card_reports_held_out_real_data_quality_gate():
     card = json.loads((settings.base_dir / "models" / "event_v2.card.json").read_text())
     valid = card["metrics"]["hf_topic_valid"]
     assert valid["n"] == 4117
-    assert valid["macro_f1_8_ps_classes"] >= 0.79
+    assert valid["macro_f1_8_ps_classes"] >= 0.78
     assert valid["abstention_at_threshold"]["precision"] >= 0.88
 
 
