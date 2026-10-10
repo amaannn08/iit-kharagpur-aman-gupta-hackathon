@@ -29,13 +29,65 @@ from sentinel.storage.db import init_db
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Lifecycle events: initialize SQLite database on startup, start live tailer."""
+    """Lifecycle events: initialize SQLite database on startup, prime demo replay, manage background tasks."""
     init_db()
+
+    # Pre-populate initial demo scenario if queue is empty and DB has no signals
+    try:
+        from sentinel.api.routes.replay import (
+            _load_source,
+            emit_signal,
+            nlp_engine,
+            replay_controller,
+        )
+        from sentinel.storage.db import SessionLocal
+        from sentinel.storage.repository import ReplayRepository
+
+        with SessionLocal() as db:
+            repo = ReplayRepository(db)
+            if not replay_controller._queue:
+                demo_records = _load_source("news_demo") + _load_source("social_demo")
+                if demo_records:
+                    badges = [
+                        settings.replay_sources["news_demo"][2],
+                        settings.replay_sources["social_demo"][2],
+                    ]
+                    replay_controller.load_scenario(
+                        "demo",
+                        demo_records,
+                        sources=["news_demo", "social_demo"],
+                        badges=badges,
+                    )
+            # If database has fewer than 10 signals, advance records so feed is populated on cold start
+            existing_count = len(repo.list_signals(limit=10))
+            if existing_count < 10 and replay_controller._queue:
+                to_step = min(10 - existing_count, len(replay_controller._queue))
+                for _ in range(to_step):
+                    async def persist_and_process(record, dedup):
+                        repo.save_record(record, dedup, run_id=replay_controller.run_id)
+                        signals = nlp_engine.process_record_multi(
+                            record,
+                            run_id=replay_controller.run_id,
+                            dedup_decision=dedup,
+                        )
+                        for sig in signals:
+                            await emit_signal(repo, record, sig)
+                        return signals
+
+                    await replay_controller.step(processor=persist_and_process)
+            repo.upsert_run(replay_controller.get_status())
+    except Exception as e:
+        import logging
+        logging.getLogger("sentinel").warning(f"Startup replay priming notice: {e}")
+
     if settings.live_tail_enabled:
         live_tailer.start()
     try:
         yield
     finally:
+        from sentinel.api.routes.replay import _stop_playback_loop
+
+        _stop_playback_loop()
         if settings.live_tail_enabled:
             live_tailer.stop()
 

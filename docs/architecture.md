@@ -11,7 +11,7 @@
 | `scripts/live/record_live.py` | Separate real-time recorder: GDELT GKG and SEC 8-K filings appended to `data/live/*.csv` |
 | `sentinel.contracts` | Pydantic contracts: `InputRecord`, `RiskSignal`, stress positions and results |
 | `sentinel.ingestion` | CSV adapters for news and social records |
-| `sentinel.replay` | Logical clock, run controller (sources, badges, live append), exact + MinHash-LSH dedup |
+| `sentinel.replay` | Logical clock, background playback loop task with clock speed control (1.0x - 100.0x), SSE status sync, exact + MinHash-LSH dedup |
 | `sentinel.nlp.entities` | S&P 500 entity linker with exact spans and role guards; `resolve_all` for multi-entity texts |
 | `sentinel.nlp.events` | Calibrated event classifier (`models/event_v2.joblib`), abstention, evidence gates, PS-aligned label mapping |
 | `sentinel.nlp.sentiment` | Sentiment backends (local FinBERT, `models/sentiment_v2.joblib`, lexicon fallback) and policy/indicator direction |

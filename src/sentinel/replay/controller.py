@@ -93,6 +93,10 @@ class ReplayController:
         return self._run_id
 
     @property
+    def scenario_id(self) -> Optional[str]:
+        return self._scenario_id
+
+    @property
     def state(self) -> RunState:
         return self._state
 
@@ -165,8 +169,8 @@ class ReplayController:
             self._state = RunState.PAUSED
 
     def resume(self) -> None:
-        """Resume replay progression from PAUSED state."""
-        if self._state == RunState.PAUSED:
+        """Resume replay progression from PAUSED or IDLE state."""
+        if self._state in (RunState.PAUSED, RunState.IDLE):
             self._state = RunState.RUNNING
             self._pause_event.set()
 

@@ -38,6 +38,11 @@ export function useReplay(options: UseReplayOptions = {}) {
       setSelectedScenario(scId);
       const st = await loadReplayScenario(scId, SOURCE_PRESETS[scId]?.sources ?? ['news_demo', 'social_demo']);
       setReplayStatus(st);
+      if (st.processed_count === 0 && st.pending_records > 0) {
+        await stepReplay();
+        const updated = await fetchReplayStatus();
+        setReplayStatus(updated);
+      }
       const sigs = await fetchSignals(50);
       options.onSignalsUpdated?.(sigs);
       if (sigs.length > 0) options.onSignalSelected?.(sigs[0]);

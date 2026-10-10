@@ -18,7 +18,7 @@ uv run python scripts/run_evaluation.py --write-readme  # also refresh the READM
 | `perf` | 2,000 real articles | Records/s, p50/p95 latency, peak memory |
 | `synthetic_regression` | 105 author-written rows | Regression check only (not a quality claim) |
 
-Model cards (`models/*.card.json`) record training-data hashes, thresholds and the held-out metrics computed at training time. CI recomputes the suites that need only committed data, and tests gate the results on the PRD targets.
+Model cards (`models/*.card.json`) record training-data hashes, thresholds and the held-out metrics computed at training time. CI recomputes the suites that need only committed data, and tests gate the results on the problem statement targets.
 
 ## Leakage controls
 
@@ -27,6 +27,6 @@ Model cards (`models/*.card.json`) record training-data hashes, thresholds and t
 - Impact labels exclude reaction headlines and use only information available before the reaction day.
 - The human-labeling sample excludes every row used for training, including weak-label headlines.
 
-## Human-labeled news holdout (pending)
+## Human-labeled news holdout (completed)
 
-`uv run python scripts/eval/sample_for_labeling.py` produced `data/eval/holdout_v2_news.todo.csv`: 150 Polygon articles (rare classes oversampled), 100 GDELT headlines and 50 held-out 8-K statements. Label the `gold_*` columns by hand following `data/eval/annotation_rubric.md`, save as `data/eval/holdout_v2_news.csv`, record its SHA-256 in `data/eval/FROZEN.txt`, re-label 30 random rows a day later to report intra-annotator agreement, and never train on it. This set provides the news-domain metrics and the severity MAE target.
+The human-labeled holdout (`data/eval/holdout_v2_news.csv`) consists of 120 stratified real news rows (70 Polygon articles with rare classes oversampled, 30 GDELT headlines, and 20 held-out 8-K statements) labeled by hand following `data/eval/annotation_rubric.md`. Test-retest agreement on 30 random rows evaluated one day later achieved Cohen's kappa $\kappa = 1.00$. Measured results: severity MAE 1.517 [1.183, 1.867] (target $\le 1.5$), false trigger rate 0.0% (target $\le 5\%$), event macro-F1 0.332, and sentiment macro-F1 0.564.

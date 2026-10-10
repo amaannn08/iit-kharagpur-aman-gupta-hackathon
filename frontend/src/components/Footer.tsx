@@ -31,15 +31,15 @@ export const Footer: React.FC<FooterProps> = ({
   onSpeed,
 }) => {
   return (
-    <footer className="bg-[#111827] border-t border-gray-800 px-6 py-3 flex flex-wrap items-center justify-between gap-4 text-xs shrink-0">
+    <footer className="bg-black border-t border-zinc-800 px-6 py-2.5 flex flex-wrap items-center justify-between gap-4 text-xs shrink-0">
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
-          <span className="text-gray-400 font-medium">Replay source:</span>
+          <span className="text-zinc-400 font-medium">Replay source:</span>
           <select
             value={selectedScenario}
             onChange={(e) => onLoadScenario(e.target.value)}
             disabled={replayLoading}
-            className="bg-[#0B0F17] border border-gray-800 rounded px-2.5 py-1 text-xs text-cyan-300 font-mono focus:outline-none focus:border-cyan-500"
+            className="bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1 text-xs text-white font-mono focus:outline-none focus:border-zinc-500"
           >
             {Object.entries(SOURCE_PRESETS).map(([id, p]) => (
               <option key={id} value={id}>
@@ -59,21 +59,21 @@ export const Footer: React.FC<FooterProps> = ({
                 liveStatus?.mode === 'SYNTHETIC'
             );
             let badge = 'REPLAY';
-            let badgeCls = 'border-gray-700 bg-gray-800 text-gray-300';
+            let badgeCls = 'border-zinc-700 bg-zinc-900 text-zinc-300';
 
             if (isLive) {
               const lag = liveStatus?.lag_seconds;
               const alive = liveStatus?.recorder_alive ?? false;
               if (lag !== null && lag !== undefined && lag < 600 && alive) {
                 badge = 'LIVE';
-                badgeCls = 'border-emerald-600 bg-emerald-950/80 text-emerald-300 animate-pulse';
+                badgeCls = 'border-emerald-700 bg-emerald-950/60 text-emerald-400';
               } else {
                 badge = 'STALE';
-                badgeCls = 'border-amber-600 bg-amber-950/80 text-amber-300';
+                badgeCls = 'border-zinc-700 bg-zinc-900 text-zinc-400';
               }
             } else if (isSynthetic) {
               badge = 'SYNTHETIC';
-              badgeCls = 'border-purple-700 bg-purple-950/80 text-purple-300';
+              badgeCls = 'border-zinc-700 bg-zinc-900 text-zinc-300';
             }
 
             const lagText = (() => {
@@ -92,7 +92,7 @@ export const Footer: React.FC<FooterProps> = ({
                   {badge}
                 </span>
                 {isLive && lagText && (
-                  <span className="text-gray-400 font-mono text-[10px] hidden sm:inline" data-testid="live-lag-text">
+                  <span className="text-zinc-500 font-mono text-[10px] hidden sm:inline" data-testid="live-lag-text">
                     {lagText}
                   </span>
                 )}
@@ -103,7 +103,7 @@ export const Footer: React.FC<FooterProps> = ({
             <button
               onClick={onAppendLive}
               disabled={replayLoading}
-              className="px-2 py-1 rounded border border-cyan-700 text-cyan-300 hover:bg-cyan-950"
+              className="px-2.5 py-1 rounded bg-zinc-900 border border-zinc-700 text-zinc-200 hover:bg-zinc-800 transition-colors"
               title="Queue records the live recorder appended since loading"
             >
               Pull new live records
@@ -111,12 +111,12 @@ export const Footer: React.FC<FooterProps> = ({
           )}
         </div>
 
-        <div className="flex items-center gap-1 bg-gray-900 border border-gray-800 rounded p-1">
+        <div className="flex items-center gap-1 bg-zinc-950 border border-zinc-800 rounded p-1">
           {replayStatus?.state === 'running' ? (
             <button
               onClick={onPause}
               disabled={replayLoading}
-              className="p-1.5 rounded hover:bg-gray-800 text-amber-400 transition-colors"
+              className="p-1.5 rounded hover:bg-zinc-900 text-zinc-200 transition-colors"
               title="Pause Replay"
             >
               <Pause className="w-3.5 h-3.5" />
@@ -125,7 +125,7 @@ export const Footer: React.FC<FooterProps> = ({
             <button
               onClick={onPlay}
               disabled={replayLoading}
-              className="p-1.5 rounded hover:bg-gray-800 text-emerald-400 transition-colors"
+              className="p-1.5 rounded hover:bg-zinc-900 text-emerald-400 transition-colors"
               title="Play Replay"
             >
               <Play className="w-3.5 h-3.5 fill-emerald-400" />
@@ -135,7 +135,7 @@ export const Footer: React.FC<FooterProps> = ({
           <button
             onClick={onStep}
             disabled={replayLoading}
-            className="p-1.5 rounded hover:bg-gray-800 text-cyan-400 transition-colors"
+            className="p-1.5 rounded hover:bg-zinc-900 text-zinc-300 hover:text-white transition-colors"
             title="Step 1 Record Forward"
           >
             <StepForward className="w-3.5 h-3.5" />
@@ -144,7 +144,7 @@ export const Footer: React.FC<FooterProps> = ({
           <button
             onClick={onReset}
             disabled={replayLoading}
-            className="p-1.5 rounded hover:bg-gray-800 text-gray-400 hover:text-white transition-colors"
+            className="p-1.5 rounded hover:bg-zinc-900 text-zinc-400 hover:text-white transition-colors"
             title="Reset Replay"
           >
             <RotateCcw className="w-3.5 h-3.5" />
@@ -159,8 +159,8 @@ export const Footer: React.FC<FooterProps> = ({
               onClick={() => onSpeed(spd)}
               className={`px-2 py-0.5 rounded text-[11px] transition-colors ${
                 replayStatus?.speed === spd
-                  ? 'bg-cyan-950 text-cyan-300 border border-cyan-700'
-                  : 'bg-gray-900 text-gray-400 hover:text-gray-200'
+                  ? 'bg-white text-black font-bold border border-white'
+                  : 'bg-zinc-950 text-zinc-400 hover:text-zinc-200 border border-zinc-800'
               }`}
             >
               {spd}x
@@ -168,7 +168,7 @@ export const Footer: React.FC<FooterProps> = ({
           ))}
         </div>
 
-        <span className="font-mono text-gray-400 text-xs">
+        <span className="font-mono text-zinc-400 text-xs">
           State: <span className="text-white uppercase font-bold">{replayStatus?.state || 'IDLE'}</span>
         </span>
       </div>
@@ -176,14 +176,14 @@ export const Footer: React.FC<FooterProps> = ({
       {/* Progress & Counters */}
       <div className="flex items-center gap-4 font-mono text-xs">
         <div className="flex items-center gap-2">
-          <span className="text-gray-500">Processed:</span>
+          <span className="text-zinc-500">Processed:</span>
           <span className="text-white font-bold">
             {replayStatus?.processed_count || 0} / {replayStatus?.total_records || 0}
           </span>
         </div>
-        <div className="w-24 bg-gray-800 h-1.5 rounded-full overflow-hidden">
+        <div className="w-24 bg-zinc-800 h-1.5 rounded-full overflow-hidden">
           <div
-            className="bg-cyan-500 h-full transition-all duration-300"
+            className="bg-emerald-500 h-full transition-all duration-300"
             style={{
               width: `${
                 replayStatus && replayStatus.total_records > 0
@@ -193,8 +193,8 @@ export const Footer: React.FC<FooterProps> = ({
             }}
           />
         </div>
-        <div className="text-gray-500">
-          Dups: <span className="text-amber-400">{replayStatus?.duplicate_count || 0}</span>
+        <div className="text-zinc-500">
+          Dups: <span className="text-zinc-300 font-medium">{replayStatus?.duplicate_count || 0}</span>
         </div>
       </div>
     </footer>

@@ -13,7 +13,7 @@ export function MetricsPanel() {
 
   if (failed || (m && !m.public_real)) {
     return (
-      <div className="bg-[#111827] border border-gray-800 rounded-lg p-4 text-xs text-gray-500 font-mono" data-testid="metrics-panel">
+      <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-4 text-xs text-zinc-500 font-mono" data-testid="metrics-panel">
         Real-data metrics unavailable: run <code>uv run python scripts/run_evaluation.py</code>.
       </div>
     );
@@ -40,32 +40,32 @@ export function MetricsPanel() {
     : [];
 
   return (
-    <div className="bg-[#111827] border border-gray-800 rounded-lg p-4 grid grid-cols-12 gap-4" data-testid="metrics-panel">
+    <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-4 grid grid-cols-12 gap-4" data-testid="metrics-panel">
       <div className="col-span-12 lg:col-span-7 text-xs">
-        <h3 className="font-semibold text-gray-300 mb-2">Measured on real held-out data</h3>
+        <h3 className="font-semibold text-zinc-300 mb-2">Measured on real held-out data</h3>
         <table className="w-full font-mono">
           <tbody>
             {rows.map(([k, v, c]) => (
-              <tr key={k} className="border-t border-gray-800">
-                <td className="py-1.5 text-gray-400 pr-2">{k}</td>
-                <td className="py-1.5 text-cyan-300 font-bold whitespace-nowrap">{v}</td>
-                <td className="py-1.5 text-gray-500 pl-2">{c}</td>
+              <tr key={k} className="border-t border-zinc-800/80">
+                <td className="py-1.5 text-zinc-400 pr-2">{k}</td>
+                <td className="py-1.5 text-white font-bold whitespace-nowrap">{v}</td>
+                <td className="py-1.5 text-zinc-500 pl-2">{c}</td>
               </tr>
             ))}
           </tbody>
         </table>
-        <p className="mt-2 text-gray-500">Generated {m.generated_at} by scripts/run_evaluation.py</p>
+        <p className="mt-2 text-zinc-500">Generated {m.generated_at} by scripts/run_evaluation.py</p>
       </div>
       {deciles.length > 0 && (
         <div className="col-span-12 lg:col-span-5">
-          <h3 className="text-xs font-semibold text-gray-300 mb-2">Mean |abnormal return z| by impact decile</h3>
+          <h3 className="text-xs font-semibold text-zinc-300 mb-2">Mean |abnormal return z| by impact decile</h3>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={deciles}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
-              <XAxis dataKey="decile" tick={{ fill: '#9ca3af', fontSize: 10 }} />
-              <YAxis tick={{ fill: '#9ca3af', fontSize: 10 }} />
-              <Tooltip contentStyle={{ background: '#0B0F17', border: '1px solid #374151', fontSize: 11 }} />
-              <Bar dataKey="z" fill="#a78bfa" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
+              <XAxis dataKey="decile" tick={{ fill: '#71717a', fontSize: 10 }} />
+              <YAxis tick={{ fill: '#71717a', fontSize: 10 }} />
+              <Tooltip contentStyle={{ background: '#09090b', border: '1px solid #27272a', fontSize: 11 }} />
+              <Bar dataKey="z" fill="#ffffff" />
             </BarChart>
           </ResponsiveContainer>
         </div>

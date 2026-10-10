@@ -41,6 +41,18 @@ The following open-source dependencies are currently declared in `pyproject.toml
   - **License:** BSD-3-Clause
   - **Copyright:** (c) 2017-present Encode OSS Ltd.
   - **URL:** https://www.uvicorn.org/
+- **scikit-learn**
+  - **License:** BSD-3-Clause
+  - **Copyright:** (c) 2007-2024 The scikit-learn developers
+  - **URL:** https://scikit-learn.org/
+- **joblib**
+  - **License:** BSD-3-Clause
+  - **Copyright:** (c) 2008-2024 The joblib developers
+  - **URL:** https://joblib.readthedocs.io/
+- **datasketch**
+  - **License:** MIT License
+  - **Copyright:** (c) 2017 Eric Zhu
+  - **URL:** https://github.com/ekzhu/datasketch
 - **pytest & pytest-asyncio**
   - **License:** MIT License
   - **Copyright:** (c) 2004-2024 Holger Krekel and contributors
@@ -67,6 +79,10 @@ The following open-source dependencies are currently declared in `pyproject.toml
   - **License:** ISC License
   - **Copyright:** (c) 2022 Lucide Contributors
   - **URL:** https://lucide.dev/
+- **Recharts**
+  - **License:** MIT License
+  - **Copyright:** (c) 2015-present Recharts Group
+  - **URL:** https://github.com/recharts/recharts
 - **Vitest**
   - **License:** MIT License
   - **Copyright:** (c) 2021-present Anthony Fu and Vitest contributors

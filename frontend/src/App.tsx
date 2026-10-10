@@ -99,9 +99,15 @@ export function App() {
       if (pRes.status === 'fulfilled') setPortfolio(pRes.value);
       if (rRes.status === 'fulfilled') setReplayStatus(rRes.value);
       if (sRes.status === 'fulfilled') {
-        setSignals(sRes.value);
-        if (sRes.value.length > 0 && !selectedSignal) {
-          setSelectedSignal(sRes.value[0]);
+        const fetched = sRes.value;
+        setSignals(fetched);
+        if (fetched.length > 0 && !selectedSignal) {
+          setSelectedSignal(fetched[0]);
+        } else if (fetched.length === 0) {
+          // Cold-start self-healing: automatically prime demo scenario and advance initial records
+          handleLoadScenario('demo').then(() => {
+            handleStep();
+          });
         }
       }
       if (strRes.status === 'fulfilled' && strRes.value.length > 0) {
@@ -175,7 +181,7 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0B0F17] text-[#E5E7EB] flex flex-col font-sans">
+    <div className="min-h-screen bg-black text-zinc-100 flex flex-col font-sans selection:bg-zinc-800 selection:text-white">
       <Header
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -197,11 +203,20 @@ export function App() {
               onFilterEventChange={setFilterEvent}
               showDuplicates={showDuplicates}
               onShowDuplicatesChange={setShowDuplicates}
+              onLoadScenario={handleLoadScenario}
+              onPlay={handlePlay}
+              totalLossUsd={activeStressResult?.total_pnl_usd}
             />
             <Inspector
               selectedSignal={selectedSignal}
               activeStressResult={activeStressResult}
               onViewStressPnL={() => setActiveTab('stress')}
+              onSelectTopSignal={() => {
+                if (signals.length > 0) {
+                  const top = [...signals].sort((a, b) => b.impact.score - a.impact.score)[0];
+                  setSelectedSignal(top);
+                }
+              }}
             />
           </div>
         )}

@@ -39,6 +39,16 @@ export function useSSE(options: UseSSEOptions = {}) {
         }
       });
 
+      es.addEventListener('signal_emitted', (event) => {
+        try {
+          const payload = JSON.parse(event.data);
+          if (payload.signal) onSignalRef.current?.(payload.signal);
+          if (payload.stress_run) onStressRunRef.current?.(payload.stress_run);
+        } catch {
+          // ignore parse error
+        }
+      });
+
       es.addEventListener('stress_run', (event) => {
         try {
           const sRun: StressRunResult = JSON.parse(event.data);

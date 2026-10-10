@@ -14,9 +14,9 @@ import {
 import { fetchIndexCurrent, fetchIndexHistory, IndexCurrent, IndexRecord, resetIndex } from '../api/client';
 
 const PALETTE = [
-  '#22d3ee', '#a78bfa', '#f472b6', '#facc15', '#4ade80', '#fb923c', '#60a5fa', '#f87171',
-  '#2dd4bf', '#c084fc', '#e879f9', '#fde047', '#86efac', '#fdba74', '#93c5fd', '#fca5a5',
-  '#5eead4', '#d8b4fe', '#f0abfc', '#bef264',
+  '#f4f4f5', '#e4e4e7', '#d4d4d8', '#a1a1aa', '#71717a', '#52525b', '#3f3f46', '#27272a',
+  '#e2e8f0', '#cbd5e1', '#94a3b8', '#64748b', '#475569', '#334155', '#1e293b', '#0f172a',
+  '#d1d5db', '#9ca3af', '#6b7280', '#4b5563',
 ];
 
 const pct = (v: number) => `${(v * 100).toFixed(1)}%`;
@@ -45,10 +45,10 @@ export function IndexPanel() {
   }, []);
 
   if (error && !current) {
-    return <div className="p-6 text-xs text-gray-500 font-mono">Index unavailable: {error}</div>;
+    return <div className="p-6 text-xs text-zinc-500 font-mono">Index unavailable: {error}</div>;
   }
   if (!current) {
-    return <div className="p-6 text-xs text-gray-500 font-mono">Loading mock index...</div>;
+    return <div className="p-6 text-xs text-zinc-500 font-mono">Loading mock index...</div>;
   }
 
   const tickers = Object.keys(current.weights);
@@ -62,36 +62,36 @@ export function IndexPanel() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-sm font-bold text-white">Module A: Sentiment-Driven Index Rebalancer</h2>
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-zinc-400">
             {current.label}. Positive sentiment raises a weight, negative lowers it; caps {pct(current.constraints.name_cap)} per
             name, {pct(current.constraints.sector_cap)} per sector; sentiment half-life {current.constraints.halflife_days} days.
           </p>
         </div>
         <div className="flex items-center gap-3 text-xs">
-          <span className="font-mono text-cyan-400">{current.rebalances} rebalances</span>
+          <span className="font-mono text-white bg-zinc-900 border border-zinc-700 px-2.5 py-1 rounded font-semibold">{current.rebalances} rebalances</span>
           <button
             onClick={async () => {
               await resetIndex();
               refresh();
             }}
-            className="px-3 py-1.5 rounded border border-gray-700 text-gray-300 hover:bg-gray-800"
+            className="px-3 py-1.5 rounded border border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800 transition-colors"
           >
             Reset index
           </button>
         </div>
       </div>
 
-      <div className="bg-[#111827] border border-gray-800 rounded-lg p-4">
-        <h3 className="text-xs font-semibold text-gray-300 mb-3">Index weights over time</h3>
+      <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-4">
+        <h3 className="text-xs font-semibold text-zinc-300 mb-3">Index weights over time</h3>
         <ResponsiveContainer width="100%" height={300}>
           <AreaChart data={series} stackOffset="expand">
-            <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
-            <XAxis dataKey="step" tick={{ fill: '#9ca3af', fontSize: 10 }} label={{ value: 'rebalance #', fill: '#6b7280', fontSize: 10, position: 'insideBottom' }} />
-            <YAxis tickFormatter={(v) => `${Math.round(v * 100)}%`} tick={{ fill: '#9ca3af', fontSize: 10 }} />
+            <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
+            <XAxis dataKey="step" tick={{ fill: '#a1a1aa', fontSize: 10 }} label={{ value: 'rebalance #', fill: '#71717a', fontSize: 10, position: 'insideBottom' }} />
+            <YAxis tickFormatter={(v) => `${Math.round(v * 100)}%`} tick={{ fill: '#a1a1aa', fontSize: 10 }} />
             <Tooltip
               formatter={(v: number) => pct(v)}
               labelFormatter={(i) => series[Number(i)]?.label ?? i}
-              contentStyle={{ background: '#0B0F17', border: '1px solid #374151', fontSize: 11 }}
+              contentStyle={{ background: '#09090b', border: '1px solid #27272a', fontSize: 11 }}
             />
             {tickers.map((t, i) => (
               <Area key={t} type="stepAfter" dataKey={t} stackId="w" stroke="none" fill={PALETTE[i % PALETTE.length]} fillOpacity={0.85} />
@@ -101,33 +101,33 @@ export function IndexPanel() {
       </div>
 
       <div className="grid grid-cols-12 gap-6">
-        <div className="col-span-12 lg:col-span-7 bg-[#111827] border border-gray-800 rounded-lg p-4">
-          <h3 className="text-xs font-semibold text-gray-300 mb-3">Current weight vs base (equal weight)</h3>
+        <div className="col-span-12 lg:col-span-7 bg-zinc-950 border border-zinc-800 rounded-lg p-4">
+          <h3 className="text-xs font-semibold text-zinc-300 mb-3">Current weight vs base (equal weight)</h3>
           <ResponsiveContainer width="100%" height={320}>
             <BarChart data={bars} layout="vertical" margin={{ left: 10 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
-              <XAxis type="number" tickFormatter={(v) => pct(v)} tick={{ fill: '#9ca3af', fontSize: 10 }} />
-              <YAxis type="category" dataKey="ticker" width={50} tick={{ fill: '#d1d5db', fontSize: 10 }} />
-              <Tooltip formatter={(v: number) => pct(v)} contentStyle={{ background: '#0B0F17', border: '1px solid #374151', fontSize: 11 }} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
+              <XAxis type="number" tickFormatter={(v) => pct(v)} tick={{ fill: '#a1a1aa', fontSize: 10 }} />
+              <YAxis type="category" dataKey="ticker" width={50} tick={{ fill: '#d4d4d8', fontSize: 10 }} />
+              <Tooltip formatter={(v: number) => pct(v)} contentStyle={{ background: '#09090b', border: '1px solid #27272a', fontSize: 11 }} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar dataKey="base" name="Base" fill="#374151" />
-              <Bar dataKey="current" name="Current" fill="#22d3ee" />
+              <Bar dataKey="base" name="Base" fill="#52525b" />
+              <Bar dataKey="current" name="Current" fill="#ffffff" />
             </BarChart>
           </ResponsiveContainer>
         </div>
-        <div className="col-span-12 lg:col-span-5 bg-[#111827] border border-gray-800 rounded-lg p-4 text-xs">
-          <h3 className="font-semibold text-gray-300 mb-3">Why each weight moved</h3>
+        <div className="col-span-12 lg:col-span-5 bg-zinc-950 border border-zinc-800 rounded-lg p-4 text-xs">
+          <h3 className="font-semibold text-zinc-300 mb-3">Why each weight moved</h3>
           <table className="w-full font-mono">
-            <thead className="text-gray-500">
+            <thead className="text-zinc-500">
               <tr><th className="text-left">Ticker</th><th className="text-right">Weight</th><th className="text-right">Sentiment</th><th className="text-left pl-3">Reason</th></tr>
             </thead>
             <tbody>
               {bars.map((b) => (
-                <tr key={b.ticker} className="border-t border-gray-800">
-                  <td className="py-1 text-gray-200">{b.ticker}</td>
-                  <td className="text-right text-cyan-300">{pct(b.current)}</td>
-                  <td className={`text-right ${b.ema > 0 ? 'text-emerald-400' : b.ema < 0 ? 'text-red-400' : 'text-gray-500'}`}>{b.ema.toFixed(2)}</td>
-                  <td className="pl-3 text-gray-400">{current.reasons[b.ticker]}</td>
+                <tr key={b.ticker} className="border-t border-zinc-800">
+                  <td className="py-1 text-zinc-200">{b.ticker}</td>
+                  <td className="text-right text-white font-semibold">{pct(b.current)}</td>
+                  <td className={`text-right ${b.ema > 0 ? 'text-emerald-400' : b.ema < 0 ? 'text-red-400' : 'text-zinc-500'}`}>{b.ema.toFixed(2)}</td>
+                  <td className="pl-3 text-zinc-400">{current.reasons[b.ticker]}</td>
                 </tr>
               ))}
             </tbody>
