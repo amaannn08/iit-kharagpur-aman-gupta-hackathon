@@ -3,6 +3,7 @@
 import uuid
 from collections import defaultdict
 from datetime import datetime
+from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 from sentinel.contracts.stress import (
@@ -38,7 +39,19 @@ class ValuationEngine:
         contagion_graph: Optional[ContagionGraph] = None,
     ) -> None:
         self.portfolio = portfolio
-        self.contagion_graph = contagion_graph or ContagionGraph()
+        if contagion_graph is not None:
+            self.contagion_graph = contagion_graph
+        else:
+            entities = {p.entity_id.upper() for p in portfolio.all_positions()}
+            demo_graph = (
+                Path(__file__).resolve().parent.parent.parent.parent
+                / "data"
+                / "graph_edges_demo.csv"
+            )
+            if "APEX" in entities and demo_graph.exists():
+                self.contagion_graph = ContagionGraph(demo_graph)
+            else:
+                self.contagion_graph = ContagionGraph()
 
     def _tier(self, rating: Optional[str], shock: ScaledShock) -> float:
         return spread_multiplier(rating) if shock.rating_tiered else 1.0

@@ -100,12 +100,12 @@
     {
       "file_path": "data/graph_edges.csv",
       "format": "csv",
-      "description": "Directed contagion graph edges mapping customer-supplier dependencies and credit linkages for second-order risk propagation.",
-      "is_synthetic": true,
-      "license": "MIT License (Project-Authored Synthetic Relationships)",
-      "sha256": "d23e1032c12b83428e6aa750ed008d1616c06f4c66cf2e591d11f5e644df2ae1",
-      "byte_size": 1236,
-      "record_count": 10,
+      "description": "Real contagion graph from 252d residual correlations ex-SPY and SEC 10-K disclosures",
+      "is_synthetic": false,
+      "license": "Public SEC EDGAR + derived from CRSP/market historical closes",
+      "sha256": "875730f6b8600573435077e8103f401de7b8f3d32254179833f9044293deeda1",
+      "byte_size": 24918,
+      "record_count": 226,
       "columns": [
         "source_ticker",
         "target_ticker",
@@ -113,7 +113,8 @@
         "transmission_factor",
         "sign",
         "is_synthetic",
-        "rationale"
+        "rationale",
+        "evidence"
       ]
     },
     {

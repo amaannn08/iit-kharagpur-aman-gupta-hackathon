@@ -8,6 +8,7 @@ from sentinel.config import settings
 from sentinel.contracts.signals import RiskSignal
 from sentinel.contracts.stress import StressRunResult
 from sentinel.nlp.sentiment import macro_polarity
+from sentinel.stress.contagion import ContagionGraph
 from sentinel.stress.portfolio import WholesalePortfolio
 from sentinel.stress.sectors import normalize_sector
 from sentinel.stress.shocks import (
@@ -46,7 +47,15 @@ class StressEngine:
                 if existing:
                     prof_port = WholesalePortfolio.load_many(existing)
                     self.profiles[prof_name] = prof_port
-                    self.valuation_engines[prof_name] = ValuationEngine(prof_port)
+                    graph_file = (
+                        settings.data_dir / "graph_edges_demo.csv"
+                        if prof_name == "synthetic_demo"
+                        else settings.data_dir / "graph_edges.csv"
+                    )
+                    c_graph = ContagionGraph(graph_file) if graph_file.exists() else None
+                    self.valuation_engines[prof_name] = ValuationEngine(
+                        prof_port, contagion_graph=c_graph
+                    )
 
             default_prof = settings.default_portfolio_profile
             self.portfolio = self.profiles.get(default_prof) or next(iter(self.profiles.values()))
