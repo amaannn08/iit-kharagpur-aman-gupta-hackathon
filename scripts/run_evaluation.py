@@ -22,6 +22,7 @@ import csv
 import hashlib
 import importlib.util
 import json
+import re
 import resource
 import sys
 import time
@@ -55,6 +56,7 @@ TARGETS = {
     "event_macro_f1": 0.70,
     "sentiment_macro_f1": 0.75,
     "entity_precision": 0.90,
+    "entity_recall_mentioned": 0.90,
     "severity_mae": 1.5,
     "p95_latency_s": 2.0,
     "peak_rss_gb": 4.0,
@@ -159,29 +161,66 @@ def suite_public_real() -> Dict[str, Any]:
 
 
 def suite_entity_polygon() -> Dict[str, Any]:
+    from sentinel.nlp.entities import CANONICAL_SHARE_CLASSES
+
     news = pd.read_csv(DATA / "real" / "polygon_news" / "polygon_news.csv")
     silver = pd.read_csv(DATA / "real" / "polygon_news" / "silver_labels.csv")
     gold = (
         silver[silver.label_source == "polygon_tickers"]
         .groupby("record_id")
-        .ticker.apply(lambda s: {t.replace(".", "-") for t in s})
+        .ticker.apply(
+            lambda s: {
+                CANONICAL_SHARE_CLASSES.get(t.replace(".", "-"), t.replace(".", "-")) for t in s
+            }
+        )
     )
     linker = EntityLinker()
-    universe = {t for t, e in linker.entities.items() if not e.is_synthetic}
+    universe = {
+        CANONICAL_SHARE_CLASSES.get(t, t)
+        for t, e in linker.entities.items()
+        if not e.is_synthetic
+    }
+
+    def is_mentioned(ticker: str, text: str) -> bool:
+        ke = linker.entities.get(ticker)
+        if not ke:
+            return False
+        if re.search(rf"(\$|\b){re.escape(ticker)}\b", text, re.I):
+            return True
+        if ke.canonical_name.lower() in text.lower():
+            return True
+        for a in ke.aliases:
+            if len(a) >= 3 and a.lower() in text.lower():
+                return True
+        return False
+
     tp = fp = fn = n = 0
+    tp_ment = fn_ment = 0
     for r in news.itertuples():
         g = gold.get(r.record_id, set()) & universe
         if not g:
             continue
         n += 1
-        p = {t for t in linker.find_companies(f"{r.headline}. {r.body if isinstance(r.body, str) else ''}")
-             if t in universe}  # fmt: skip
-        tp, fp, fn = tp + len(p & g), fp + len(p - g), fn + len(g - p)
+        text = f"{r.headline}. {r.body if isinstance(r.body, str) else ''}"
+        p = {
+            CANONICAL_SHARE_CLASSES.get(t, t)
+            for t in linker.find_companies(text)
+            if CANONICAL_SHARE_CLASSES.get(t, t) in universe
+        }
+        tp += len(p & g)
+        fp += len(p - g)
+        fn += len(g - p)
+        g_ment = {t for t in g if is_mentioned(t, text)}
+        tp_ment += len(p & g_ment)
+        fn_ment += len(g_ment - p)
+
     return {
         "dataset": "Polygon 2023 news (real), gold = article tickers[] within the S&P 500 universe",
         "articles": n,
         "precision": round(tp / (tp + fp), 4),
         "recall": round(tp / (tp + fn), 4),
+        "recall_all_tags": round(tp / (tp + fn), 4),
+        "recall_mentioned": round(tp_ment / (tp_ment + fn_ment), 4) if (tp_ment + fn_ment) else 0.0,
     }
 
 
@@ -475,9 +514,14 @@ def headline_rows(m: Dict[str, Any]) -> List[List[str]]:
                      f"{s['macro_f1']:.3f}", f">= {TARGETS['sentiment_macro_f1']}",
                      f"lexicon {s['baseline_lexicon_macro_f1']:.3f}"])  # fmt: skip
     if ent := m.get("entity_polygon"):
-        rows.append([f"Entity linking, {ent['articles']:,} real news articles",
-                     f"P {ent['precision']:.3f} / R {ent['recall']:.3f}",
-                     f"P >= {TARGETS['entity_precision']}", "old alias table: entity found in 5%"])  # fmt: skip
+        rec_ment = ent.get("recall_mentioned", ent["recall"])
+        rec_all = ent.get("recall_all_tags", ent["recall"])
+        rows.append([
+            f"Entity linking, {ent['articles']:,} real news articles",
+            f"P {ent['precision']:.3f} / R {rec_ment:.3f} (mentioned)",
+            f"P >= {TARGETS['entity_precision']}, R >= 0.90",
+            f"all tags R {rec_all:.3f} (incl. unmentioned tags)",
+        ])
     if mi := m.get("market_impact"):
         lo, hi = mi["learned_oof_spearman_ci95"]
         rows.append([f"Impact vs next-day abnormal return, {mi['events']:,} real events",

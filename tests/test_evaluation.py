@@ -23,6 +23,7 @@ def test_committed_metrics_meet_targets_on_real_data():
     assert m["public_real"]["event"]["precision_when_fired"] >= 0.88
     assert m["public_real"]["sentiment"]["macro_f1"] >= t["sentiment_macro_f1"]
     assert m["entity_polygon"]["precision"] >= t["entity_precision"]
+    assert m["entity_polygon"].get("recall_mentioned", 1.0) >= 0.90
     assert m["market_impact"]["learned_oof_spearman_ci95"][0] > 0
     assert m["perf"]["latency_p95_s"] <= t["p95_latency_s"]
     assert m["perf"]["peak_rss_gb"] <= t["peak_rss_gb"]

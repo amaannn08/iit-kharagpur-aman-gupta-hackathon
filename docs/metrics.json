@@ -135,9 +135,11 @@
  },
  "entity_polygon": {
   "dataset": "Polygon 2023 news (real), gold = article tickers[] within the S&P 500 universe",
-  "articles": 2518,
-  "precision": 0.9708,
-  "recall": 0.588
+  "articles": 2521,
+  "precision": 0.969,
+  "recall": 0.6023,
+  "recall_all_tags": 0.6023,
+  "recall_mentioned": 0.9805
  },
  "market_impact": {
   "events": 2617,
@@ -339,11 +341,12 @@
   "sentiment_macro_f1": 0.3477,
   "severity_mae": 2.79
  },
- "generated_at": "2026-10-10T14:46:45+00:00",
+ "generated_at": "2026-10-10T14:56:12+00:00",
  "targets": {
   "event_macro_f1": 0.7,
   "sentiment_macro_f1": 0.75,
   "entity_precision": 0.9,
+  "entity_recall_mentioned": 0.9,
   "severity_mae": 1.5,
   "p95_latency_s": 2.0,
   "peak_rss_gb": 4.0,

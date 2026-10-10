@@ -137,3 +137,26 @@ def test_historical_constituents_resolution():
     ref_sbny, _ = linker.resolve("Regulators close Signature Bank to prevent systemic fallout")
     assert ref_sbny.ticker == "SBNY"
 
+
+def test_share_classes_and_possessive_entity_names():
+    linker = EntityLinker()
+    # Alphabet / Google share classes resolve to canonical GOOGL
+    ref_goog, _ = linker.resolve("Alphabet's Google unveils new generative AI tools for cloud")
+    assert ref_goog.ticker == "GOOGL"
+
+    # Bare GOOG resolves to GOOGL
+    ref_bare, _ = linker.resolve("Trading volume surged for GOOG shares in after-hours")
+    assert ref_bare.ticker == "GOOGL"
+
+    # Cisco with shares
+    ref_csco, _ = linker.resolve("Cisco shares gained 3% on earnings beat")
+    assert ref_csco.ticker == "CSCO"
+
+    # Archer-Daniels-Midland
+    ref_adm, _ = linker.resolve("Archer-Daniels-Midland reports higher quarterly operating profit")
+    assert ref_adm.ticker == "ADM"
+
+    # Meta possessive with financial context
+    ref_meta, _ = linker.resolve("Meta's advertising revenue gained 15% year-over-year")
+    assert ref_meta.ticker == "META"
+

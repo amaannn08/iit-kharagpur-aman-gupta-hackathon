@@ -81,9 +81,44 @@ PHRASE_EXCLUSIONS = {
     "TGT": (re.compile(r"\bprice\s*$", re.I), None),  # "price target"
     "DD": (None, re.compile(r"^\s+analysis\b", re.I)),  # "DuPont analysis"
 }
+CANONICAL_SHARE_CLASSES: Dict[str, str] = {
+    "GOOG": "GOOGL",
+    "FOX": "FOXA",
+    "NWS": "NWSA",
+    "BRK-A": "BRK-B",
+    "BRK.A": "BRK-B",
+}
+
+EXTRA_ALIASES: Dict[str, List[Tuple[str, bool]]] = {
+    "GOOGL": [
+        ("Alphabet", False),
+        ("Google", False),
+        ("Alphabet Inc.", False),
+        ("Alphabet Inc", False),
+        ("GOOG", False),
+    ],
+    "META": [
+        ("Meta", True),
+        ("Meta Platforms", False),
+    ],
+    "ADM": [
+        ("Archer-Daniels-Midland", False),
+        ("Archer Daniels Midland", False),
+        ("Archer Daniels", False),
+        ("Archer-Daniels", False),
+    ],
+    "CSCO": [
+        ("Cisco Systems", False),
+    ],
+    "EBAY": [
+        ("eBay Inc.", False),
+        ("eBay", False),
+    ],
+}
+
 TOKEN = re.compile(r"[A-Za-z0-9][A-Za-z0-9&'’\-.]*")
 NEXT_PROPER = re.compile(
-    r"^\s+(?!Inc\b|Corp\b|Co\b|Group\b|Holdings\b|Shares\b|Stock\b)[A-Z][a-z]+"
+    r"^\s+(?!Inc\b|Corp\b|Co\b|Group\b|Holdings\b|Shares\b|Stock\b|Systems\b|Technologies\b|Enterprises\b|Networks\b|Services\b|Platforms\b)[A-Z][a-z]+"
 )
 PUNCT = re.compile(r"[.,:;!?'’]*$")
 TRAILING = re.compile(r"(?:'s|’s|\.com)?[.,:;!?'’]*$")
@@ -147,11 +182,23 @@ class EntityLinker:
                 for alias in aliases:
                     if alias.upper() == ticker and len(alias) <= 5:
                         continue  # bare tickers are handled by the ticker rules
-                    self.alias_lookup.setdefault(alias.lower(), (ticker, alias))
+                    target_ticker = CANONICAL_SHARE_CLASSES.get(ticker, ticker)
+                    self.alias_lookup.setdefault(alias.lower(), (target_ticker, alias))
+                    self.max_alias_tokens = max(self.max_alias_tokens, len(alias.split()))
+
+        for t, extra_list in EXTRA_ALIASES.items():
+            if t in self.entities:
+                for alias, is_ambig in extra_list:
+                    if alias not in self.entities[t].aliases:
+                        self.entities[t].aliases.append(alias)
+                    if is_ambig:
+                        self.entities[t].ambiguous_aliases.add(alias)
+                    self.alias_lookup[alias.lower()] = (t, alias)
                     self.max_alias_tokens = max(self.max_alias_tokens, len(alias.split()))
 
     def _ref(self, ticker: str) -> EntityReference:
-        ke = self.entities[ticker]
+        t = CANONICAL_SHARE_CLASSES.get(ticker, ticker)
+        ke = self.entities[t]
         return EntityReference(
             name=ke.canonical_name, ticker=ke.ticker, scope="company", resolved=True,
             sector=ke.sector or None,
@@ -159,6 +206,7 @@ class EntityLinker:
 
     def _ticker_in_universe(self, raw: str) -> Optional[str]:
         t = raw.upper().replace(".", "-")
+        t = CANONICAL_SHARE_CLASSES.get(t, t)
         return t if t in self.entities else None
 
     def find_companies(self, text: str) -> Dict[str, List[EvidenceSpan]]:
@@ -166,7 +214,8 @@ class EntityLinker:
         found: Dict[str, List[EvidenceSpan]] = {}
 
         def add(ticker: str, start: int, end: int) -> None:
-            spans = found.setdefault(ticker, [])
+            t = CANONICAL_SHARE_CLASSES.get(ticker, ticker)
+            spans = found.setdefault(t, [])
             overlaps = any(start < s.end and s.start < end for s in spans)  # "$APEX" vs "APEX"
             if len(spans) < 3 and not overlaps:
                 spans.append(EvidenceSpan(start=start, end=end, text=text[start:end]))
@@ -182,8 +231,11 @@ class EntityLinker:
         mostly_upper = letters and sum(c.isupper() for c in letters) / len(letters) > 0.6
         if not mostly_upper:  # all-caps headlines ("FED HIKES RATES") are not ticker lists
             for m in BARE_TICKER.finditer(text):
-                if m.group() not in STOP_TICKERS and m.group() in self.entities:
-                    add(m.group(), m.start(), m.end())
+                raw = m.group()
+                if raw not in STOP_TICKERS:
+                    t = CANONICAL_SHARE_CLASSES.get(raw, raw)
+                    if t in self.entities:
+                        add(t, m.start(), m.end())
 
         has_context = bool(FINANCIAL_CONTEXT.search(text))
         tokens = [(m.start(), m.end()) for m in TOKEN.finditer(text)]
