@@ -68,6 +68,7 @@ class CustomStressRequest(BaseModel):
     bond_spread_shift_bps: float = Field(0.0, ge=-1000, le=3000)
     loan_pd_increment: float = Field(0.0, ge=-1.0, le=1.0)
     lgd_increment: float = Field(0.0, ge=-1.0, le=1.0)
+    pd_from_spread: bool = False
     run_id: str = "custom-sandbox"
 
 

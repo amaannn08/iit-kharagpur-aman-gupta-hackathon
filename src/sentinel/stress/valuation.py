@@ -20,7 +20,10 @@ from sentinel.contracts.stress import (
 )
 from sentinel.stress.contagion import ContagionGraph
 from sentinel.stress.portfolio import WholesalePortfolio
+from sentinel.stress.ratings import rating_bucket, spread_multiplier
 from sentinel.stress.shocks import ScaledShock
+
+RISK_NEUTRAL_TO_PHYSICAL = 1.0
 
 
 class ValuationEngine:
@@ -35,6 +38,9 @@ class ValuationEngine:
     ) -> None:
         self.portfolio = portfolio
         self.contagion_graph = contagion_graph or ContagionGraph()
+
+    def _tier(self, rating: Optional[str], shock: ScaledShock) -> float:
+        return spread_multiplier(rating) if shock.rating_tiered else 1.0
 
     def _is_position_in_scope(
         self,
@@ -85,7 +91,8 @@ class ValuationEngine:
         baseline_val = bond.market_value
 
         if in_scope:
-            effective_spread_shift = shock.bond_spread_shift_bps * transmission_factor
+            tier = self._tier(bond.rating, shock)
+            effective_spread_shift = shock.bond_spread_shift_bps * tier * transmission_factor
             effective_yield_shift = shock.benchmark_yield_shift_bps * (
                 transmission_factor if is_contagion else 1.0
             )
@@ -103,7 +110,7 @@ class ValuationEngine:
                 )
             else:
                 shock_summary = (
-                    f"Spread {shock.bond_spread_shift_bps:+.1f} bps, "
+                    f"Spread {effective_spread_shift:+.1f} bps (x{tier:.2f} {rating_bucket(bond.rating)}), "
                     f"Yield {shock.benchmark_yield_shift_bps:+.1f} bps"
                 )
         else:
@@ -150,7 +157,14 @@ class ValuationEngine:
         baseline_ecl = loan.ead * loan.baseline_pd * loan.lgd
 
         if in_scope:
-            effective_pd_inc = shock.loan_pd_increment * transmission_factor
+            tier = self._tier(loan.rating, shock)
+            pd_inc = shock.loan_pd_increment * tier
+            if shock.pd_from_spread and loan.lgd > 0:
+                pd_inc += (
+                    max(0.0, shock.bond_spread_shift_bps * tier / 1e4 / loan.lgd)
+                    * RISK_NEUTRAL_TO_PHYSICAL
+                )
+            effective_pd_inc = pd_inc * transmission_factor
             effective_lgd_inc = shock.lgd_increment * transmission_factor
             stressed_pd = min(1.0, max(0.0, loan.baseline_pd + effective_pd_inc))
             stressed_lgd = min(1.0, max(0.0, loan.lgd + effective_lgd_inc))
@@ -168,7 +182,7 @@ class ValuationEngine:
                 )
             else:
                 shock_summary = (
-                    f"PD {shock.loan_pd_increment * 100:+.2f} pp, "
+                    f"PD {effective_pd_inc * 100:+.2f} pp (x{tier:.2f} {rating_bucket(loan.rating)}), "
                     f"LGD {shock.lgd_increment * 100:+.2f} pp"
                 )
         else:

@@ -59,6 +59,7 @@ def test_bond_duration_valuation_and_bps_conversion(engine: ValuationEngine):
         scale_multiplier=1.0,
         target_entity="APEX",
         target_scope="entity",
+        rating_tiered=False,
     )
 
     delta = engine.value_bond(bond, shock)
@@ -94,6 +95,7 @@ def test_loan_ecl_valuation_and_clamping(engine: ValuationEngine):
         scale_multiplier=1.0,
         target_entity="APEX",
         target_scope="entity",
+        rating_tiered=False,
     )
 
     delta = engine.value_loan(loan, shock)

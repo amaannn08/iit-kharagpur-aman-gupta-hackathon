@@ -109,6 +109,8 @@ class ScaledShock:
     operational_loss_multiplier: float = 0.0  # x observed sector fraud rate (CYBER)
     catalog_entry: str = ""
     target_sector: Optional[str] = None  # sector of the target entity (CYBER operational loss)
+    pd_from_spread: bool = False  # derive ΔPD per loan from the spread (credit triangle)
+    rating_tiered: bool = True  # scale spread / PD by rating_bucket multiplier
 
 
 # Severe cyber event: operational losses at this multiple of the observed card-fraud rate.
@@ -137,6 +139,10 @@ def build_scaled_shock(
     """Scale the selected catalog entry proportionally by impact_score / 8.0."""
     baseline = select_parameters(event_class, target_scope, is_easing)
     scale = max(0.125, min(1.25, impact_score / 8.0))
+    is_systemic_anchor = (
+        (event_class.upper() in {"MACRO", "GEOPOLITICAL"})
+        or (event_class.upper() == "CREDIT" and target_scope == "systemic")
+    )
     return ScaledShock(
         bond_spread_shift_bps=round(baseline.bond_spread_shift_bps * scale, 2),
         loan_pd_increment=round(baseline.loan_pd_increment * scale, 4),
@@ -151,6 +157,8 @@ def build_scaled_shock(
         else 0.0,
         catalog_entry=f"{SHOCK_CATALOG_VERSION}:{baseline.anchor}",
         target_sector=target_sector,
+        pd_from_spread=is_systemic_anchor,
+        rating_tiered=True,
     )
 
 
@@ -173,4 +181,6 @@ def shock_from_scenario(scenario: dict) -> ScaledShock:
         target_scope=scope,
         equity_shock_pct=float(equity.get("equity_shock_pct", 0.0)),
         catalog_entry=f"scenario:{scenario.get('scenario_id')}",
+        pd_from_spread=bool(direct.get("pd_from_spread", False)),
+        rating_tiered=bool(scenario.get("rating_tiered", True)),
     )

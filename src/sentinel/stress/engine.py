@@ -202,6 +202,8 @@ class StressEngine:
         loan_pd_increment: float = 0.0,
         lgd_increment: float = 0.0,
         run_id: str = "custom-run",
+        pd_from_spread: bool = False,
+        rating_tiered: bool = True,
     ) -> StressRunResult:
         """Explicit systemic shock set, e.g. the PS example: equities -10%, rates +200 bp."""
         shock = ScaledShock(
@@ -214,6 +216,8 @@ class StressEngine:
             target_scope="systemic",
             equity_shock_pct=equity_shock_pct,
             catalog_entry="custom",
+            pd_from_spread=pd_from_spread,
+            rating_tiered=rating_tiered,
         )
         result = self.valuation_engine.run_stress_test(
             shock=shock, run_id=run_id, trigger_type="USER_TRIGGERED", event_class="CUSTOM"
