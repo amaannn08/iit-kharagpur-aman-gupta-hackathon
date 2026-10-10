@@ -107,6 +107,8 @@ def test_headline_to_reconciled_stress(client: TestClient, held_issuer: IssuerIn
         abs(sum(p["pnl_usd"] for p in full["position_deltas"]) - full["total_pnl_usd"])
         < 0.05
     )
+    attr = full["attribution"]
+    assert abs(sum(attr["by_component"].values()) - full["total_pnl_usd"]) < 0.05
 
 
 def test_low_impact_is_not_stressed(client: TestClient):

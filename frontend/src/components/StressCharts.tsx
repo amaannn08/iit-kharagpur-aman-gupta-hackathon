@@ -5,22 +5,47 @@ import { fetchStressScenarios, runCustomStress, runStressScenario, StressRunResu
 const usd = (v: number) => `${v < 0 ? '-' : ''}$${Math.abs(v / 1e6).toFixed(2)}M`;
 const ASSET_ORDER = ['loan', 'bond', 'equity', 'cash'];
 
-/** P&L waterfall: funded baseline, one bar per funded asset class, derivative MTM, stressed. */
+/** P&L waterfall: funded baseline, one bar per loss component (or asset class fallback), stressed. */
 export function waterfallData(r: StressRunResult) {
   const rows: { name: string; base: number; delta: number; kind: 'total' | 'loss' | 'gain' }[] = [];
   const baseline = r.funded_baseline_value_usd ?? r.baseline_total_book_value_usd;
   rows.push({ name: 'Funded baseline', base: 0, delta: baseline, kind: 'total' });
   let level = baseline;
-  const classes = r.asset_class_breakdown.filter((a) => ASSET_ORDER.includes(a.asset_class));
-  classes.sort((a, b) => ASSET_ORDER.indexOf(a.asset_class) - ASSET_ORDER.indexOf(b.asset_class));
-  for (const a of classes) {
-    const d = a.total_pnl_usd;
-    rows.push({ name: a.asset_class, base: d < 0 ? level + d : level, delta: Math.abs(d), kind: d < 0 ? 'loss' : 'gain' });
-    level += d;
+
+  if (r.attribution?.by_component) {
+    const COMPONENT_ORDER: [string, string][] = [
+      ['rates_usd', 'Rates'],
+      ['spread_usd', 'Spread'],
+      ['pd_usd', 'Loan PD'],
+      ['lgd_usd', 'Loan LGD'],
+      ['equity_usd', 'Equity'],
+      ['operational_usd', 'Op-loss'],
+      ['clamp_usd', 'Clamp'],
+    ];
+    for (const [key, label] of COMPONENT_ORDER) {
+      const d = r.attribution.by_component[key] ?? 0;
+      if (Math.abs(d) > 0.01) {
+        rows.push({
+          name: label,
+          base: d < 0 ? level + d : level,
+          delta: Math.abs(d),
+          kind: d < 0 ? 'loss' : 'gain',
+        });
+        level += d;
+      }
+    }
+  } else {
+    const classes = r.asset_class_breakdown.filter((a) => ASSET_ORDER.includes(a.asset_class));
+    classes.sort((a, b) => ASSET_ORDER.indexOf(a.asset_class) - ASSET_ORDER.indexOf(b.asset_class));
+    for (const a of classes) {
+      const d = a.total_pnl_usd;
+      rows.push({ name: a.asset_class, base: d < 0 ? level + d : level, delta: Math.abs(d), kind: d < 0 ? 'loss' : 'gain' });
+      level += d;
+    }
+    const deriv = r.derivative_mtm_change_usd ?? 0;
+    rows.push({ name: 'swap MTM', base: deriv < 0 ? level + deriv : level, delta: Math.abs(deriv), kind: deriv < 0 ? 'loss' : 'gain' });
+    level += deriv;
   }
-  const deriv = r.derivative_mtm_change_usd ?? 0;
-  rows.push({ name: 'swap MTM', base: deriv < 0 ? level + deriv : level, delta: Math.abs(deriv), kind: deriv < 0 ? 'loss' : 'gain' });
-  level += deriv;
   rows.push({ name: 'After stress', base: 0, delta: level, kind: 'total' });
   return rows;
 }

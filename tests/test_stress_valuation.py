@@ -281,3 +281,68 @@ def test_combined_portfolio_reports_sleeves_and_separates_derivative_mtm():
         abs(result.funded_stressed_value_usd - (result.funded_baseline_value_usd + sleeve_pnl))
         < 0.05
     )
+
+
+def test_attribution_sums_equal_pnl_across_scenarios(engine: ValuationEngine):
+    """Item 13: Attribution sums must equal P&L for every position across scenarios."""
+    scenarios = [
+        build_scaled_shock("CREDIT", impact_score=9, target_scope="systemic"),
+        build_scaled_shock("MACRO", impact_score=8, target_scope="systemic"),
+        build_scaled_shock("M_AND_A", impact_score=7, target_entity="JPM", target_scope="entity"),
+    ]
+    for shock in scenarios:
+        res = engine.run_stress_test(shock)
+        assert res.reconciliation_passed
+        for p in res.position_deltas:
+            comp_sum = (
+                p.attribution.rates_usd
+                + p.attribution.spread_usd
+                + p.attribution.pd_usd
+                + p.attribution.lgd_usd
+                + p.attribution.equity_usd
+                + p.attribution.operational_usd
+                + p.attribution.clamp_usd
+            )
+            assert pytest.approx(comp_sum, abs=0.02) == p.pnl_usd
+        assert (
+            pytest.approx(sum(res.attribution["by_component"].values()), abs=0.05)
+            == res.total_pnl_usd
+        )
+
+
+def test_pure_rates_shock_has_zero_spread_attribution(engine: ValuationEngine):
+    """Item 13: Pure rates shock gives spread_usd == 0."""
+    pure_rates = ScaledShock(
+        bond_spread_shift_bps=0.0,
+        loan_pd_increment=0.0,
+        lgd_increment=0.0,
+        benchmark_yield_shift_bps=100.0,
+        scale_multiplier=1.0,
+        target_entity=None,
+        target_scope="systemic",
+    )
+    res = engine.run_stress_test(pure_rates)
+    assert res.attribution["by_component"]["spread_usd"] == 0.0
+    assert res.attribution["by_component"]["rates_usd"] != 0.0
+    assert res.reconciliation_passed
+
+
+def test_cyber_run_has_negative_operational_attribution():
+    """Item 13: CYBER shock produces negative operational loss attribution."""
+    from sentinel.config import settings
+
+    combined = WholesalePortfolio.load_many(
+        [settings.data_dir / f for f in settings.portfolio_files]
+    )
+    engine = ValuationEngine(combined)
+    cyber_shock = build_scaled_shock(
+        "CYBER",
+        impact_score=9,
+        target_entity="JPM",
+        target_scope="entity",
+        target_sector="Financials",
+    )
+    res = engine.run_stress_test(cyber_shock)
+    assert res.attribution["by_component"]["operational_usd"] < 0.0
+    assert res.reconciliation_passed
+

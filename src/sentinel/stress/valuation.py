@@ -13,6 +13,7 @@ from sentinel.contracts.stress import (
     CashPosition,
     EquityPosition,
     LoanPosition,
+    LossAttribution,
     PositionStressDelta,
     SectorStressSummary,
     SleeveStressSummary,
@@ -113,17 +114,39 @@ class ValuationEngine:
             )
             yield_shift = effective_yield_shift / 10000.0
             spread_shift = effective_spread_shift / 10000.0
-            total_shift = yield_shift + spread_shift
-            delta_val = -bond.modified_duration * baseline_val * total_shift
-            stressed_val = max(0.0, baseline_val + delta_val)
+            rates_move = -bond.modified_duration * baseline_val * yield_shift
+            spread_move = -bond.modified_duration * baseline_val * spread_shift
+            unclamped_delta = rates_move + spread_move
+            stressed_val = max(0.0, baseline_val + unclamped_delta)
             # Recompute exact delta if clamped at zero
             delta_val = stressed_val - baseline_val
+            clamp_move = delta_val - unclamped_delta
+
+            rates_usd = round(rates_move, 2)
+            spread_usd = round(spread_move, 2)
+            clamp_usd = round(clamp_move, 2)
+            diff = round(round(delta_val, 2) - (rates_usd + spread_usd + clamp_usd), 2)
+            if abs(diff) > 0:
+                clamp_usd = round(clamp_usd + diff, 2)
+
+            attribution = LossAttribution(
+                rates_usd=rates_usd,
+                spread_usd=spread_usd,
+                clamp_usd=clamp_usd,
+            )
+
             if is_contagion:
+                driver = f"contagion from {contagion_source} (hop {contagion_hops})"
                 shock_summary = (
                     f"Contagion from {contagion_source} (hop {contagion_hops}, "
                     f"factor {transmission_factor:.2f}): Spread {effective_spread_shift:+.1f} bps"
                 )
             else:
+                driver = (
+                    "systemic"
+                    if shock.target_scope == "systemic"
+                    else ("sector" if shock.target_scope == "sector" else "direct")
+                )
                 shock_summary = (
                     f"Spread {effective_spread_shift:+.1f} bps (x{tier:.2f} {rating_bucket(bond.rating)}), "
                     f"Yield {shock.benchmark_yield_shift_bps:+.1f} bps"
@@ -132,6 +155,8 @@ class ValuationEngine:
             delta_val = 0.0
             stressed_val = baseline_val
             shock_summary = "Unimpacted"
+            attribution = LossAttribution()
+            driver = ""
 
         pct_change = (delta_val / baseline_val) if baseline_val > 0 else 0.0
 
@@ -152,6 +177,8 @@ class ValuationEngine:
             contagion_source=contagion_source,
             transmission_factor=round(transmission_factor, 4),
             sleeve=bond.sleeve,
+            attribution=attribution,
+            driver=driver,
         )
 
     def value_loan(
@@ -170,6 +197,9 @@ class ValuationEngine:
 
         baseline_val = loan.market_value
         baseline_ecl = loan.ead * loan.baseline_pd * loan.lgd
+        pd_move = 0.0
+        lgd_move = 0.0
+        driver = ""
 
         if in_scope:
             tier = self._tier(loan.rating, shock)
@@ -186,16 +216,26 @@ class ValuationEngine:
             stressed_ecl = loan.ead * stressed_pd * stressed_lgd
             incremental_ecl = stressed_ecl - baseline_ecl
 
+            # Exact credit decomposition:
+            pd_move = -loan.ead * (stressed_pd - loan.baseline_pd) * loan.lgd
+            lgd_move = -loan.ead * stressed_pd * (stressed_lgd - loan.lgd)
+
             # Loan carrying value is marked down by incremental credit loss
             delta_val = -incremental_ecl
             stressed_val = max(0.0, baseline_val + delta_val)
             delta_val = stressed_val - baseline_val
             if is_contagion:
+                driver = f"contagion from {contagion_source} (hop {contagion_hops})"
                 shock_summary = (
                     f"Contagion from {contagion_source} (hop {contagion_hops}, "
                     f"factor {transmission_factor:.2f}): PD {effective_pd_inc * 100:+.2f} pp"
                 )
             else:
+                driver = (
+                    "systemic"
+                    if shock.target_scope == "systemic"
+                    else ("sector" if shock.target_scope == "sector" else "direct")
+                )
                 shock_summary = (
                     f"PD {effective_pd_inc * 100:+.2f} pp (x{tier:.2f} {rating_bucket(loan.rating)}), "
                     f"LGD {shock.lgd_increment * 100:+.2f} pp"
@@ -229,6 +269,30 @@ class ValuationEngine:
                 f"(fraud rate {fraud_rate:.3%} x {shock.operational_loss_multiplier:.1f})"
             )
             shock_summary = note if shock_summary == "Unimpacted" else f"{shock_summary}; {note}"
+            if not driver:
+                driver = "sector"
+
+        operational_move = -op_loss
+        unclamped_total = pd_move + lgd_move + operational_move
+        clamp_move = delta_val - unclamped_total
+
+        pd_usd = round(pd_move, 2)
+        lgd_usd = round(lgd_move, 2)
+        operational_usd = round(operational_move, 2)
+        clamp_usd = round(clamp_move, 2)
+        diff = round(round(delta_val, 2) - (pd_usd + lgd_usd + operational_usd + clamp_usd), 2)
+        if abs(diff) > 0:
+            if abs(clamp_move) > 1e-6:
+                clamp_usd = round(clamp_usd + diff, 2)
+            else:
+                lgd_usd = round(lgd_usd + diff, 2)
+
+        attribution = LossAttribution(
+            pd_usd=pd_usd,
+            lgd_usd=lgd_usd,
+            operational_usd=operational_usd,
+            clamp_usd=clamp_usd,
+        )
 
         pct_change = (delta_val / baseline_val) if baseline_val > 0 else 0.0
 
@@ -252,6 +316,8 @@ class ValuationEngine:
             contagion_source=contagion_source,
             transmission_factor=round(transmission_factor, 4),
             sleeve=loan.sleeve,
+            attribution=attribution,
+            driver=driver,
         )
 
     def value_swap(self, swap: SwapPosition, shock: ScaledShock) -> PositionStressDelta:
@@ -268,10 +334,15 @@ class ValuationEngine:
                 f"Yield shift {shock.benchmark_yield_shift_bps:+.1f} bps "
                 f"(DV01: {swap.signed_dv01:,.0f})"
             )
+            driver = "systemic"
         else:
             delta_val = 0.0
             stressed_val = baseline_val
             shock_summary = "Unimpacted"
+            driver = ""
+
+        pnl_rounded = round(delta_val, 2)
+        attribution = LossAttribution(rates_usd=pnl_rounded)
 
         # Percentage change uses notional as reference denominator if baseline MTM is near zero
         pct_change = (delta_val / swap.notional) if swap.notional > 0 else 0.0
@@ -284,11 +355,13 @@ class ValuationEngine:
             sector=swap.sector,
             baseline_value_usd=round(baseline_val, 2),
             stressed_value_usd=round(stressed_val, 2),
-            pnl_usd=round(delta_val, 2),
+            pnl_usd=pnl_rounded,
             pct_change=round(pct_change, 6),
-            market_risk_pnl_usd=round(delta_val, 2),
+            market_risk_pnl_usd=pnl_rounded,
             applied_shock_summary=shock_summary,
             sleeve=swap.sleeve,
+            attribution=attribution,
+            driver=driver,
         )
 
     def value_equity(self, equity: EquityPosition, shock: ScaledShock) -> PositionStressDelta:
@@ -306,11 +379,21 @@ class ValuationEngine:
                 move = shock.equity_shock_pct
         move = max(-1.0, move)
         delta_val = baseline_val * move
+        pnl_rounded = round(delta_val, 2)
         if move:
             basis = "idiosyncratic" if shock.target_scope == "entity" else f"beta {equity.beta:.2f}"
             summary = f"Equity {move:+.2%} ({basis})"
+            driver = (
+                "direct"
+                if shock.target_scope == "entity"
+                else ("sector" if shock.target_scope == "sector" else "systemic")
+            )
         else:
             summary = "Unimpacted"
+            driver = ""
+
+        attribution = LossAttribution(equity_usd=pnl_rounded)
+
         return PositionStressDelta(
             position_id=equity.position_id,
             asset_class=AssetClass.EQUITY,
@@ -319,16 +402,19 @@ class ValuationEngine:
             sector=equity.sector,
             baseline_value_usd=round(baseline_val, 2),
             stressed_value_usd=round(baseline_val + delta_val, 2),
-            pnl_usd=round(delta_val, 2),
+            pnl_usd=pnl_rounded,
             pct_change=round(move, 6),
-            market_risk_pnl_usd=round(delta_val, 2),
+            market_risk_pnl_usd=pnl_rounded,
             applied_shock_summary=summary,
             sleeve=equity.sleeve,
+            attribution=attribution,
+            driver=driver,
         )
 
     def value_cash(self, cash: CashPosition, shock: ScaledShock) -> PositionStressDelta:
         """Cash valuation: zero market or credit delta."""
         baseline_val = cash.market_value
+        attribution = LossAttribution()
         return PositionStressDelta(
             position_id=cash.position_id,
             asset_class=AssetClass.CASH,
@@ -341,6 +427,8 @@ class ValuationEngine:
             pct_change=0.0,
             applied_shock_summary="Unimpacted (Risk-free cash)",
             sleeve=cash.sleeve,
+            attribution=attribution,
+            driver="",
         )
 
     def run_stress_test(
@@ -495,6 +583,7 @@ class ValuationEngine:
         # PRD Section 13.3 Invariants Reconciliation Check:
         # 1. sum of position PnL equals total_pnl
         # 2. for each position: baseline + pnl == stressed
+        # 3. for each position: sum(components) == pnl
         sum_position_pnl = sum(p.pnl_usd for p in position_deltas)
         pnl_reconciliation = abs(sum_position_pnl - total_pnl) < 0.01
 
@@ -503,9 +592,84 @@ class ValuationEngine:
             for p in position_deltas
         )
 
-        reconciliation_passed = pnl_reconciliation and positions_reconciled
+        attribution_reconciled = all(
+            abs(
+                (
+                    p.attribution.rates_usd
+                    + p.attribution.spread_usd
+                    + p.attribution.pd_usd
+                    + p.attribution.lgd_usd
+                    + p.attribution.equity_usd
+                    + p.attribution.operational_usd
+                    + p.attribution.clamp_usd
+                )
+                - p.pnl_usd
+            )
+            < 0.02
+            for p in position_deltas
+        )
+
+        reconciliation_passed = (
+            pnl_reconciliation and positions_reconciled and attribution_reconciled
+        )
 
         total_pnl_pct = (total_pnl / baseline_funded) if baseline_funded > 0 else 0.0
+
+        # Loss attribution aggregations
+        by_component = {
+            "rates_usd": round(sum(p.attribution.rates_usd for p in position_deltas), 2),
+            "spread_usd": round(sum(p.attribution.spread_usd for p in position_deltas), 2),
+            "pd_usd": round(sum(p.attribution.pd_usd for p in position_deltas), 2),
+            "lgd_usd": round(sum(p.attribution.lgd_usd for p in position_deltas), 2),
+            "equity_usd": round(sum(p.attribution.equity_usd for p in position_deltas), 2),
+            "operational_usd": round(sum(p.attribution.operational_usd for p in position_deltas), 2),
+            "clamp_usd": round(sum(p.attribution.clamp_usd for p in position_deltas), 2),
+        }
+        comp_diff = round(round(total_pnl, 2) - sum(by_component.values()), 2)
+        if abs(comp_diff) > 0:
+            by_component["clamp_usd"] = round(by_component["clamp_usd"] + comp_diff, 2)
+
+        by_driver: Dict[str, float] = defaultdict(float)
+        for p in position_deltas:
+            d = p.driver or "unimpacted"
+            by_driver[d] += p.pnl_usd
+        by_driver_dict = {k: round(v, 2) for k, v in by_driver.items()}
+
+        losing_positions = [p for p in position_deltas if p.pnl_usd < 0]
+        losing_positions.sort(key=lambda p: p.pnl_usd)
+        top_5 = losing_positions[:5]
+        top_positions = []
+        for p in top_5:
+            attr_dict = {
+                "rates": p.attribution.rates_usd,
+                "spread": p.attribution.spread_usd,
+                "pd": p.attribution.pd_usd,
+                "lgd": p.attribution.lgd_usd,
+                "equity": p.attribution.equity_usd,
+                "operational": p.attribution.operational_usd,
+                "clamp": p.attribution.clamp_usd,
+            }
+            dominant = min(attr_dict.items(), key=lambda x: x[1])[0]
+            top_positions.append({
+                "position_id": p.position_id,
+                "entity_id": p.entity_id,
+                "counterparty_name": p.counterparty_name,
+                "asset_class": (
+                    p.asset_class.value
+                    if hasattr(p.asset_class, "value")
+                    else str(p.asset_class)
+                ),
+                "pnl_usd": p.pnl_usd,
+                "dominant_component": dominant,
+                "driver": p.driver,
+                "attribution": attr_dict,
+            })
+
+        attribution_summary = {
+            "by_component": by_component,
+            "by_driver": by_driver_dict,
+            "top_positions": top_positions,
+        }
 
         # PRD 9.1: funded balance-sheet value vs derivative MTM, and per-sleeve subtotals
         derivative_mtm = sum(p.pnl_usd for p in position_deltas if p.asset_class == AssetClass.SWAP)
@@ -571,4 +735,5 @@ class ValuationEngine:
             funded_baseline_value_usd=round(baseline_funded, 2),
             funded_stressed_value_usd=round(baseline_funded + funded_pnl, 2),
             derivative_mtm_change_usd=round(derivative_mtm, 2),
+            attribution=attribution_summary,
         )

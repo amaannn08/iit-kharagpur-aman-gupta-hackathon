@@ -131,6 +131,16 @@ export interface RiskSignal {
   model_versions?: Record<string, string>;
 }
 
+export interface LossAttribution {
+  rates_usd: number;
+  spread_usd: number;
+  pd_usd: number;
+  lgd_usd: number;
+  equity_usd: number;
+  operational_usd: number;
+  clamp_usd: number;
+}
+
 export interface PositionStressDelta {
   position_id: string;
   asset_class: 'loan' | 'bond' | 'swap' | 'cash' | 'equity';
@@ -148,6 +158,8 @@ export interface PositionStressDelta {
   operational_loss_usd?: number;
   applied_shock_summary: string;
   sleeve?: string;
+  attribution?: LossAttribution;
+  driver?: string;
 }
 
 export interface SleeveStressSummary {
@@ -177,6 +189,23 @@ export interface SectorStressSummary {
   pct_change: number;
 }
 
+export interface TopPositionLoss {
+  position_id: string;
+  entity_id: string;
+  counterparty_name: string;
+  asset_class: string;
+  pnl_usd: number;
+  dominant_component: string;
+  driver: string;
+  attribution?: Record<string, number>;
+}
+
+export interface StressAttributionSummary {
+  by_component: Record<string, number>;
+  by_driver: Record<string, number>;
+  top_positions: TopPositionLoss[];
+}
+
 export interface StressRunResult {
   stress_id: string;
   run_id: string;
@@ -204,6 +233,7 @@ export interface StressRunResult {
   funded_stressed_value_usd?: number;
   derivative_mtm_change_usd?: number;
   status?: 'COMPLETED' | 'NO_EXPOSURE';
+  attribution?: StressAttributionSummary;
 }
 
 export interface WholesalePortfolio {

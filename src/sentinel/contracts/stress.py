@@ -2,7 +2,7 @@
 
 from datetime import date
 from enum import Enum
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -13,6 +13,16 @@ class AssetClass(str, Enum):
     SWAP = "swap"
     CASH = "cash"
     EQUITY = "equity"
+
+
+class LossAttribution(BaseModel):
+    rates_usd: float = 0.0  # bond yield move, swap DV01
+    spread_usd: float = 0.0  # bond spread move
+    pd_usd: float = 0.0  # ΔECL from PD
+    lgd_usd: float = 0.0  # ΔECL from LGD (incl. PD x LGD cross term)
+    equity_usd: float = 0.0
+    operational_usd: float = 0.0  # CYBER op-loss
+    clamp_usd: float = 0.0  # value floored at 0 (keeps the sum exact)
 
 
 class LoanPosition(BaseModel):
@@ -131,6 +141,8 @@ class PositionStressDelta(BaseModel):
     contagion_source: Optional[str] = None
     transmission_factor: float = 1.0
     sleeve: str = "wholesale"
+    attribution: LossAttribution = Field(default_factory=LossAttribution)
+    driver: str = ""  # "direct", "contagion from SIVB (hop 1)", "systemic", "sector"
 
 
 class SleeveStressSummary(BaseModel):
@@ -191,3 +203,4 @@ class StressRunResult(BaseModel):
     derivative_mtm_change_usd: float = 0.0
     status: str = Field(default="COMPLETED", description="COMPLETED | NO_EXPOSURE")
     portfolio_profile: str = Field(default="real_issuers", description="real_issuers | synthetic_demo")
+    attribution: Dict[str, Any] = Field(default_factory=dict)  # by_component, by_driver, top_positions

@@ -48,6 +48,7 @@ import {
 import { IndexPanel } from './components/IndexPanel';
 import { MetricsPanel } from './components/MetricsPanel';
 import { StressCharts } from './components/StressCharts';
+import { WhyThisLossPanel } from './components/WhyThisLossPanel';
 
 // Replay presets map onto the backend source registry (GET /api/replay/sources)
 const SOURCE_PRESETS: Record<string, { label: string; sources: string[]; live?: boolean }> = {
@@ -777,6 +778,15 @@ export function App() {
                       )}
                     </div>
                   </div>
+
+                  {/* Why this loss Inspector panel */}
+                  {activeStressResult && (
+                    <WhyThisLossPanel
+                      result={activeStressResult}
+                      triggerHeadline={selectedSignal.text_excerpt}
+                      evidenceSpan={selectedSignal.evidence?.[0]?.text}
+                    />
+                  )}
                 </div>
               ) : (
                 <div className="flex-1 flex items-center justify-center text-gray-500 text-xs font-mono">
@@ -791,6 +801,13 @@ export function App() {
         {activeTab === 'stress' && (
           <div className="flex-1 flex flex-col space-y-6 overflow-y-auto">
             <StressCharts result={activeStressResult} onResult={setActiveStressResult} />
+            {activeStressResult && (
+              <WhyThisLossPanel
+                result={activeStressResult}
+                triggerHeadline={signals.find((s) => s.signal_id === activeStressResult?.trigger_signal_id)?.text_excerpt}
+                evidenceSpan={signals.find((s) => s.signal_id === activeStressResult?.trigger_signal_id)?.evidence?.[0]?.text}
+              />
+            )}
             {/* Top Summary Segregation Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="bg-[#111827] p-4 rounded-lg border border-gray-800">
