@@ -74,8 +74,8 @@ export const Feed: React.FC<FeedProps> = ({
       {/* Stream Toolbar & Search */}
       <div className="p-4 border-b border-theme-border bg-theme-card space-y-3 shrink-0">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5 flex-1 min-w-[200px]">
-            <div className="relative flex-1">
+          <div className="flex flex-wrap items-center gap-2.5 flex-1 min-w-0">
+            <div className="relative flex-1 min-w-[180px]">
               <Search className="w-4 h-4 text-theme-subtle absolute left-3 top-2.5" />
               <input
                 type="text"
@@ -105,7 +105,7 @@ export const Feed: React.FC<FeedProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-3 text-xs shrink-0">
+          <div className="flex flex-wrap items-center gap-3 text-xs">
             <label className="flex items-center gap-1.5 cursor-pointer text-theme-text-secondary select-none text-[11px]">
               <input
                 type="checkbox"
@@ -117,7 +117,7 @@ export const Feed: React.FC<FeedProps> = ({
             </label>
             <span className="font-mono text-theme-primary-text text-xs px-2.5 py-0.5 rounded-full bg-theme-primary-tint border border-theme-primary/40 font-semibold">
               {totalSignalsCount && totalSignalsCount > signals.length
-                ? `Showing latest ${filteredSignals.length} of ${totalSignalsCount} Signals`
+                ? `Latest ${filteredSignals.length} of ${totalSignalsCount}`
                 : `${filteredSignals.length} Signals`}
             </span>
           </div>
