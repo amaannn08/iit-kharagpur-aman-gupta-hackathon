@@ -1,6 +1,6 @@
 # Presentation, demo and video outline
 
-The deck itself is generated: `uv run python scripts/generate_presentation_pdf.py` -> `docs/presentation.pdf` (7 slides, numbers from `docs/metrics.json`).
+`docs/presentation.pdf` is the final 7-slide deck, designed in Canva with numbers taken from `docs/metrics.json`. `uv run python scripts/generate_presentation_pdf.py` writes a plain draft with the same numbers to `docs/presentation_draft.pdf` (not committed).
 
 | Slide | Topic (guidelines outline) | Content |
 |---|---|---|

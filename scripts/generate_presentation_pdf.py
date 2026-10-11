@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the 7-slide submission deck, docs/presentation.pdf.
+"""Generate a plain draft of the 7-slide deck, docs/presentation_draft.pdf (final deck: docs/presentation.pdf).
 
 Follows the guidelines' outline (title, problem & approach, system design, implementation,
 key results, domain impact, limitations & next steps). Every number is read from
@@ -27,7 +27,7 @@ from reportlab.platypus import (
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DOCS = REPO_ROOT / "docs"
-OUTPUT_PDF = DOCS / "presentation.pdf"
+OUTPUT_PDF = DOCS / "presentation_draft.pdf"
 
 INK, MUTED, ACCENT, GRID = "#0f172a", "#334155", "#0284c7", "#cbd5e1"
 SCENARIO_NAMES = {
