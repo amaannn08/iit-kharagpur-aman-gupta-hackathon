@@ -292,6 +292,22 @@ export async function fetchReplayStatus(): Promise<ReplayStatus> {
   return resp.json();
 }
 
+export interface ReplayPresetItem {
+  id: string;
+  label: string;
+  sources: string[];
+  badge: string;
+}
+
+export async function fetchReplayPresets(): Promise<ReplayPresetItem[]> {
+  const resp = await fetch(`${API_BASE}/replay/presets`);
+  if (!resp.ok) {
+    throw new Error(`Fetch presets failed: HTTP ${resp.status}`);
+  }
+  const data = await resp.json();
+  return data.presets || [];
+}
+
 export async function loadReplayScenario(scenarioId: string, sources = ['news_demo', 'social_demo']): Promise<ReplayStatus> {
   const resp = await fetch(`${API_BASE}/replay/load`, {
     method: 'POST',

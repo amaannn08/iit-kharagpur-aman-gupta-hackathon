@@ -258,6 +258,11 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
                     {p.label}
                   </option>
                 ))}
+                {!SOURCE_PRESETS[selectedScenario] && (
+                  <option value={selectedScenario}>
+                    {selectedScenario}
+                  </option>
+                )}
               </select>
               <div className="text-[11px] font-mono text-theme-muted">
                 {replayStatus?.current_simulated_at
