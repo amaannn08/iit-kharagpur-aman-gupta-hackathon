@@ -388,4 +388,25 @@ describe('S&P Sentinel Risk Terminal', () => {
       expect(badge.textContent).toBe('SYNTHETIC');
     });
   });
+
+  it('toggles theme between light and dark via TopBar button at App level', async () => {
+    localStorage.clear();
+    document.documentElement.classList.remove('dark');
+
+    render(<App />);
+
+    const themeToggleBtn = screen.getByRole('button', { name: /Toggle theme/i });
+    expect(themeToggleBtn).toBeInTheDocument();
+    expect(document.documentElement.classList.contains('dark')).toBe(false);
+
+    // Toggle to dark
+    fireEvent.click(themeToggleBtn);
+    expect(document.documentElement.classList.contains('dark')).toBe(true);
+    expect(localStorage.getItem('sentinel_theme')).toBe('dark');
+
+    // Toggle back to light
+    fireEvent.click(themeToggleBtn);
+    expect(document.documentElement.classList.contains('dark')).toBe(false);
+    expect(localStorage.getItem('sentinel_theme')).toBe('light');
+  });
 });

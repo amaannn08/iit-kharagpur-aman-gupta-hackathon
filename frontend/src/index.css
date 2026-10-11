@@ -61,6 +61,65 @@
   --theme-warn-border: #FDE68A;
 }
 
+.dark {
+  color-scheme: dark;
+
+  /* Surfaces & Canvas */
+  --theme-bg: #0B0F17;
+  --theme-workspace: #0E1420;
+  --theme-card: #151D28;
+  --theme-card-subtle: #1A2433;
+  --theme-card-subtle-alt: #1E293B;
+  --theme-card-hover: #1E293B;
+  --theme-border: #243042;
+  --theme-border-subtle: #1E293B;
+  --theme-border-light: #2D3B4F;
+  --theme-border-strong: #3E4F66;
+
+  /* Typography */
+  --theme-text: #F3F4F6;
+  --theme-text-dark: #F9FAFB;
+  --theme-text-body: #D1D5DB;
+  --theme-text-secondary: #9CA3AF;
+  --theme-muted: #94A3B8;
+  --theme-subtle: #94A3B8;
+  --theme-on-primary: #FFFFFF;
+
+  /* Primary Green Palette - Split Text vs Fill */
+  --theme-primary: #22C55E;
+  --theme-primary-fill: #166534;
+  --theme-primary-text: #4ADE80;
+  --theme-primary-dark: #166534;
+  --theme-primary-hover: #15803D;
+  --theme-primary-tint: #0B291B;
+  --theme-primary-light: #22C55E;
+  --theme-chart-hatch: #4ADE80;
+  --theme-cursor-fill: rgba(74, 222, 128, 0.15);
+
+  /* Hero / Accent Cards */
+  --theme-hero-from: #14532D;
+  --theme-hero-to: #0F3E22;
+  --theme-hero-text: #FFFFFF;
+  --theme-hero-subtle: #86EFAC;
+  --theme-hero-btn-bg: #FFFFFF;
+  --theme-hero-btn-text: #14532D;
+  --theme-hero-btn-hover: #E8F5EE;
+
+  /* Semantic Feedback States */
+  --theme-success: #4ADE80;
+  --theme-success-dark: #22C55E;
+  --theme-success-bg: #0B291B;
+  --theme-loss: #F87171;
+  --theme-loss-dark: #FCA5A5;
+  --theme-loss-deeper: #FECACA;
+  --theme-loss-bg: #3B1212;
+  --theme-loss-bg-alt: #2D0E0E;
+  --theme-warn: #FBBF24;
+  --theme-warn-dark: #FCD34D;
+  --theme-warn-bg: #2E1F0A;
+  --theme-warn-border: #4D3312;
+}
+
 @theme inline {
   --font-sans: 'Plus Jakarta Sans Variable', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 

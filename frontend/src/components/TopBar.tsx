@@ -1,5 +1,6 @@
-import { Search, ShieldAlert } from 'lucide-react';
+import { Moon, Search, ShieldAlert, Sun } from 'lucide-react';
 import { ReplayStatus } from '../api/client';
+import { useTheme } from '../hooks/useTheme';
 
 export interface TopBarProps {
   searchQuery: string;
@@ -14,6 +15,8 @@ export const TopBar: React.FC<TopBarProps> = ({
   sseConnected,
   replayStatus,
 }) => {
+  const { theme, toggleTheme } = useTheme();
+
   // Derive dynamic current run badge
   const dynamicSourceBadge =
     (replayStatus?.source_badges ?? [])[0] ||
@@ -61,6 +64,20 @@ export const TopBar: React.FC<TopBarProps> = ({
             {sseConnected ? 'SSE LIVE' : 'POLLING'}
           </span>
         </div>
+
+        {/* Theme Toggle Button */}
+        <button
+          type="button"
+          onClick={toggleTheme}
+          aria-label="Toggle theme"
+          className="p-1.5 rounded-full bg-theme-bg border border-theme-border text-theme-text-body hover:text-theme-text hover:border-theme-border-strong transition-colors cursor-pointer flex items-center justify-center"
+        >
+          {theme === 'dark' ? (
+            <Sun className="w-4 h-4 text-theme-warn" />
+          ) : (
+            <Moon className="w-4 h-4 text-theme-text-body" />
+          )}
+        </button>
 
         {/* Candidate Identity */}
         <div className="flex items-center gap-2.5 pl-2 border-l border-theme-border">
