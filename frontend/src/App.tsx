@@ -7,11 +7,13 @@ import {
   fetchPortfolio,
   fetchReplayStatus,
   fetchSignals,
+  fetchSignalStats,
   fetchStressRun,
   fetchStressRuns,
   HealthResponse,
   ManifestResponse,
   RiskSignal,
+  SignalStats,
   simulateStress,
   StressRunResult,
   WholesalePortfolio,
@@ -38,6 +40,7 @@ export function App() {
 
   // Signals Feed & Selection State
   const [signals, setSignals] = useState<RiskSignal[]>([]);
+  const [signalStats, setSignalStats] = useState<SignalStats | null>(null);
   const [selectedSignal, setSelectedSignal] = useState<RiskSignal | null>(null);
   const [filterEvent, setFilterEvent] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -93,11 +96,13 @@ export function App() {
       fetchReplayStatus(),
       fetchSignals(50),
       fetchStressRuns(10),
-    ]).then(([hRes, mRes, pRes, rRes, sRes, strRes]) => {
+      fetchSignalStats(),
+    ]).then(([hRes, mRes, pRes, rRes, sRes, strRes, statRes]) => {
       if (hRes.status === 'fulfilled') setHealth(hRes.value);
       if (mRes.status === 'fulfilled') setManifest(mRes.value);
       if (pRes.status === 'fulfilled') setPortfolio(pRes.value);
       if (rRes.status === 'fulfilled') setReplayStatus(rRes.value);
+      if (statRes.status === 'fulfilled') setSignalStats(statRes.value);
       if (sRes.status === 'fulfilled') {
         const fetched = sRes.value;
         setSignals(fetched);
@@ -129,6 +134,30 @@ export function App() {
         const exists = prev.some((s) => s.signal_id === sig.signal_id);
         if (exists) return prev;
         return [sig, ...prev];
+      });
+      setSignalStats((prev) => {
+        if (!prev) return null;
+        const isEligible = Boolean(sig.eligible_for_action);
+        const isDup = Boolean(
+          sig.duplicate_group_id || sig.action_block_reasons?.includes('DUPLICATE_TEXT_SUPPRESSED')
+        );
+        const label = (sig.event?.label || 'OTHER').toUpperCase();
+        const prevEvent = prev.by_event[label] || { eligible: 0, blocked: 0, total: 0 };
+        return {
+          total_signals: prev.total_signals + 1,
+          actionable_count: prev.actionable_count + (isEligible ? 1 : 0),
+          duplicate_count: prev.duplicate_count + (isDup ? 1 : 0),
+          blocked_count: prev.blocked_count + (!isEligible ? 1 : 0),
+          high_impact_count: prev.high_impact_count + ((sig.impact?.score ?? 0) > 7 ? 1 : 0),
+          by_event: {
+            ...prev.by_event,
+            [label]: {
+              eligible: prevEvent.eligible + (isEligible ? 1 : 0),
+              blocked: prevEvent.blocked + (!isEligible ? 1 : 0),
+              total: prevEvent.total + 1,
+            },
+          },
+        };
       });
     },
     onStressRun: (sRun) => {
@@ -180,6 +209,12 @@ export function App() {
     }
   };
 
+  const totalSignalsCount = Math.max(
+    signalStats?.total_signals ?? 0,
+    replayStatus?.processed_count ?? 0,
+    signals.length
+  );
+
   return (
     <div className="h-screen bg-theme-bg text-theme-text flex items-center justify-center p-3 sm:p-5 md:p-7 overflow-hidden box-border">
       {/* Donezo Main Shell: Large Rounded Container with Subtle Shadow */}
@@ -188,7 +223,7 @@ export function App() {
         <SidebarNav
           activeTab={activeTab}
           setActiveTab={setActiveTab}
-          signalsCount={signals.length}
+          signalsCount={totalSignalsCount}
           liveStatus={liveStatus}
           replayStatus={replayStatus}
           selectedScenario={selectedScenario}
@@ -211,6 +246,7 @@ export function App() {
             {activeTab === 'feed' && (
               <DashboardTab
                 signals={signals}
+                signalStats={signalStats}
                 selectedSignal={selectedSignal}
                 onSelectSignal={setSelectedSignal}
                 searchQuery={searchQuery}

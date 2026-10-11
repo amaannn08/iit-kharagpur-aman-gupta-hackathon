@@ -50,6 +50,16 @@ def list_latest_signals(
     return results
 
 
+@router.get("/stats", response_model=Dict[str, Any])
+def get_signal_stats(
+    run_id: Optional[str] = Query(default=None, description="Optional run ID to filter stats"),
+    db: Session = Depends(get_db),
+) -> Dict[str, Any]:
+    """Return aggregated signal counts, actionability breakdown, and event distribution."""
+    repo = ReplayRepository(db)
+    return repo.get_signals_stats(run_id=run_id)
+
+
 @router.get("/{signal_id}", response_model=RiskSignal)
 def get_signal_by_id(
     signal_id: str,

@@ -13,6 +13,7 @@ import { Card } from './ui/Card';
 
 export interface FeedProps {
   signals: RiskSignal[];
+  totalSignalsCount?: number;
   selectedSignal: RiskSignal | null;
   onSelectSignal: (sig: RiskSignal) => void;
   searchQuery: string;
@@ -28,6 +29,7 @@ export interface FeedProps {
 
 export const Feed: React.FC<FeedProps> = ({
   signals,
+  totalSignalsCount,
   selectedSignal,
   onSelectSignal,
   searchQuery,
@@ -114,7 +116,9 @@ export const Feed: React.FC<FeedProps> = ({
               <span>Show Suppressed Dups</span>
             </label>
             <span className="font-mono text-theme-primary-text text-xs px-2.5 py-0.5 rounded-full bg-theme-primary-tint border border-theme-primary/40 font-semibold">
-              {filteredSignals.length} Signals
+              {totalSignalsCount && totalSignalsCount > signals.length
+                ? `Showing latest ${filteredSignals.length} of ${totalSignalsCount} Signals`
+                : `${filteredSignals.length} Signals`}
             </span>
           </div>
         </div>
@@ -133,7 +137,7 @@ export const Feed: React.FC<FeedProps> = ({
                 : 'bg-theme-bg text-theme-text-secondary hover:text-theme-text'
             }`}
           >
-            All ({signals.length})
+            All ({totalSignalsCount && totalSignalsCount > signals.length ? `latest ${signals.length} of ${totalSignalsCount}` : signals.length})
           </button>
           <button
             type="button"
@@ -216,7 +220,7 @@ export const Feed: React.FC<FeedProps> = ({
                 }}
                 className="px-4 py-1.5 rounded-full bg-theme-primary-fill text-theme-on-primary font-semibold text-xs hover:bg-theme-primary-hover transition-colors cursor-pointer"
               >
-                Reset All Filters ({signals.length} Signals Available)
+                Reset All Filters ({totalSignalsCount && totalSignalsCount > signals.length ? `latest ${signals.length} of ${totalSignalsCount}` : signals.length} Signals Available)
               </button>
             </div>
           ) : (

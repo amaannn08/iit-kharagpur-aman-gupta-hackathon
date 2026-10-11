@@ -372,6 +372,24 @@ export async function fetchSignals(limit = 50): Promise<RiskSignal[]> {
   return resp.json();
 }
 
+export interface SignalStats {
+  total_signals: number;
+  actionable_count: number;
+  duplicate_count: number;
+  blocked_count: number;
+  high_impact_count: number;
+  by_event: Record<string, { eligible: number; blocked: number; total: number }>;
+}
+
+export async function fetchSignalStats(runId?: string): Promise<SignalStats> {
+  const url = runId ? `${API_BASE}/signals/stats?run_id=${encodeURIComponent(runId)}` : `${API_BASE}/signals/stats`;
+  const resp = await fetch(url);
+  if (!resp.ok) {
+    throw new Error(`Fetch signal stats failed: HTTP ${resp.status}`);
+  }
+  return resp.json();
+}
+
 export async function fetchSignal(signalId: string): Promise<RiskSignal> {
   const resp = await fetch(`${API_BASE}/signals/${signalId}`);
   if (!resp.ok) {

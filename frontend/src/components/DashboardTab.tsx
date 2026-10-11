@@ -12,6 +12,7 @@ import {
   fetchStressRun,
   ReplayStatus,
   RiskSignal,
+  SignalStats,
   StressRunResult,
 } from '../api/client';
 import { SOURCE_PRESETS } from '../hooks/useReplay';
@@ -27,6 +28,7 @@ import { PillButton } from './ui/PillButton';
 
 export interface DashboardTabProps {
   signals: RiskSignal[];
+  signalStats?: SignalStats | null;
   selectedSignal: RiskSignal | null;
   onSelectSignal: (sig: RiskSignal) => void;
   searchQuery: string;
@@ -52,6 +54,7 @@ export interface DashboardTabProps {
 
 export const DashboardTab: React.FC<DashboardTabProps> = ({
   signals,
+  signalStats,
   selectedSignal,
   onSelectSignal,
   searchQuery,
@@ -101,16 +104,23 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
   }, [stressRuns]);
 
   // Quantitative signal metrics (Strictly no made-up numbers)
-  const totalSignalsCount = signals.length;
-  const actionableSignals = signals.filter((s) => s.eligible_for_action);
-  const actionableCount = actionableSignals.length;
+  const totalSignalsCount = Math.max(
+    signalStats?.total_signals ?? 0,
+    replayStatus?.processed_count ?? 0,
+    signals.length
+  );
+  const actionableCount =
+    signalStats?.actionable_count ?? signals.filter((s) => s.eligible_for_action).length;
 
   const duplicateSignalsCount = signals.filter(
     (s) => s.duplicate_group_id || s.action_block_reasons?.includes('DUPLICATE_TEXT_SUPPRESSED')
   ).length;
-  const effectiveDuplicateCount = replayStatus?.duplicate_count ?? duplicateSignalsCount;
+  const effectiveDuplicateCount =
+    signalStats?.duplicate_count ?? replayStatus?.duplicate_count ?? duplicateSignalsCount;
 
-  const blockedCount = Math.max(0, totalSignalsCount - actionableCount - effectiveDuplicateCount);
+  const blockedCount =
+    signalStats?.blocked_count ??
+    Math.max(0, totalSignalsCount - actionableCount - effectiveDuplicateCount);
 
   // High impact signals: STRICTLY impact.score > 7
   const highImpactSignals = signals
@@ -120,11 +130,18 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
   // Event class distribution for pill bar chart
   const eventTaxonomy = ['CREDIT', 'MACRO', 'GEOPOLITICAL', 'M_AND_A', 'CYBER', 'SUPPLY_CHAIN', 'EARNINGS'];
   const eventChartData: PillBarChartDataPoint[] = eventTaxonomy.map((label) => {
-    const classSignals = signals.filter(
-      (s) => s.event?.label?.toUpperCase() === label
-    );
-    const eligible = classSignals.filter((s) => s.eligible_for_action).length;
-    const blocked = classSignals.length - eligible;
+    let eligible = 0;
+    let blocked = 0;
+    if (signalStats?.by_event && signalStats.by_event[label]) {
+      eligible = signalStats.by_event[label].eligible;
+      blocked = signalStats.by_event[label].blocked;
+    } else {
+      const classSignals = signals.filter(
+        (s) => s.event?.label?.toUpperCase() === label
+      );
+      eligible = classSignals.filter((s) => s.eligible_for_action).length;
+      blocked = classSignals.length - eligible;
+    }
     return {
       name: label === 'GEOPOLITICAL' ? 'GEO' : label === 'SUPPLY_CHAIN' ? 'SUPPLY' : label,
       eligible,
@@ -591,6 +608,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
         <div className="lg:col-span-7">
           <Feed
             signals={signals}
+            totalSignalsCount={totalSignalsCount}
             selectedSignal={selectedSignal}
             onSelectSignal={onSelectSignal}
             searchQuery={searchQuery}

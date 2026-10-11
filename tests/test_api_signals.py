@@ -70,3 +70,29 @@ def test_signals_streaming_and_query_endpoints(client):
     sink_file = Path("data/signals.jsonl")
     assert sink_file.exists()
     assert sink_file.stat().st_size > 0
+
+
+def test_signals_stats_endpoint(client):
+    # Reset, load scenario, and step to emit signals
+    client.post("/api/replay/reset")
+    load_resp = client.post(
+        "/api/replay/load",
+        json={"scenario_id": "SCENARIO-CREDIT-01", "sources": ["news_demo"]},
+    )
+    assert load_resp.status_code == 200
+    run_id = load_resp.json()["run_id"]
+
+    client.post("/api/replay/step")
+
+    # Verify stats endpoint
+    stats_resp = client.get(f"/api/signals/stats?run_id={run_id}")
+    assert stats_resp.status_code == 200
+    data = stats_resp.json()
+    assert "total_signals" in data
+    assert data["total_signals"] >= 1
+    assert "actionable_count" in data
+    assert "duplicate_count" in data
+    assert "blocked_count" in data
+    assert "high_impact_count" in data
+    assert "by_event" in data
+    assert data["total_signals"] == data["actionable_count"] + data["blocked_count"] + data["duplicate_count"]

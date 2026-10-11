@@ -1,7 +1,7 @@
 """Data access repository for runs, records, signals, and audit lineage."""
 
 from datetime import datetime
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from sqlalchemy.orm import Session
 
@@ -148,6 +148,71 @@ class ReplayRepository:
             .limit(limit)
             .all()
         )
+
+    def get_signals_stats(self, run_id: Optional[str] = None) -> Dict[str, Any]:
+        """Compute aggregated statistics across signals (or for a specific run)."""
+        from sqlalchemy import func
+
+        q = self.session.query(SignalModel)
+        if run_id and run_id != "all":
+            q = q.filter(SignalModel.run_id == run_id)
+        elif not run_id:
+            latest_run = (
+                self.session.query(RunModel).order_by(RunModel.created_at.desc()).first()
+            )
+            if latest_run:
+                run_id = latest_run.run_id
+                q = q.filter(SignalModel.run_id == run_id)
+
+        total_signals = q.count()
+        if total_signals == 0:
+            return {
+                "total_signals": 0,
+                "actionable_count": 0,
+                "duplicate_count": 0,
+                "blocked_count": 0,
+                "high_impact_count": 0,
+                "by_event": {},
+            }
+
+        actionable_count = q.filter(SignalModel.eligible_for_action.is_(True)).count()
+        duplicate_count = q.filter(
+            (SignalModel.duplicate_group_id.isnot(None))
+            | (SignalModel.action_block_reasons.like("%DUPLICATE%"))
+        ).count()
+        blocked_count = max(0, total_signals - actionable_count - duplicate_count)
+        high_impact_count = q.filter(SignalModel.impact_score > 7).count()
+
+        event_query = self.session.query(
+            SignalModel.event_label,
+            SignalModel.eligible_for_action,
+            func.count(SignalModel.signal_id),
+        )
+        if run_id and run_id != "all":
+            event_query = event_query.filter(SignalModel.run_id == run_id)
+        event_counts = event_query.group_by(
+            SignalModel.event_label, SignalModel.eligible_for_action
+        ).all()
+
+        by_event: Dict[str, Dict[str, int]] = {}
+        for ev, is_el, cnt in event_counts:
+            label = (ev or "OTHER").upper()
+            if label not in by_event:
+                by_event[label] = {"eligible": 0, "blocked": 0, "total": 0}
+            if is_el:
+                by_event[label]["eligible"] += cnt
+            else:
+                by_event[label]["blocked"] += cnt
+            by_event[label]["total"] += cnt
+
+        return {
+            "total_signals": total_signals,
+            "actionable_count": actionable_count,
+            "duplicate_count": duplicate_count,
+            "blocked_count": blocked_count,
+            "high_impact_count": high_impact_count,
+            "by_event": by_event,
+        }
 
     def save_stress_run(self, result: "StressRunResult") -> StressRunModel:
         """Store executed StressRunResult in SQLite with JSON contract."""
