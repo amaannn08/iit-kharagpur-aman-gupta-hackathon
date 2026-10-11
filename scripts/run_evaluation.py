@@ -33,7 +33,6 @@ from typing import Any, Dict, List, Tuple
 import numpy as np
 import pandas as pd
 from sklearn.metrics import confusion_matrix, f1_score
-from sklearn.model_selection import train_test_split
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DATA = REPO_ROOT / "data"
@@ -393,9 +392,9 @@ def suite_pipeline() -> Dict[str, Any]:
             "n_with_market_outcome": len(zs),
             "precision_abs_z_ge_2": prec,
             "precision_ci95": bootstrap_ratio_ci(hits, len(zs)) if zs else None,
-            "lift_vs_base_rate": round(prec / base_rate_z2, 2) if prec is not None else None,
+            "lift_vs_base_rate": round(prec / base_rate_z2, 2) if prec is not None and base_rate_z2 else None,
             "recall_abs_z_ge_3": round(len(high) / len(gold_high), 4) if len(gold_high) else None,
-            "recall_ci95": bootstrap_ratio_ci(len(high), len(gold_high)),
+            "recall_ci95": bootstrap_ratio_ci(len(high), len(gold_high)) if len(gold_high) else None,
         }
 
     # 4. Routine negative controls, held out from every model's training data
@@ -415,11 +414,8 @@ def suite_pipeline() -> Dict[str, Any]:
     )
     te = importlib.util.module_from_spec(te_spec)
     te_spec.loader.exec_module(te)
-    s8k = pd.read_csv(DATA / "train" / "sec_8k" / "items.csv")
-    _, test_ids = train_test_split(
-        np.asarray(sorted(s8k.accession.unique()), dtype=object), test_size=0.2, random_state=te.SEED
-    )
-    routine_8k = s8k[s8k.accession.isin(test_ids) & s8k.label.isin(["OTHER", "EARNINGS"])]
+    _, heldout_8k = te.sec_split(pd.read_csv(DATA / "train" / "sec_8k" / "items.csv"))
+    routine_8k = heldout_8k[heldout_8k.label.isin(["OTHER", "EARNINGS"])]
     routine_counts["sec_8k_routine_heldout"] = (
         count_triggers(zip(routine_8k.record_id, routine_8k.text.astype(str)), SourceType.NEWS),
         len(routine_8k),
@@ -648,13 +644,20 @@ def headline_rows(m: Dict[str, Any]) -> List[List[str]]:
                      f"rubric {mi['rubric_v1_spearman']:.3f}"])  # fmt: skip
     if pl := m.get("pipeline"):
         el, tr = pl["eligible_vs_market"], pl["triggers_vs_market"]
-        p_ci, r_ci = el["precision_ci95"], el["recall_ci95"]
+
+        def pct(x):
+            return "n/a" if x is None else f"{x:.1%}"
+
+        def ci(c):
+            return "" if not c else f" [{c[0]:.1%}, {c[1]:.1%}]"
+
+        lift = "n/a" if el["lift_vs_base_rate"] is None else f"{el['lift_vs_base_rate']:.2f}x"
         rows.append([
             f"Eligible signals vs next-day market move, Q4 2023 holdout ({pl['holdout_articles']:,} articles)",
-            f"{el['precision_abs_z_ge_2']:.1%} [{p_ci[0]:.1%}, {p_ci[1]:.1%}] had abs(z)>=2 vs base {pl['gold_base_rate_z2']:.1%} (lift {el['lift_vs_base_rate']:.2f}x)",
+            f"{pct(el['precision_abs_z_ge_2'])}{ci(el['precision_ci95'])} had abs(z)>=2 vs base {pl['gold_base_rate_z2']:.1%} (lift {lift})",
             f"> {TARGETS['trigger_precision_lift']}x lift",
-            f"recall of abs(z)>=3 events {el['recall_abs_z_ge_3']:.1%} [{r_ci[0]:.1%}, {r_ci[1]:.1%}]; "
-            f"automatic stress triggers: {pl['stress_triggers']} (recall {tr['recall_abs_z_ge_3']:.0%})",
+            f"recall of abs(z)>=3 events {pct(el['recall_abs_z_ge_3'])}{ci(el['recall_ci95'])}; "
+            f"automatic stress triggers: {pl['stress_triggers']} (recall {pct(tr['recall_abs_z_ge_3'])})",
         ])
         fr = pl["false_trigger_rates_by_source"]
         rows.append([

@@ -489,7 +489,7 @@
   "sentiment_macro_f1": 0.3477,
   "severity_mae": 2.943
  },
- "generated_at": "2026-10-11T07:10:06+00:00",
+ "generated_at": "2026-10-11T07:12:36+00:00",
  "targets": {
   "event_macro_f1": 0.7,
   "sentiment_macro_f1": 0.75,

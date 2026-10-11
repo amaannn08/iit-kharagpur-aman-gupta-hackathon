@@ -119,6 +119,15 @@ def abstention_stats(model, x, y, thr):
     }
 
 
+def sec_split(sec: pd.DataFrame) -> tuple:
+    """(train, held-out) 8-K rows, split by accession. The single definition of the split:
+    scripts/run_evaluation.py uses it to keep its routine-filing controls out of training."""
+    train_ids, test_ids = train_test_split(
+        np.asarray(sorted(sec.accession.unique()), dtype=object), test_size=0.2, random_state=SEED
+    )
+    return sec[sec.accession.isin(train_ids)], sec[sec.accession.isin(test_ids)]
+
+
 def main() -> None:
     topic_train = DATA / "train" / "hf_fin_topic" / "topic_train.csv"
     topic_valid = DATA / "train" / "hf_fin_topic" / "topic_valid.csv"
@@ -133,12 +142,9 @@ def main() -> None:
         d["y"] = [ps_aligned_label(lab, t) for lab, t in zip(d.label, d.text)]
 
     sec = pd.read_csv(sec_path)
-    sec_train_ids, sec_test_ids = train_test_split(
-        np.asarray(sorted(sec.accession.unique()), dtype=object), test_size=0.2, random_state=SEED
-    )
-    sec["text"] = sec.text.map(clean_for_classifier)
-    sec_train = sec[sec.accession.isin(sec_train_ids)].rename(columns={"label": "y"})
-    sec_test = sec[sec.accession.isin(sec_test_ids)].rename(columns={"label": "y"})
+    sec_train, sec_test = sec_split(sec)
+    sec_train = sec_train.assign(text=sec_train.text.map(clean_for_classifier)).rename(columns={"label": "y"})
+    sec_test = sec_test.assign(text=sec_test.text.map(clean_for_classifier)).rename(columns={"label": "y"})
 
     weak = weak_labeled_headlines()
     weak["text"] = weak.text.map(clean_for_classifier)

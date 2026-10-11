@@ -58,3 +58,13 @@ def test_readme_injection_replaces_only_marked_block(tmp_path, monkeypatch):
         readme.read_text()
         == "intro\n<!-- METRICS:START -->\n| new |\n<!-- METRICS:END -->\noutro\n"
     )
+
+
+def test_headline_rows_survive_empty_pipeline_results():
+    m = _metrics()
+    pl = dict(m["pipeline"])
+    empty = {"n_with_market_outcome": 0, "precision_abs_z_ge_2": None, "precision_ci95": None,
+             "lift_vs_base_rate": None, "recall_abs_z_ge_3": None, "recall_ci95": None}
+    pl["eligible_vs_market"] = pl["triggers_vs_market"] = empty
+    rows = run_evaluation.headline_rows({**m, "pipeline": pl})
+    assert any("n/a" in " ".join(r) for r in rows)
