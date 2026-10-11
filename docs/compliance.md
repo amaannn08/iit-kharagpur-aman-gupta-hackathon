@@ -24,7 +24,7 @@ Status of every requirement, with the evidence that shows it. Measured values ar
 |---|---|
 | Public GitHub repo with README in the mandatory template | README follows the template; repository visibility is set by the candidate |
 | requirements.txt, LICENSE (MIT), src/, data/, docs/presentation.pdf, docs/architecture.png | Present |
-| Demo video (unlisted YouTube) linked in README | Video link placeholder in README |
+| Demo video (unlisted YouTube) linked in README | https://youtu.be/2oVdwJt_VmY (unlisted, 4:42), linked in README |
 | All data used submitted in /data, no large dumps, sources and assumptions stated | Samples and derived data committed with licenses; raw cache gitignored and reproducible (`scripts/data/fetch_real.py`); see README section 3 and `docs/assumptions.md` |
 | No confidential client data; synthetic data disclosed | `data/manifest.json` flags every dataset |
 | Incremental commit history | One commit per feature/fix on the development branch |

@@ -3,7 +3,7 @@
 **Candidate Name:** Aman Gupta
 **College Email ID:** amangupta08@kgpian.iitkgp.ac.in
 **College / Campus:** Indian Institute of Technology Kharagpur
-**Demo Video Link:** TODO: unlisted YouTube link (to be recorded)
+**Demo Video Link:** [https://youtu.be/2oVdwJt_VmY](https://youtu.be/2oVdwJt_VmY) (unlisted, 4:42)
 **Slide Deck Link (if hosted externally):** in repository: [docs/presentation.pdf](docs/presentation.pdf)
 
 ## 1. Project Overview / Problem Statement & Approach
