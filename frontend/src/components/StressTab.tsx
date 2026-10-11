@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { CheckCircle, Download, Play, Sliders } from 'lucide-react';
 import { RiskSignal, StressRunResult, WholesalePortfolio } from '../api/client';
 import { Card } from './ui/Card';
@@ -46,6 +46,8 @@ export const StressTab: React.FC<StressTabProps> = ({
 }) => {
   const fundedBookValue = portfolio?.summary.total_book_value_usd ?? 0;
   const derivativeNotional = portfolio?.summary.interest_rate_swaps_gross_notional_usd ?? 150000000;
+  const [showAllHistory, setShowAllHistory] = useState(false);
+  const visibleRuns = showAllHistory ? stressRuns : stressRuns.slice(0, 5);
 
   return (
     <div className="flex-1 flex flex-col space-y-6">
@@ -193,7 +195,7 @@ export const StressTab: React.FC<StressTabProps> = ({
               </div>
             </div>
 
-            <div className="overflow-x-auto max-h-72 overflow-y-auto rounded-xl border border-theme-border">
+            <div className="overflow-x-auto rounded-xl border border-theme-border">
               <table className="w-full text-xs text-left bg-theme-card">
                 <thead className="text-theme-muted bg-theme-card-subtle border-b border-theme-border font-mono text-[11px] sticky top-0">
                   <tr>
@@ -217,7 +219,7 @@ export const StressTab: React.FC<StressTabProps> = ({
                       <td className={`py-2 px-3 text-right font-bold ${pos.pnl_usd < 0 ? 'text-theme-loss' : 'text-theme-primary'}`}>
                         ${pos.pnl_usd.toLocaleString('en-US')}
                       </td>
-                      <td className="py-2 px-3 text-theme-muted text-[11px] truncate max-w-xs">{pos.applied_shock_summary}</td>
+                      <td className="py-2 px-3 text-theme-muted text-[11px] whitespace-normal leading-relaxed">{pos.applied_shock_summary}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -332,8 +334,8 @@ export const StressTab: React.FC<StressTabProps> = ({
             {/* History of Stress Runs */}
             <div className="pt-3 border-t border-theme-border space-y-2">
               <div className="text-theme-muted font-semibold text-xs">Recent Simulation History</div>
-              <div className="space-y-1.5 max-h-48 overflow-y-auto">
-                {stressRuns.slice(0, 5).map((run) => (
+              <div className="space-y-1.5">
+                {visibleRuns.map((run) => (
                   <div
                     key={run.stress_id}
                     onClick={() => setActiveStressResult(run)}
@@ -355,6 +357,15 @@ export const StressTab: React.FC<StressTabProps> = ({
                   </div>
                 ))}
               </div>
+              {stressRuns.length > 5 && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllHistory((prev) => !prev)}
+                  className="w-full py-1.5 text-[11px] font-semibold text-theme-text-secondary hover:text-theme-text transition-colors text-center border border-dashed border-theme-border rounded-xl cursor-pointer"
+                >
+                  {showAllHistory ? 'Show less' : `Show more (${stressRuns.length - 5} older runs)`}
+                </button>
+              )}
             </div>
           </Card>
         </div>
