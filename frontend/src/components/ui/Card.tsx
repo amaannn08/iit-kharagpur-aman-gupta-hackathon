@@ -20,12 +20,12 @@ export const Card: React.FC<CardProps> = ({
   if (variant === 'hero') {
     return (
       <div
-        className={`relative overflow-hidden rounded-[20px] bg-gradient-to-br from-[#14532D] to-[#1F6B45] text-white p-5 md:p-6 shadow-[0_4px_20px_rgba(20,83,45,0.18)] ${className}`}
+        className={`relative overflow-hidden rounded-[20px] bg-gradient-to-br from-theme-hero-from to-theme-hero-to text-theme-hero-text p-5 md:p-6 shadow-[0_4px_20px_rgba(20,83,45,0.18)] ${className}`}
         {...props}
       >
         {/* Subtle decorative wave pattern */}
         <svg
-          className="absolute -right-12 -bottom-12 w-64 h-64 opacity-15 pointer-events-none select-none text-white"
+          className="absolute -right-12 -bottom-12 w-64 h-64 opacity-15 pointer-events-none select-none text-current"
           viewBox="0 0 200 200"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
@@ -55,12 +55,12 @@ export const Card: React.FC<CardProps> = ({
               <div>
                 {title && (
                   typeof title === 'string' ? (
-                    <h3 className="text-sm font-bold text-white tracking-tight">{title}</h3>
+                    <h3 className="text-sm font-bold text-theme-hero-text tracking-tight">{title}</h3>
                   ) : title
                 )}
                 {subtitle && (
                   typeof subtitle === 'string' ? (
-                    <p className="text-xs text-white/70 mt-0.5">{subtitle}</p>
+                    <p className="text-xs text-theme-hero-subtle mt-0.5">{subtitle}</p>
                   ) : subtitle
                 )}
               </div>
@@ -75,7 +75,7 @@ export const Card: React.FC<CardProps> = ({
 
   return (
     <div
-      className={`rounded-[20px] bg-white border border-[#ECEDEC] shadow-[0_2px_12px_rgba(0,0,0,0.03)] p-5 md:p-6 text-[#111827] ${className}`}
+      className={`rounded-[20px] bg-theme-card border border-theme-border shadow-[0_2px_12px_rgba(0,0,0,0.03)] p-5 md:p-6 text-theme-text ${className}`}
       {...props}
     >
       {(title || subtitle || action) && (
@@ -83,12 +83,12 @@ export const Card: React.FC<CardProps> = ({
           <div>
             {title && (
               typeof title === 'string' ? (
-                <h3 className="text-sm font-bold text-[#111827] tracking-tight">{title}</h3>
+                <h3 className="text-sm font-bold text-theme-text tracking-tight">{title}</h3>
               ) : title
             )}
             {subtitle && (
               typeof subtitle === 'string' ? (
-                <p className="text-xs text-[#6B7280] mt-0.5">{subtitle}</p>
+                <p className="text-xs text-theme-muted mt-0.5">{subtitle}</p>
               ) : subtitle
             )}
           </div>

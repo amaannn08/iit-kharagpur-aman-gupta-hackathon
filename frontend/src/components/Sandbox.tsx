@@ -31,21 +31,21 @@ export const Sandbox: React.FC<SandboxProps> = ({
       {/* Left 6/12: Text Input & Presets */}
       <div className="col-span-12 lg:col-span-6 flex flex-col">
         <Card className="flex-1 flex flex-col space-y-4">
-          <div className="border-b border-[#ECEDEC] pb-3">
-            <h3 className="text-sm font-bold text-[#111827] flex items-center gap-2">
-              <span className="w-7 h-7 rounded-full bg-[#E8F5EE] text-[#14532D] flex items-center justify-center">
+          <div className="border-b border-theme-border pb-3">
+            <h3 className="text-sm font-bold text-theme-text flex items-center gap-2">
+              <span className="w-7 h-7 rounded-full bg-theme-primary-tint text-theme-primary-text flex items-center justify-center">
                 <Sparkles className="w-4 h-4" />
               </span>
               NLP Pipeline Sandbox & Risk Signal Generator
             </h3>
-            <p className="text-xs text-[#6B7280] mt-1 leading-relaxed">
+            <p className="text-xs text-theme-muted mt-1 leading-relaxed">
               Type or paste raw financial text to test entity linking, sentiment, event classification, market-calibrated impact and automated stress triggers.
             </p>
           </div>
 
           {/* Test Scenario Presets */}
           <div className="space-y-1.5">
-            <label className="text-xs text-[#4B5563] font-semibold">Test Scenario Presets:</label>
+            <label className="text-xs text-theme-text-secondary font-semibold">Test Scenario Presets:</label>
             <div className="grid grid-cols-2 gap-2 text-xs">
               <button
                 type="button"
@@ -55,10 +55,10 @@ export const Sandbox: React.FC<SandboxProps> = ({
                   );
                   onSourceChange('news');
                 }}
-                className="p-2.5 rounded-xl bg-[#F9FAFB] border border-[#ECEDEC] hover:border-[#1F6B45]/40 hover:bg-[#F3F4F6] text-left transition-all cursor-pointer"
+                className="p-2.5 rounded-xl bg-theme-card-subtle-alt border border-theme-border hover:border-theme-primary/40 hover:bg-theme-bg text-left transition-all cursor-pointer"
               >
-                <div className="font-bold text-[#DC2626]">1. Severe Credit Default</div>
-                <div className="text-[10px] text-[#6B7280] truncate mt-0.5">$APEX missed $45M coupon</div>
+                <div className="font-bold text-theme-loss">1. Severe Credit Default</div>
+                <div className="text-[10px] text-theme-muted truncate mt-0.5">$APEX missed $45M coupon</div>
               </button>
 
               <button
@@ -69,10 +69,10 @@ export const Sandbox: React.FC<SandboxProps> = ({
                   );
                   onSourceChange('news');
                 }}
-                className="p-2.5 rounded-xl bg-[#F9FAFB] border border-[#ECEDEC] hover:border-[#1F6B45]/40 hover:bg-[#F3F4F6] text-left transition-all cursor-pointer"
+                className="p-2.5 rounded-xl bg-theme-card-subtle-alt border border-theme-border hover:border-theme-primary/40 hover:bg-theme-bg text-left transition-all cursor-pointer"
               >
-                <div className="font-bold text-[#111827]">2. Macro Rate Shock</div>
-                <div className="text-[10px] text-[#6B7280] truncate mt-0.5">Fed +75bps rate hike</div>
+                <div className="font-bold text-theme-text">2. Macro Rate Shock</div>
+                <div className="text-[10px] text-theme-muted truncate mt-0.5">Fed +75bps rate hike</div>
               </button>
 
               <button
@@ -83,10 +83,10 @@ export const Sandbox: React.FC<SandboxProps> = ({
                   );
                   onSourceChange('news');
                 }}
-                className="p-2.5 rounded-xl bg-[#F9FAFB] border border-[#ECEDEC] hover:border-[#1F6B45]/40 hover:bg-[#F3F4F6] text-left transition-all cursor-pointer"
+                className="p-2.5 rounded-xl bg-theme-card-subtle-alt border border-theme-border hover:border-theme-primary/40 hover:bg-theme-bg text-left transition-all cursor-pointer"
               >
-                <div className="font-bold text-[#111827]">3. Supply Disruption</div>
-                <div className="text-[10px] text-[#6B7280] truncate mt-0.5">Semiconductor supply halt</div>
+                <div className="font-bold text-theme-text">3. Supply Disruption</div>
+                <div className="text-[10px] text-theme-muted truncate mt-0.5">Semiconductor supply halt</div>
               </button>
 
               <button
@@ -97,10 +97,10 @@ export const Sandbox: React.FC<SandboxProps> = ({
                   );
                   onSourceChange('news');
                 }}
-                className="p-2.5 rounded-xl bg-[#F9FAFB] border border-[#ECEDEC] hover:border-[#1F6B45]/40 hover:bg-[#F3F4F6] text-left transition-all cursor-pointer"
+                className="p-2.5 rounded-xl bg-theme-card-subtle-alt border border-theme-border hover:border-theme-primary/40 hover:bg-theme-bg text-left transition-all cursor-pointer"
               >
-                <div className="font-bold text-[#6B7280]">4. Routine Governance</div>
-                <div className="text-[10px] text-[#9CA3AF] truncate mt-0.5">Admin meeting (Action Blocked)</div>
+                <div className="font-bold text-theme-muted">4. Routine Governance</div>
+                <div className="text-[10px] text-theme-subtle truncate mt-0.5">Admin meeting (Action Blocked)</div>
               </button>
             </div>
           </div>
@@ -108,13 +108,13 @@ export const Sandbox: React.FC<SandboxProps> = ({
           {/* Text Input Area */}
           <div className="flex-1 flex flex-col space-y-2">
             <div className="flex items-center justify-between text-xs">
-              <label className="text-[#4B5563] font-semibold">Raw Input Text:</label>
+              <label className="text-theme-text-secondary font-semibold">Raw Input Text:</label>
               <div className="flex items-center gap-2">
-                <span className="text-[#6B7280]">Source:</span>
+                <span className="text-theme-muted">Source:</span>
                 <select
                   value={playgroundSource}
                   onChange={(e) => onSourceChange(e.target.value)}
-                  className="bg-[#F9FAFB] border border-[#ECEDEC] rounded-full px-3 py-1 text-xs text-[#111827] font-medium focus:outline-none focus:border-[#1F6B45]"
+                  className="bg-theme-card-subtle-alt border border-theme-border rounded-full px-3 py-1 text-xs text-theme-text font-medium focus:outline-none focus:border-theme-primary"
                 >
                   <option value="news">News</option>
                   <option value="social">Social Media</option>
@@ -125,7 +125,7 @@ export const Sandbox: React.FC<SandboxProps> = ({
               value={playgroundText}
               onChange={(e) => onTextChange(e.target.value)}
               rows={6}
-              className="w-full flex-1 bg-[#F9FAFB] border border-[#ECEDEC] rounded-xl p-3.5 text-xs text-[#111827] placeholder-[#9CA3AF] font-sans focus:outline-none focus:border-[#1F6B45] focus:bg-white resize-none transition-colors"
+              className="w-full flex-1 bg-theme-card-subtle-alt border border-theme-border rounded-xl p-3.5 text-xs text-theme-text placeholder-theme-subtle font-sans focus:outline-none focus:border-theme-primary focus:bg-theme-card resize-none transition-colors"
               placeholder="Enter news article or social post text..."
             />
           </div>
@@ -137,7 +137,7 @@ export const Sandbox: React.FC<SandboxProps> = ({
             className="w-full justify-center py-2.5"
           >
             {playgroundLoading ? (
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <div className="w-4 h-4 border-2 border-theme-on-primary border-t-transparent rounded-full animate-spin" />
             ) : (
               <>
                 <Sparkles className="w-4 h-4" />
@@ -151,9 +151,9 @@ export const Sandbox: React.FC<SandboxProps> = ({
       {/* Right 6/12: Pipeline Output */}
       <div className="col-span-12 lg:col-span-6 flex flex-col overflow-y-auto">
         <Card className="flex-1 flex flex-col space-y-4">
-          <div className="border-b border-[#ECEDEC] pb-3 flex items-center justify-between">
-            <h3 className="text-sm font-bold text-[#111827] flex items-center gap-2">
-              <span className="w-7 h-7 rounded-full bg-[#F3F4F6] text-[#374151] flex items-center justify-center">
+          <div className="border-b border-theme-border pb-3 flex items-center justify-between">
+            <h3 className="text-sm font-bold text-theme-text flex items-center gap-2">
+              <span className="w-7 h-7 rounded-full bg-theme-border-subtle text-theme-text-body flex items-center justify-center">
                 <Layers className="w-4 h-4" />
               </span>
               Structured Risk Signal & Downstream Impact
@@ -169,22 +169,22 @@ export const Sandbox: React.FC<SandboxProps> = ({
             <div className="space-y-4 text-xs">
               {/* Entity & Event Badges */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-[#F9FAFB] p-3.5 rounded-xl border border-[#ECEDEC]">
-                  <div className="text-[#6B7280] text-[10px] font-bold uppercase tracking-wider">RESOLVED ENTITY</div>
-                  <div className="text-sm font-bold text-[#111827] mt-1">
+                <div className="bg-theme-card-subtle-alt p-3.5 rounded-xl border border-theme-border">
+                  <div className="text-theme-muted text-[10px] font-bold uppercase tracking-wider">RESOLVED ENTITY</div>
+                  <div className="text-sm font-bold text-theme-text mt-1">
                     {playgroundResult.signal.entity.name}
                   </div>
-                  <div className="text-[11px] text-[#6B7280] font-mono mt-0.5">
+                  <div className="text-[11px] text-theme-muted font-mono mt-0.5">
                     {playgroundResult.signal.entity.ticker || 'No Ticker'} • {playgroundResult.signal.entity.scope}
                   </div>
                 </div>
 
-                <div className="bg-[#F9FAFB] p-3.5 rounded-xl border border-[#ECEDEC]">
-                  <div className="text-[#6B7280] text-[10px] font-bold uppercase tracking-wider">EVENT CLASSIFICATION</div>
-                  <div className="text-sm font-bold text-[#111827] mt-1 uppercase">
+                <div className="bg-theme-card-subtle-alt p-3.5 rounded-xl border border-theme-border">
+                  <div className="text-theme-muted text-[10px] font-bold uppercase tracking-wider">EVENT CLASSIFICATION</div>
+                  <div className="text-sm font-bold text-theme-text mt-1 uppercase">
                     {playgroundResult.signal.event.label}
                   </div>
-                  <div className="text-[11px] text-[#6B7280] font-mono mt-0.5">
+                  <div className="text-[11px] text-theme-muted font-mono mt-0.5">
                     Confidence: {(playgroundResult.signal.event.confidence * 100).toFixed(0)}%
                     {playgroundResult.signal.event.abstained && ' (Abstained)'}
                   </div>
@@ -193,42 +193,42 @@ export const Sandbox: React.FC<SandboxProps> = ({
 
               {/* Sentiment & Impact */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-[#F9FAFB] p-3.5 rounded-xl border border-[#ECEDEC]">
-                  <div className="text-[#6B7280] text-[10px] font-bold uppercase tracking-wider">FINBERT SENTIMENT</div>
-                  <div className={`text-xl font-bold mt-1 ${playgroundResult.signal.sentiment.score < 0 ? 'text-[#DC2626]' : 'text-[#15803D]'}`}>
+                <div className="bg-theme-card-subtle-alt p-3.5 rounded-xl border border-theme-border">
+                  <div className="text-theme-muted text-[10px] font-bold uppercase tracking-wider">FINBERT SENTIMENT</div>
+                  <div className={`text-xl font-bold mt-1 ${playgroundResult.signal.sentiment.score < 0 ? 'text-theme-loss' : 'text-theme-success'}`}>
                     {playgroundResult.signal.sentiment.score.toFixed(3)}
                   </div>
-                  <div className="text-[11px] text-[#6B7280] mt-0.5">
-                    Label: <span className="font-semibold text-[#111827]">{playgroundResult.signal.sentiment.label}</span>
+                  <div className="text-[11px] text-theme-muted mt-0.5">
+                    Label: <span className="font-semibold text-theme-text">{playgroundResult.signal.sentiment.label}</span>
                   </div>
                 </div>
 
-                <div className="bg-[#F9FAFB] p-3.5 rounded-xl border border-[#ECEDEC]">
-                  <div className="text-[#6B7280] text-[10px] font-bold uppercase tracking-wider">IMPACT SEVERITY RUBRIC</div>
-                  <div className="text-xl font-bold text-[#111827] mt-1">
+                <div className="bg-theme-card-subtle-alt p-3.5 rounded-xl border border-theme-border">
+                  <div className="text-theme-muted text-[10px] font-bold uppercase tracking-wider">IMPACT SEVERITY RUBRIC</div>
+                  <div className="text-xl font-bold text-theme-text mt-1">
                     {playgroundResult.signal.impact.score} / 10
                   </div>
-                  <div className="text-[11px] text-[#6B7280] mt-0.5 font-mono">
+                  <div className="text-[11px] text-theme-muted mt-0.5 font-mono">
                     Base: {playgroundResult.signal.impact.components.event_base} | Scope: +{playgroundResult.signal.impact.components.scope}
                   </div>
                 </div>
               </div>
 
               {/* Action Gate Policy */}
-              <div className="bg-[#F9FAFB] p-3.5 rounded-xl border border-[#ECEDEC]">
-                <div className="text-[#4B5563] font-semibold mb-1">Action Gate Eligibility</div>
+              <div className="bg-theme-card-subtle-alt p-3.5 rounded-xl border border-theme-border">
+                <div className="text-theme-text-secondary font-semibold mb-1">Action Gate Eligibility</div>
                 {playgroundResult.signal.eligible_for_action ? (
-                  <div className="text-[#15803D] font-semibold flex items-center gap-1.5">
-                    <CheckCircle className="w-4 h-4 text-[#15803D]" />
+                  <div className="text-theme-success font-semibold flex items-center gap-1.5">
+                    <CheckCircle className="w-4 h-4 text-theme-success" />
                     ELIGIBLE FOR ACTION → Automatically Triggered Wholesale Stress Run
                   </div>
                 ) : (
                   <div>
-                    <div className="flex items-center gap-1.5 text-[#DC2626] font-semibold">
-                      <AlertTriangle className="w-4 h-4 text-[#DC2626]" />
+                    <div className="flex items-center gap-1.5 text-theme-loss font-semibold">
+                      <AlertTriangle className="w-4 h-4 text-theme-loss" />
                       ACTION BLOCKED BY POLICY
                     </div>
-                    <div className="text-[11px] text-[#6B7280] mt-1">
+                    <div className="text-[11px] text-theme-muted mt-1">
                       Reason: {playgroundResult.signal.action_block_reasons.join(', ')}
                     </div>
                   </div>
@@ -237,17 +237,17 @@ export const Sandbox: React.FC<SandboxProps> = ({
 
               {/* Triggered Stress Result if present */}
               {playgroundResult.stress_run && (
-                <div className="bg-[#FEF2F2] p-4 rounded-xl border border-[#FEE2E2] space-y-2">
+                <div className="bg-theme-loss-bg-alt p-4 rounded-xl border border-theme-loss-bg space-y-2">
                   <div className="flex items-center justify-between">
-                    <div className="text-[#991B1B] font-bold flex items-center gap-1.5">
-                      <TrendingDown className="w-4 h-4 text-[#DC2626]" />
+                    <div className="text-theme-loss-dark font-bold flex items-center gap-1.5">
+                      <TrendingDown className="w-4 h-4 text-theme-loss" />
                       Triggered Stress Valuation Result
                     </div>
-                    <span className="font-mono text-[#DC2626] font-bold text-sm">
+                    <span className="font-mono text-theme-loss font-bold text-sm">
                       PnL: -${Math.abs(playgroundResult.stress_run.total_pnl_usd).toLocaleString('en-US')}
                     </span>
                   </div>
-                  <div className="text-[11px] text-[#7F1D1D] font-mono">
+                  <div className="text-[11px] text-theme-loss-deeper font-mono">
                     Credit ECL Delta: +${playgroundResult.stress_run.credit_ecl_change_usd.toLocaleString('en-US')} • Market MTM Delta: ${playgroundResult.stress_run.market_mtm_change_usd.toLocaleString('en-US')}
                   </div>
                   <PillButton
@@ -262,7 +262,7 @@ export const Sandbox: React.FC<SandboxProps> = ({
               )}
             </div>
           ) : (
-            <div className="flex-1 min-h-[220px] flex items-center justify-center text-[#6B7280] text-xs font-medium border border-dashed border-[#ECEDEC] rounded-xl bg-[#F9FAFB]/50">
+            <div className="flex-1 min-h-[220px] flex items-center justify-center text-theme-muted text-xs font-medium border border-dashed border-theme-border rounded-xl bg-theme-card-subtle-alt/50">
               Run an analysis to inspect structured signals and stress triggers.
             </div>
           )}

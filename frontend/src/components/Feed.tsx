@@ -70,25 +70,25 @@ export const Feed: React.FC<FeedProps> = ({
   return (
     <Card className="flex flex-col h-[760px] p-0 overflow-hidden">
       {/* Stream Toolbar & Search */}
-      <div className="p-4 border-b border-[#ECEDEC] bg-white space-y-3 shrink-0">
+      <div className="p-4 border-b border-theme-border bg-theme-card space-y-3 shrink-0">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 flex-1 min-w-[200px]">
             <div className="relative flex-1">
-              <Search className="w-4 h-4 text-[#9CA3AF] absolute left-3 top-2.5" />
+              <Search className="w-4 h-4 text-theme-subtle absolute left-3 top-2.5" />
               <input
                 type="text"
                 placeholder="Filter by entity, ticker, or text..."
                 value={searchQuery}
                 onChange={(e) => onSearchChange(e.target.value)}
-                className="w-full bg-[#F3F4F3] border border-transparent focus:border-[#7FD1A4] rounded-full pl-9 pr-3 py-1.5 text-xs text-[#111827] placeholder-[#9CA3AF] focus:outline-none transition-all"
+                className="w-full bg-theme-bg border border-transparent focus:border-theme-primary-light rounded-full pl-9 pr-3 py-1.5 text-xs text-theme-text placeholder-theme-subtle focus:outline-none transition-all"
               />
             </div>
             <div className="flex items-center gap-1.5 text-xs shrink-0">
-              <Filter className="w-3.5 h-3.5 text-[#6B7280]" />
+              <Filter className="w-3.5 h-3.5 text-theme-muted" />
               <select
                 value={filterEvent}
                 onChange={(e) => onFilterEventChange(e.target.value)}
-                className="bg-[#F3F4F3] border border-[#ECEDEC] rounded-full px-3 py-1.5 text-xs text-[#374151] focus:outline-none cursor-pointer"
+                className="bg-theme-bg border border-theme-border rounded-full px-3 py-1.5 text-xs text-theme-text-body focus:outline-none cursor-pointer"
               >
                 <option value="all">All Taxonomy Events</option>
                 <option value="CREDIT">Credit Defaults &amp; Debt</option>
@@ -104,16 +104,16 @@ export const Feed: React.FC<FeedProps> = ({
           </div>
 
           <div className="flex items-center gap-3 text-xs shrink-0">
-            <label className="flex items-center gap-1.5 cursor-pointer text-[#4B5563] select-none text-[11px]">
+            <label className="flex items-center gap-1.5 cursor-pointer text-theme-text-secondary select-none text-[11px]">
               <input
                 type="checkbox"
                 checked={showDuplicates}
                 onChange={(e) => onShowDuplicatesChange(e.target.checked)}
-                className="rounded text-[#1F6B45] focus:ring-0 accent-[#1F6B45]"
+                className="rounded text-theme-primary focus:ring-0 accent-theme-primary"
               />
               <span>Show Suppressed Dups</span>
             </label>
-            <span className="font-mono text-[#14532D] text-xs px-2.5 py-0.5 rounded-full bg-[#E8F5EE] border border-[#7FD1A4]/40 font-semibold">
+            <span className="font-mono text-theme-primary-text text-xs px-2.5 py-0.5 rounded-full bg-theme-primary-tint border border-theme-primary/40 font-semibold">
               {filteredSignals.length} Signals
             </span>
           </div>
@@ -129,8 +129,8 @@ export const Feed: React.FC<FeedProps> = ({
             }}
             className={`px-3 py-1 rounded-full transition-all cursor-pointer whitespace-nowrap ${
               filterMode === 'all' && filterEvent === 'all'
-                ? 'bg-[#14532D] text-white shadow-xs font-semibold'
-                : 'bg-[#F3F4F3] text-[#4B5563] hover:text-[#111827]'
+                ? 'bg-theme-primary-fill text-theme-on-primary shadow-xs font-semibold'
+                : 'bg-theme-bg text-theme-text-secondary hover:text-theme-text'
             }`}
           >
             All ({signals.length})
@@ -140,8 +140,8 @@ export const Feed: React.FC<FeedProps> = ({
             onClick={() => setFilterMode('high_impact')}
             className={`px-3 py-1 rounded-full transition-all cursor-pointer whitespace-nowrap ${
               filterMode === 'high_impact'
-                ? 'bg-[#14532D] text-white shadow-xs font-semibold'
-                : 'bg-[#F3F4F3] text-[#4B5563] hover:text-[#111827]'
+                ? 'bg-theme-primary-fill text-theme-on-primary shadow-xs font-semibold'
+                : 'bg-theme-bg text-theme-text-secondary hover:text-theme-text'
             }`}
           >
             High Impact &gt; 7 ({highImpactCount})
@@ -151,8 +151,8 @@ export const Feed: React.FC<FeedProps> = ({
             onClick={() => setFilterMode('actionable')}
             className={`px-3 py-1 rounded-full transition-all cursor-pointer whitespace-nowrap ${
               filterMode === 'actionable'
-                ? 'bg-[#14532D] text-white shadow-xs font-semibold'
-                : 'bg-[#F3F4F3] text-[#4B5563] hover:text-[#111827]'
+                ? 'bg-theme-primary-fill text-theme-on-primary shadow-xs font-semibold'
+                : 'bg-theme-bg text-theme-text-secondary hover:text-theme-text'
             }`}
           >
             Actionable Triggers ({actionableCount})
@@ -162,8 +162,8 @@ export const Feed: React.FC<FeedProps> = ({
             onClick={() => onFilterEventChange('CREDIT')}
             className={`px-3 py-1 rounded-full transition-all cursor-pointer whitespace-nowrap ${
               filterEvent === 'CREDIT'
-                ? 'bg-[#14532D] text-white shadow-xs font-semibold'
-                : 'bg-[#F3F4F3] text-[#4B5563] hover:text-[#111827]'
+                ? 'bg-theme-primary-fill text-theme-on-primary shadow-xs font-semibold'
+                : 'bg-theme-bg text-theme-text-secondary hover:text-theme-text'
             }`}
           >
             Credit ({creditCount})
@@ -173,8 +173,8 @@ export const Feed: React.FC<FeedProps> = ({
             onClick={() => onFilterEventChange('MACRO')}
             className={`px-3 py-1 rounded-full transition-all cursor-pointer whitespace-nowrap ${
               filterEvent === 'MACRO'
-                ? 'bg-[#14532D] text-white shadow-xs font-semibold'
-                : 'bg-[#F3F4F3] text-[#4B5563] hover:text-[#111827]'
+                ? 'bg-theme-primary-fill text-theme-on-primary shadow-xs font-semibold'
+                : 'bg-theme-bg text-theme-text-secondary hover:text-theme-text'
             }`}
           >
             Macro ({macroCount})
@@ -185,8 +185,8 @@ export const Feed: React.FC<FeedProps> = ({
               onClick={() => onFilterEventChange('CYBER')}
               className={`px-3 py-1 rounded-full transition-all cursor-pointer whitespace-nowrap ${
                 filterEvent === 'CYBER'
-                  ? 'bg-[#14532D] text-white shadow-xs font-semibold'
-                  : 'bg-[#F3F4F3] text-[#4B5563] hover:text-[#111827]'
+                  ? 'bg-theme-primary-fill text-theme-on-primary shadow-xs font-semibold'
+                  : 'bg-theme-bg text-theme-text-secondary hover:text-theme-text'
               }`}
             >
               Cyber ({cyberCount})
@@ -199,12 +199,12 @@ export const Feed: React.FC<FeedProps> = ({
       <div className="flex-1 p-3.5 space-y-2.5 overflow-y-auto">
         {filteredSignals.length === 0 ? (
           signals.length > 0 ? (
-            <div className="py-16 text-center text-[#6B7280] text-xs border border-dashed border-[#ECEDEC] rounded-2xl bg-[#F9FAF9] p-6 space-y-3">
-              <AlertTriangle className="w-6 h-6 text-[#9CA3AF] mx-auto" />
-              <div className="text-sm font-semibold text-[#111827]">
+            <div className="py-16 text-center text-theme-muted text-xs border border-dashed border-theme-border rounded-2xl bg-theme-card-subtle p-6 space-y-3">
+              <AlertTriangle className="w-6 h-6 text-theme-subtle mx-auto" />
+              <div className="text-sm font-semibold text-theme-text">
                 No signals match current filters
               </div>
-              <p className="max-w-sm mx-auto text-[#6B7280]">
+              <p className="max-w-sm mx-auto text-theme-muted">
                 No signals match '{searchQuery || filterEvent}'. Clear search or change filters to view active items.
               </p>
               <button
@@ -214,21 +214,21 @@ export const Feed: React.FC<FeedProps> = ({
                   onFilterEventChange('all');
                   setFilterMode('all');
                 }}
-                className="px-4 py-1.5 rounded-full bg-[#14532D] text-white font-semibold text-xs hover:bg-[#1F6B45] transition-colors cursor-pointer"
+                className="px-4 py-1.5 rounded-full bg-theme-primary-fill text-theme-on-primary font-semibold text-xs hover:bg-theme-primary-hover transition-colors cursor-pointer"
               >
                 Reset All Filters ({signals.length} Signals Available)
               </button>
             </div>
           ) : (
-            <div className="py-10 px-6 border border-[#ECEDEC] rounded-2xl bg-white space-y-5 text-center">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E8F5EE] text-[#14532D] text-xs font-medium">
-                <Activity className="w-3.5 h-3.5 text-[#1F6B45]" />
+            <div className="py-10 px-6 border border-theme-border rounded-2xl bg-theme-card space-y-5 text-center">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-theme-primary-tint text-theme-primary-text text-xs font-medium">
+                <Activity className="w-3.5 h-3.5 text-theme-primary" />
                 Replay Engine Ready
               </div>
-              <h3 className="text-base font-bold text-[#111827]">
+              <h3 className="text-base font-bold text-theme-text">
                 Activate Real-Time Risk Ingestion
               </h3>
-              <p className="text-xs text-[#6B7280] max-w-md mx-auto">
+              <p className="text-xs text-theme-muted max-w-md mx-auto">
                 Select an audited offline scenario below or click Start Replay to stream structured risk signals and stress triggers.
               </p>
 
@@ -239,18 +239,18 @@ export const Feed: React.FC<FeedProps> = ({
                     if (onLoadScenario) onLoadScenario('demo');
                     if (onPlay) setTimeout(onPlay, 200);
                   }}
-                  className="p-3.5 rounded-2xl border border-[#ECEDEC] hover:border-[#14532D] hover:bg-[#E8F5EE]/40 transition-all cursor-pointer space-y-1"
+                  className="p-3.5 rounded-2xl border border-theme-border hover:border-theme-primary-fill hover:bg-theme-primary-tint/40 transition-all cursor-pointer space-y-1"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-xs text-[#111827] flex items-center gap-1.5">
-                      <Play className="w-3 h-3 fill-[#14532D] text-[#14532D]" />
+                    <span className="font-bold text-xs text-theme-text flex items-center gap-1.5">
+                      <Play className="w-3 h-3 fill-theme-primary-fill text-theme-primary-fill" />
                       Synthetic Demo Scenario
                     </span>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#F3F4F3] text-[#4B5563]">
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-theme-bg text-theme-text-secondary">
                       1,000+ Records
                     </span>
                   </div>
-                  <p className="text-[11px] text-[#6B7280]">
+                  <p className="text-[11px] text-theme-muted">
                     Severe Chapter 11 default ($APEX), Fed rate shock (+75bps), microchip supply halt.
                   </p>
                 </button>
@@ -261,18 +261,18 @@ export const Feed: React.FC<FeedProps> = ({
                     if (onLoadScenario) onLoadScenario('polygon_2023');
                     if (onPlay) setTimeout(onPlay, 200);
                   }}
-                  className="p-3.5 rounded-2xl border border-[#ECEDEC] hover:border-[#14532D] hover:bg-[#E8F5EE]/40 transition-all cursor-pointer space-y-1"
+                  className="p-3.5 rounded-2xl border border-theme-border hover:border-theme-primary-fill hover:bg-theme-primary-tint/40 transition-all cursor-pointer space-y-1"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-xs text-[#111827] flex items-center gap-1.5">
-                      <TrendingDown className="w-3 h-3 text-[#DC2626]" />
+                    <span className="font-bold text-xs text-theme-text flex items-center gap-1.5">
+                      <TrendingDown className="w-3 h-3 text-theme-loss" />
                       Polygon Real News (2023)
                     </span>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#F3F4F3] text-[#4B5563]">
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-theme-bg text-theme-text-secondary">
                       5,548 Articles
                     </span>
                   </div>
-                  <p className="text-[11px] text-[#6B7280]">
+                  <p className="text-[11px] text-theme-muted">
                     Real audited 2023 financial news across S&amp;P 500 universe with market returns.
                   </p>
                 </button>
@@ -293,29 +293,29 @@ export const Feed: React.FC<FeedProps> = ({
                 onClick={() => onSelectSignal(sig)}
                 className={`p-3.5 rounded-2xl border transition-all cursor-pointer ${
                   isSelected
-                    ? 'bg-[#E8F5EE]/60 border-[#14532D] shadow-xs ring-1 ring-[#14532D]/30'
-                    : 'bg-white border-[#ECEDEC] hover:border-gray-300 hover:bg-[#F9FAF9]'
+                    ? 'bg-theme-primary-tint/60 border-theme-primary-fill shadow-xs ring-1 ring-theme-primary-fill/30'
+                    : 'bg-theme-card border-theme-border hover:border-theme-border-strong hover:bg-theme-card-subtle'
                 }`}
               >
                 {/* Top Line: Source, Entity, Timestamp */}
                 <div className="flex items-center justify-between text-xs mb-1.5">
                   <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded-full font-semibold uppercase text-[10px] bg-[#F3F4F3] text-[#374151] border border-[#ECEDEC]">
+                    <span className="px-2 py-0.5 rounded-full font-semibold uppercase text-[10px] bg-theme-bg text-theme-text-body border border-theme-border">
                       {sig.source_type}
                     </span>
-                    <span className="font-bold text-[#111827]">{sig.entity.name}</span>
+                    <span className="font-bold text-theme-text">{sig.entity.name}</span>
                     {sig.entity.ticker && (
-                      <span className="font-mono text-[#111827] text-[11px] font-bold bg-[#F3F4F3] px-1.5 py-0.5 rounded border border-[#ECEDEC]">
+                      <span className="font-mono text-theme-text text-[11px] font-bold bg-theme-bg px-1.5 py-0.5 rounded border border-theme-border">
                         {sig.entity.ticker}
                       </span>
                     )}
                     {isDuplicate && (
-                      <span className="px-2 py-0.5 rounded-full bg-gray-100 text-[#6B7280] text-[10px]">
+                      <span className="px-2 py-0.5 rounded-full bg-theme-card-subtle text-theme-muted text-[10px]">
                         DUPLICATE SUPPRESSED
                       </span>
                     )}
                   </div>
-                  <span className="text-[#9CA3AF] font-mono text-[11px]">
+                  <span className="text-theme-subtle font-mono text-[11px]">
                     {sig.simulated_at
                       ? sig.simulated_at.replace('T', ' ').slice(0, 19)
                       : sig.processed_at.slice(0, 19)}
@@ -323,21 +323,21 @@ export const Feed: React.FC<FeedProps> = ({
                 </div>
 
                 {/* Middle Line: Evidence Text Snippet */}
-                <p className="text-xs text-[#374151] leading-relaxed line-clamp-2">
+                <p className="text-xs text-theme-text-body leading-relaxed line-clamp-2">
                   {sig.text_excerpt || sig.evidence[0]?.text || 'No text snippet provided.'}
                 </p>
 
                 {/* Bottom Line: Classification, Impact, Sentiment */}
-                <div className="mt-2.5 pt-2 border-t border-[#ECEDEC] flex flex-wrap items-center justify-between text-[11px] gap-2">
+                <div className="mt-2.5 pt-2 border-t border-theme-border flex flex-wrap items-center justify-between text-[11px] gap-2">
                   <div className="flex items-center gap-2">
                     {/* Exact text CREDIT (88%) tested by vitest! */}
                     <span
                       className={`px-2.5 py-0.5 rounded-full font-mono font-medium ${
                         sig.event.abstained
-                          ? 'bg-gray-100 text-[#6B7280] border border-gray-200'
+                          ? 'bg-theme-card-subtle text-theme-muted border border-theme-border'
                           : sig.event.label?.toUpperCase() === 'CREDIT'
-                          ? 'bg-[#FEE2E2] text-[#DC2626] border border-red-200 font-semibold'
-                          : 'bg-[#E8F5EE] text-[#14532D] border border-[#7FD1A4]/40 font-semibold'
+                          ? 'bg-theme-loss-bg text-theme-loss border border-theme-loss/30 font-semibold'
+                          : 'bg-theme-primary-tint text-theme-primary-text border border-theme-primary/40 font-semibold'
                       }`}
                     >
                       {sig.event.label?.toUpperCase()} ({(sig.event.confidence * 100).toFixed(0)}%)
@@ -345,10 +345,10 @@ export const Feed: React.FC<FeedProps> = ({
                     <span
                       className={`px-2 py-0.5 rounded-full font-mono font-bold ${
                         sig.impact.score >= 8
-                          ? 'bg-[#FEE2E2] text-[#DC2626] border border-red-200'
+                          ? 'bg-theme-loss-bg text-theme-loss border border-theme-loss/30'
                           : sig.impact.score >= 5
-                          ? 'bg-[#FEF3C7] text-[#B45309] border border-amber-200'
-                          : 'bg-[#F3F4F3] text-[#374151] border border-[#ECEDEC]'
+                          ? 'bg-theme-warn-bg text-theme-warn border border-theme-warn/30'
+                          : 'bg-theme-bg text-theme-text-body border border-theme-border'
                       }`}
                     >
                       Impact: {sig.impact.score}/10
@@ -359,10 +359,10 @@ export const Feed: React.FC<FeedProps> = ({
                     <span
                       className={`font-mono ${
                         sig.sentiment.score < -0.3
-                          ? 'text-[#DC2626] font-semibold'
+                          ? 'text-theme-loss font-semibold'
                           : sig.sentiment.score > 0.3
-                          ? 'text-[#1F6B45] font-semibold'
-                          : 'text-[#6B7280]'
+                          ? 'text-theme-primary-text font-semibold'
+                          : 'text-theme-muted'
                       }`}
                     >
                       Sentiment: {sig.sentiment.score.toFixed(2)} ({sig.sentiment.label})
@@ -370,12 +370,12 @@ export const Feed: React.FC<FeedProps> = ({
 
                     {/* Exact text ACTION ELIGIBLE tested by vitest! */}
                     {isEligible ? (
-                      <span className="text-[#14532D] font-bold text-[10px] flex items-center gap-1 bg-[#E8F5EE] border border-[#7FD1A4] px-2.5 py-0.5 rounded-full">
-                        <CheckCircle className="w-3 h-3 text-[#1F6B45]" />
+                      <span className="text-theme-primary-text font-bold text-[10px] flex items-center gap-1 bg-theme-primary-tint border border-theme-primary/40 px-2.5 py-0.5 rounded-full">
+                        <CheckCircle className="w-3 h-3 text-theme-primary" />
                         ACTION ELIGIBLE
                       </span>
                     ) : (
-                      <span className="text-[#9CA3AF] text-[10px] bg-gray-100 border border-gray-200 px-2 py-0.5 rounded-full">
+                      <span className="text-theme-subtle text-[10px] bg-theme-card-subtle border border-theme-border px-2 py-0.5 rounded-full">
                         ACTION BLOCKED
                       </span>
                     )}

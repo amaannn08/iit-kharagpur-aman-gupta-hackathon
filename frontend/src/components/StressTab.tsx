@@ -84,14 +84,14 @@ export const StressTab: React.FC<StressTabProps> = ({
         />
 
         <Card className="flex flex-col justify-between">
-          <div className="text-xs md:text-sm font-medium text-[#6B7280]">
+          <div className="text-xs md:text-sm font-medium text-theme-muted">
             Reconciliation Audit Invariant
           </div>
-          <div className="text-xl md:text-2xl font-bold font-mono tracking-tight text-[#14532D] flex items-center gap-2 my-2">
-            <CheckCircle className="w-5 h-5 text-[#1F6B45]" />
+          <div className="text-xl md:text-2xl font-bold font-mono tracking-tight text-theme-primary-text flex items-center gap-2 my-2">
+            <CheckCircle className="w-5 h-5 text-theme-primary" />
             VERIFIED PASSED
           </div>
-          <div className="text-[11px] text-[#6B7280]">
+          <div className="text-[11px] text-theme-muted">
             Total PnL = ECL Delta + MTM Delta ($0.00 err)
           </div>
         </Card>
@@ -114,12 +114,12 @@ export const StressTab: React.FC<StressTabProps> = ({
         <div className="col-span-12 lg:col-span-8 flex flex-col space-y-5">
           {/* Asset Class Breakdown Table */}
           <Card className="space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#ECEDEC] pb-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-theme-border pb-3">
               <div>
-                <h3 className="text-xs md:text-sm font-bold text-[#111827]">
+                <h3 className="text-xs md:text-sm font-bold text-theme-text">
                   Asset Class Stress Breakdown (Multi-Asset Engine)
                 </h3>
-                <p className="text-[11px] text-[#6B7280]">
+                <p className="text-[11px] text-theme-muted">
                   Sleeve allocation across Loans, Bonds, Equities and Swaps
                 </p>
               </div>
@@ -129,7 +129,7 @@ export const StressTab: React.FC<StressTabProps> = ({
                   <a
                     href={`/api/exports/${activeStressResult.run_id}?format=json`}
                     download
-                    className="px-2.5 py-1 rounded-full bg-[#F3F4F3] hover:bg-gray-200 text-xs font-semibold text-[#374151] flex items-center gap-1 border border-[#ECEDEC] transition-colors"
+                    className="px-2.5 py-1 rounded-full bg-theme-bg hover:bg-theme-border-strong text-xs font-semibold text-theme-text-body flex items-center gap-1 border border-theme-border transition-colors"
                   >
                     <Download className="w-3 h-3" />
                     JSON
@@ -137,7 +137,7 @@ export const StressTab: React.FC<StressTabProps> = ({
                   <a
                     href={`/api/exports/${activeStressResult.run_id}?format=csv`}
                     download
-                    className="px-2.5 py-1 rounded-full bg-[#F3F4F3] hover:bg-gray-200 text-xs font-semibold text-[#374151] flex items-center gap-1 border border-[#ECEDEC] transition-colors"
+                    className="px-2.5 py-1 rounded-full bg-theme-bg hover:bg-theme-border-strong text-xs font-semibold text-theme-text-body flex items-center gap-1 border border-theme-border transition-colors"
                   >
                     <Download className="w-3 h-3" />
                     CSV
@@ -146,9 +146,9 @@ export const StressTab: React.FC<StressTabProps> = ({
               )}
             </div>
 
-            <div className="overflow-x-auto rounded-xl border border-[#ECEDEC]">
-              <table className="w-full text-xs text-left bg-white">
-                <thead className="text-[#6B7280] bg-[#F9FAF9] border-b border-[#ECEDEC] font-mono text-[11px]">
+            <div className="overflow-x-auto rounded-xl border border-theme-border">
+              <table className="w-full text-xs text-left bg-theme-card">
+                <thead className="text-theme-muted bg-theme-card-subtle border-b border-theme-border font-mono text-[11px]">
                   <tr>
                     <th className="py-2.5 px-3">Asset Class</th>
                     <th className="py-2.5 px-3 text-right">Baseline (USD)</th>
@@ -158,19 +158,19 @@ export const StressTab: React.FC<StressTabProps> = ({
                     <th className="py-2.5 px-3 text-right">Market MTM &Delta;</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#ECEDEC] font-mono text-xs">
+                <tbody className="divide-y divide-theme-border font-mono text-xs">
                   {activeStressResult?.asset_class_breakdown.map((ac) => (
-                    <tr key={ac.asset_class} className="hover:bg-[#F9FAF9]">
-                      <td className="py-2.5 px-3 font-bold uppercase text-[#111827]">{ac.asset_class}</td>
-                      <td className="py-2.5 px-3 text-right text-[#4B5563]">${ac.baseline_value_usd.toLocaleString('en-US')}</td>
-                      <td className="py-2.5 px-3 text-right text-[#111827] font-semibold">${ac.stressed_value_usd.toLocaleString('en-US')}</td>
-                      <td className={`py-2.5 px-3 text-right font-bold ${ac.total_pnl_usd < 0 ? 'text-[#DC2626]' : 'text-[#1F6B45]'}`}>
+                    <tr key={ac.asset_class} className="hover:bg-theme-card-subtle">
+                      <td className="py-2.5 px-3 font-bold uppercase text-theme-text">{ac.asset_class}</td>
+                      <td className="py-2.5 px-3 text-right text-theme-text-secondary">${ac.baseline_value_usd.toLocaleString('en-US')}</td>
+                      <td className="py-2.5 px-3 text-right text-theme-text font-semibold">${ac.stressed_value_usd.toLocaleString('en-US')}</td>
+                      <td className={`py-2.5 px-3 text-right font-bold ${ac.total_pnl_usd < 0 ? 'text-theme-loss' : 'text-theme-primary'}`}>
                         ${ac.total_pnl_usd.toLocaleString('en-US')} ({(ac.pct_change * 100).toFixed(2)}%)
                       </td>
-                      <td className="py-2.5 px-3 text-right text-[#DC2626]">
+                      <td className="py-2.5 px-3 text-right text-theme-loss">
                         {ac.credit_ecl_delta_usd !== 0 ? `+$${ac.credit_ecl_delta_usd.toLocaleString('en-US')}` : '-'}
                       </td>
-                      <td className={`py-2.5 px-3 text-right ${ac.mark_to_market_pnl_usd < 0 ? 'text-[#DC2626]' : ac.mark_to_market_pnl_usd > 0 ? 'text-[#1F6B45]' : 'text-[#6B7280]'}`}>
+                      <td className={`py-2.5 px-3 text-right ${ac.mark_to_market_pnl_usd < 0 ? 'text-theme-loss' : ac.mark_to_market_pnl_usd > 0 ? 'text-theme-primary' : 'text-theme-muted'}`}>
                         {ac.mark_to_market_pnl_usd !== 0 ? `${ac.mark_to_market_pnl_usd < 0 ? '-' : '+'}$${Math.abs(ac.mark_to_market_pnl_usd).toLocaleString('en-US')}` : '-'}
                       </td>
                     </tr>
@@ -182,20 +182,20 @@ export const StressTab: React.FC<StressTabProps> = ({
 
           {/* Position Deltas Drilldown */}
           <Card className="space-y-4">
-            <div className="flex items-center justify-between border-b border-[#ECEDEC] pb-3">
+            <div className="flex items-center justify-between border-b border-theme-border pb-3">
               <div>
-                <h3 className="text-xs md:text-sm font-bold text-[#111827]">
+                <h3 className="text-xs md:text-sm font-bold text-theme-text">
                   Position-Level Risk Matrix ({activeStressResult?.position_deltas.length ?? 0} positions)
                 </h3>
-                <p className="text-[11px] text-[#6B7280]">
+                <p className="text-[11px] text-theme-muted">
                   Bond duration &bull; Loan ECL clamping &bull; Swap signed DV01
                 </p>
               </div>
             </div>
 
-            <div className="overflow-x-auto max-h-72 overflow-y-auto rounded-xl border border-[#ECEDEC]">
-              <table className="w-full text-xs text-left bg-white">
-                <thead className="text-[#6B7280] bg-[#F9FAF9] border-b border-[#ECEDEC] font-mono text-[11px] sticky top-0">
+            <div className="overflow-x-auto max-h-72 overflow-y-auto rounded-xl border border-theme-border">
+              <table className="w-full text-xs text-left bg-theme-card">
+                <thead className="text-theme-muted bg-theme-card-subtle border-b border-theme-border font-mono text-[11px] sticky top-0">
                   <tr>
                     <th className="py-2 px-3">Pos ID</th>
                     <th className="py-2 px-3">Counterparty</th>
@@ -206,18 +206,18 @@ export const StressTab: React.FC<StressTabProps> = ({
                     <th className="py-2 px-3">Shock Summary</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#ECEDEC] font-mono text-xs">
+                <tbody className="divide-y divide-theme-border font-mono text-xs">
                   {activeStressResult?.position_deltas.map((pos) => (
-                    <tr key={pos.position_id} className="hover:bg-[#F9FAF9]">
-                      <td className="py-2 px-3 text-[#111827] font-bold">{pos.position_id}</td>
-                      <td className="py-2 px-3 text-[#374151] font-sans font-medium">{pos.counterparty_name}</td>
-                      <td className="py-2 px-3 text-[#6B7280] uppercase text-[11px]">{pos.asset_class}</td>
-                      <td className="py-2 px-3 text-right text-[#4B5563]">${pos.baseline_value_usd.toLocaleString('en-US')}</td>
-                      <td className="py-2 px-3 text-right text-[#111827] font-semibold">${pos.stressed_value_usd.toLocaleString('en-US')}</td>
-                      <td className={`py-2 px-3 text-right font-bold ${pos.pnl_usd < 0 ? 'text-[#DC2626]' : 'text-[#1F6B45]'}`}>
+                    <tr key={pos.position_id} className="hover:bg-theme-card-subtle">
+                      <td className="py-2 px-3 text-theme-text font-bold">{pos.position_id}</td>
+                      <td className="py-2 px-3 text-theme-text-body font-sans font-medium">{pos.counterparty_name}</td>
+                      <td className="py-2 px-3 text-theme-muted uppercase text-[11px]">{pos.asset_class}</td>
+                      <td className="py-2 px-3 text-right text-theme-text-secondary">${pos.baseline_value_usd.toLocaleString('en-US')}</td>
+                      <td className="py-2 px-3 text-right text-theme-text font-semibold">${pos.stressed_value_usd.toLocaleString('en-US')}</td>
+                      <td className={`py-2 px-3 text-right font-bold ${pos.pnl_usd < 0 ? 'text-theme-loss' : 'text-theme-primary'}`}>
                         ${pos.pnl_usd.toLocaleString('en-US')}
                       </td>
-                      <td className="py-2 px-3 text-[#6B7280] text-[11px] truncate max-w-xs">{pos.applied_shock_summary}</td>
+                      <td className="py-2 px-3 text-theme-muted text-[11px] truncate max-w-xs">{pos.applied_shock_summary}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -229,20 +229,20 @@ export const StressTab: React.FC<StressTabProps> = ({
         {/* Right 4/12: Manual Stress Simulation Sandbox */}
         <div className="col-span-12 lg:col-span-4 flex flex-col space-y-5">
           <Card className="space-y-4">
-            <div className="flex items-center gap-2 border-b border-[#ECEDEC] pb-3">
-              <div className="w-7 h-7 rounded-full bg-[#E8F5EE] text-[#14532D] flex items-center justify-center">
-                <Sliders className="w-4 h-4 text-[#14532D]" />
+            <div className="flex items-center gap-2 border-b border-theme-border pb-3">
+              <div className="w-7 h-7 rounded-full bg-theme-primary-tint text-theme-primary-text flex items-center justify-center">
+                <Sliders className="w-4 h-4 text-theme-primary-text" />
               </div>
-              <h3 className="text-sm font-bold text-[#111827]">Manual Stress Sandbox</h3>
+              <h3 className="text-sm font-bold text-theme-text">Manual Stress Sandbox</h3>
             </div>
 
             <form onSubmit={onRunStressSimulation} className="space-y-4 text-xs">
               <div>
-                <label className="block text-[#4B5563] font-semibold mb-1">Event Classification</label>
+                <label className="block text-theme-text-secondary font-semibold mb-1">Event Classification</label>
                 <select
                   value={stressForm.event_class}
                   onChange={(e) => setStressForm({ ...stressForm, event_class: e.target.value })}
-                  className="w-full bg-[#F3F4F3] border border-[#ECEDEC] rounded-xl p-2 text-[#111827] focus:outline-none focus:border-[#14532D] font-mono"
+                  className="w-full bg-theme-bg border border-theme-border rounded-xl p-2 text-theme-text focus:outline-none focus:border-theme-primary-fill font-mono"
                 >
                   <option value="CREDIT">Credit Event (spread / PD / LGD, equity -15%)</option>
                   <option value="MACRO">Macro (Fed Jun-2022 window: 10y +26 bp, S&amp;P -8.7%)</option>
@@ -254,8 +254,8 @@ export const StressTab: React.FC<StressTabProps> = ({
 
               <div>
                 <div className="flex justify-between items-center mb-1">
-                  <label className="text-[#4B5563] font-semibold">Severity Impact Score</label>
-                  <span className="font-mono text-[#111827] font-bold">{stressForm.impact_score} / 10</span>
+                  <label className="text-theme-text-secondary font-semibold">Severity Impact Score</label>
+                  <span className="font-mono text-theme-text font-bold">{stressForm.impact_score} / 10</span>
                 </div>
                 <input
                   type="range"
@@ -263,16 +263,16 @@ export const StressTab: React.FC<StressTabProps> = ({
                   max="10"
                   value={stressForm.impact_score}
                   onChange={(e) => setStressForm({ ...stressForm, impact_score: Number(e.target.value) })}
-                  className="w-full accent-[#14532D] cursor-pointer"
+                  className="w-full accent-theme-primary-fill cursor-pointer"
                 />
               </div>
 
               <div>
-                <label className="block text-[#4B5563] font-semibold mb-1">Target Counterparty / Entity</label>
+                <label className="block text-theme-text-secondary font-semibold mb-1">Target Counterparty / Entity</label>
                 <select
                   value={stressForm.target_entity}
                   onChange={(e) => setStressForm({ ...stressForm, target_entity: e.target.value })}
-                  className="w-full bg-[#F3F4F3] border border-[#ECEDEC] rounded-xl p-2 text-[#111827] focus:outline-none focus:border-[#14532D]"
+                  className="w-full bg-theme-bg border border-theme-border rounded-xl p-2 text-theme-text focus:outline-none focus:border-theme-primary-fill"
                 >
                   <option value="Apex Industrial Holdings">Apex Industrial Holdings ($APEX)</option>
                   <option value="JPMorgan Chase & Co.">JPMorgan Chase &amp; Co. ($JPM)</option>
@@ -288,11 +288,11 @@ export const StressTab: React.FC<StressTabProps> = ({
               </div>
 
               <div>
-                <label className="block text-[#4B5563] font-semibold mb-1">Shock Contagion Scope</label>
+                <label className="block text-theme-text-secondary font-semibold mb-1">Shock Contagion Scope</label>
                 <select
                   value={stressForm.target_scope}
                   onChange={(e) => setStressForm({ ...stressForm, target_scope: e.target.value })}
-                  className="w-full bg-[#F3F4F3] border border-[#ECEDEC] rounded-xl p-2 text-[#111827] focus:outline-none focus:border-[#14532D]"
+                  className="w-full bg-theme-bg border border-theme-border rounded-xl p-2 text-theme-text focus:outline-none focus:border-theme-primary-fill"
                 >
                   <option value="entity">Entity Level (Idiosyncratic Shock)</option>
                   <option value="sector">Sector Level (Peer Group Contagion)</option>
@@ -301,12 +301,12 @@ export const StressTab: React.FC<StressTabProps> = ({
               </div>
 
               <div className="pt-1">
-                <label className="flex items-center gap-2 cursor-pointer text-[#374151]">
+                <label className="flex items-center gap-2 cursor-pointer text-theme-text-body">
                   <input
                     type="checkbox"
                     checked={stressForm.is_easing}
                     onChange={(e) => setStressForm({ ...stressForm, is_easing: e.target.checked })}
-                    className="rounded text-[#1F6B45] focus:ring-0 accent-[#1F6B45]"
+                    className="rounded text-theme-primary focus:ring-0 accent-theme-primary"
                   />
                   <span>Monetary Policy Easing (Negative Yield Shock)</span>
                 </label>
@@ -319,10 +319,10 @@ export const StressTab: React.FC<StressTabProps> = ({
                 className="w-full"
               >
                 {simulatingStress ? (
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-theme-on-primary border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <>
-                    <Play className="w-4 h-4 fill-white text-white" />
+                    <Play className="w-4 h-4 fill-current text-current" />
                     Execute Stress Simulation
                   </>
                 )}
@@ -330,8 +330,8 @@ export const StressTab: React.FC<StressTabProps> = ({
             </form>
 
             {/* History of Stress Runs */}
-            <div className="pt-3 border-t border-[#ECEDEC] space-y-2">
-              <div className="text-[#6B7280] font-semibold text-xs">Recent Simulation History</div>
+            <div className="pt-3 border-t border-theme-border space-y-2">
+              <div className="text-theme-muted font-semibold text-xs">Recent Simulation History</div>
               <div className="space-y-1.5 max-h-48 overflow-y-auto">
                 {stressRuns.slice(0, 5).map((run) => (
                   <div
@@ -339,17 +339,17 @@ export const StressTab: React.FC<StressTabProps> = ({
                     onClick={() => setActiveStressResult(run)}
                     className={`p-2.5 rounded-xl border cursor-pointer text-[11px] flex items-center justify-between font-mono transition-all ${
                       activeStressResult?.stress_id === run.stress_id
-                        ? 'bg-[#E8F5EE] border-[#14532D] text-[#14532D] font-bold'
-                        : 'bg-white border-[#ECEDEC] text-[#4B5563] hover:border-gray-300'
+                        ? 'bg-theme-primary-tint border-theme-primary-fill text-theme-primary-text font-bold'
+                        : 'bg-theme-card border-theme-border text-theme-text-secondary hover:border-theme-border-strong'
                     }`}
                   >
                     <div>
-                      <div className="font-bold uppercase text-[#111827]">
+                      <div className="font-bold uppercase text-theme-text">
                         {run.event_class} ({run.impact_score}/10)
                       </div>
-                      <div className="text-[10px] text-[#9CA3AF]">{run.executed_at.slice(11, 19)}</div>
+                      <div className="text-[10px] text-theme-subtle">{run.executed_at.slice(11, 19)}</div>
                     </div>
-                    <div className={`text-right font-bold ${run.total_pnl_usd < 0 ? 'text-[#DC2626]' : 'text-[#1F6B45]'}`}>
+                    <div className={`text-right font-bold ${run.total_pnl_usd < 0 ? 'text-theme-loss' : 'text-theme-primary'}`}>
                       {run.total_pnl_usd < 0 ? '-' : '+'}${Math.abs(run.total_pnl_usd).toLocaleString('en-US', { maximumFractionDigits: 0 })}
                     </div>
                   </div>

@@ -15,8 +15,8 @@ export function MetricsPanel() {
   if (failed || (m && !m.public_real)) {
     return (
       <Card className="p-4" data-testid="metrics-panel">
-        <p className="text-xs text-[#6B7280] font-mono">
-          Real-data metrics unavailable: run <code className="text-[#111827] font-semibold">uv run python scripts/run_evaluation.py</code>.
+        <p className="text-xs text-theme-muted font-mono">
+          Real-data metrics unavailable: run <code className="text-theme-text font-semibold">uv run python scripts/run_evaluation.py</code>.
         </p>
       </Card>
     );
@@ -46,49 +46,50 @@ export function MetricsPanel() {
     <Card className="p-6" data-testid="metrics-panel">
       <div className="grid grid-cols-12 gap-6">
         <div className="col-span-12 lg:col-span-7 text-xs">
-          <h3 className="font-bold text-sm text-[#111827] mb-3">Measured on real held-out data</h3>
+          <h3 className="font-bold text-sm text-theme-text mb-3">Measured on real held-out data</h3>
           <table className="w-full text-xs">
-            <tbody className="divide-y divide-[#F3F4F6]">
+            <tbody className="divide-y divide-theme-border-subtle">
               {rows.map(([k, v, c]) => (
-                <tr key={k} className="hover:bg-[#F9FAFB] transition-colors">
-                  <td className="py-2 text-[#4B5563] pr-2 font-medium">{k}</td>
-                  <td className="py-2 text-[#111827] font-bold font-mono whitespace-nowrap">{v}</td>
-                  <td className="py-2 text-[#6B7280] pl-2 text-[11px]">{c}</td>
+                <tr key={k} className="hover:bg-theme-card-subtle-alt transition-colors">
+                  <td className="py-2 text-theme-text-secondary pr-2 font-medium">{k}</td>
+                  <td className="py-2 text-theme-text font-bold font-mono whitespace-nowrap">{v}</td>
+                  <td className="py-2 text-theme-muted pl-2 text-[11px]">{c}</td>
                 </tr>
               ))}
             </tbody>
           </table>
-          <p className="mt-3 text-[11px] text-[#9CA3AF] font-mono">Generated {m.generated_at} by scripts/run_evaluation.py</p>
+          <p className="mt-3 text-[11px] text-theme-subtle font-mono">Generated {m.generated_at} by scripts/run_evaluation.py</p>
         </div>
         {deciles.length > 0 && (
           <div className="col-span-12 lg:col-span-5">
-            <h3 className="text-xs font-bold text-[#111827] mb-3">Mean |abnormal return z| by impact decile</h3>
+            <h3 className="text-xs font-bold text-theme-text mb-3">Mean |abnormal return z| by impact decile</h3>
             <div className="h-[220px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={deciles} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--theme-border-subtle)" vertical={false} />
                   <XAxis
                     dataKey="decile"
-                    tick={{ fill: '#6B7280', fontSize: 10, fontFamily: 'Plus Jakarta Sans' }}
-                    axisLine={{ stroke: '#E5E7EB' }}
+                    tick={{ fill: 'var(--theme-muted)', fontSize: 10, fontFamily: 'Plus Jakarta Sans' }}
+                    axisLine={{ stroke: 'var(--theme-border-light)' }}
                     tickLine={false}
                   />
                   <YAxis
-                    tick={{ fill: '#6B7280', fontSize: 10, fontFamily: 'Plus Jakarta Sans' }}
-                    axisLine={{ stroke: '#E5E7EB' }}
+                    tick={{ fill: 'var(--theme-muted)', fontSize: 10, fontFamily: 'Plus Jakarta Sans' }}
+                    axisLine={{ stroke: 'var(--theme-border-light)' }}
                     tickLine={false}
                   />
                   <Tooltip
                     contentStyle={{
-                      background: '#FFFFFF',
-                      border: '1px solid #ECEDEC',
+                      background: 'var(--theme-card)',
+                      border: '1px solid var(--theme-border)',
                       borderRadius: '12px',
                       boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
                       fontSize: '11px',
+                      color: 'var(--theme-text)',
                       fontFamily: 'Plus Jakarta Sans',
                     }}
                   />
-                  <Bar dataKey="z" fill="#1F6B45" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="z" fill="var(--theme-primary)" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

@@ -54,21 +54,21 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
   );
 
   let liveBadge = 'REPLAY';
-  let badgeColor = 'bg-gray-100 text-gray-700 border-gray-200';
+  let badgeColor = 'bg-theme-bg text-theme-muted border-theme-border';
 
   if (isLiveScenario) {
     const lag = liveStatus?.lag_seconds;
     const alive = liveStatus?.recorder_alive ?? false;
     if (lag !== null && lag !== undefined && lag < 600 && alive) {
       liveBadge = 'LIVE';
-      badgeColor = 'bg-[#E8F5EE] text-[#14532D] border-[#7FD1A4]';
+      badgeColor = 'bg-theme-primary-tint text-theme-primary-dark border-theme-primary/40';
     } else {
       liveBadge = 'STALE';
-      badgeColor = 'bg-amber-100 text-amber-800 border-amber-200';
+      badgeColor = 'bg-theme-warn-bg text-theme-warn border-theme-warn/40';
     }
   } else if (isSynthetic) {
     liveBadge = 'SYNTHETIC';
-    badgeColor = 'bg-[#E8F5EE] text-[#14532D] border-[#7FD1A4]';
+    badgeColor = 'bg-theme-primary-tint text-theme-primary-dark border-theme-primary/40';
   }
 
   const lagText = (() => {
@@ -79,18 +79,18 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
   })();
 
   return (
-    <aside className="w-64 bg-white border-r border-[#ECEDEC] flex flex-col justify-between p-5 select-none shrink-0">
+    <aside className="w-64 bg-theme-card border-r border-theme-border flex flex-col justify-between p-5 select-none shrink-0">
       <div className="space-y-6">
         {/* Brand / Logo */}
         <div className="flex items-center gap-3 px-2">
-          <div className="w-9 h-9 rounded-full bg-[#14532D] flex items-center justify-center text-white shadow-sm">
-            <Shield className="w-5 h-5 fill-white/20 stroke-white" />
+          <div className="w-9 h-9 rounded-full bg-theme-primary-fill flex items-center justify-center text-theme-on-primary shadow-sm">
+            <Shield className="w-5 h-5 fill-current/20 stroke-current" />
           </div>
           <div>
-            <h1 className="text-base font-bold tracking-tight text-[#111827] leading-none">
+            <h1 className="text-base font-bold tracking-tight text-theme-text leading-none">
               S&P Sentinel
             </h1>
-            <span className="text-[10px] font-medium text-[#6B7280]">
+            <span className="text-[10px] font-medium text-theme-muted">
               Financial Risk Dashboard
             </span>
           </div>
@@ -98,7 +98,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
 
         {/* MENU Section */}
         <div className="space-y-1">
-          <div className="text-[10px] font-bold tracking-wider text-[#9CA3AF] uppercase px-3 mb-2 font-mono">
+          <div className="text-[10px] font-bold tracking-wider text-theme-subtle uppercase px-3 mb-2 font-mono">
             MENU
           </div>
           <nav className="space-y-1">
@@ -113,21 +113,21 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                   onClick={() => setActiveTab(item.id)}
                   className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs md:text-sm font-medium transition-all group relative cursor-pointer ${
                     isActive
-                      ? 'bg-[#E8F5EE] text-[#14532D] font-bold'
-                      : 'text-[#4B5563] hover:text-[#111827] hover:bg-[#F9FAF9]'
+                      ? 'bg-theme-primary-tint text-theme-primary-text font-bold'
+                      : 'text-theme-muted hover:text-theme-text hover:bg-theme-card-hover'
                   }`}
                 >
                   {/* Left indicator bar for active item */}
                   {isActive && (
-                    <span className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-[#14532D] rounded-r" />
+                    <span className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-theme-primary-fill rounded-r" />
                   )}
 
                   <div className="flex items-center gap-3 pl-1">
                     <Icon
                       className={`w-4 h-4 transition-colors ${
                         isActive
-                          ? 'text-[#14532D]'
-                          : 'text-[#6B7280] group-hover:text-[#111827]'
+                          ? 'text-theme-primary-text'
+                          : 'text-theme-muted group-hover:text-theme-text'
                       }`}
                     />
                     <span>{item.name}</span>
@@ -138,8 +138,8 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                     <span
                       className={`px-2 py-0.5 rounded-full text-[11px] font-mono font-semibold ${
                         isActive
-                          ? 'bg-[#14532D] text-white'
-                          : 'bg-[#E8F5EE] text-[#14532D]'
+                          ? 'bg-theme-primary-fill text-theme-on-primary'
+                          : 'bg-theme-primary-tint text-theme-primary-text'
                       }`}
                     >
                       {item.badge}
@@ -153,9 +153,9 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
       </div>
 
       {/* Bottom Promo Card: "Live capture" */}
-      <div className="mt-6 rounded-2xl bg-gradient-to-br from-[#14532D] to-[#1F6B45] text-white p-4 relative overflow-hidden shadow-sm">
+      <div className="mt-6 rounded-2xl bg-gradient-to-br from-theme-hero-from to-theme-hero-to text-theme-hero-text p-4 relative overflow-hidden shadow-sm">
         <svg
-          className="absolute -right-6 -bottom-6 w-28 h-28 opacity-15 pointer-events-none select-none text-white"
+          className="absolute -right-6 -bottom-6 w-28 h-28 opacity-15 pointer-events-none select-none text-current"
           viewBox="0 0 100 100"
           fill="none"
         >
@@ -165,8 +165,8 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
 
         <div className="relative z-10 space-y-2.5">
           <div className="flex items-center justify-between" data-testid="live-status-container">
-            <span className="text-xs font-semibold text-emerald-100 flex items-center gap-1.5">
-              <Radio className="w-3.5 h-3.5 animate-pulse text-emerald-300" />
+            <span className="text-xs font-semibold text-theme-hero-subtle flex items-center gap-1.5">
+              <Radio className="w-3.5 h-3.5 animate-pulse text-current" />
               Live Tailer
             </span>
             <span
@@ -177,13 +177,13 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
             </span>
           </div>
 
-          <div className="text-[11px] text-emerald-100/90 leading-tight">
+          <div className="text-[11px] text-theme-hero-subtle leading-tight">
             GDELT + SEC 8-K streaming ingest adapter.
           </div>
 
           {lagText && (
             <div
-              className="text-[10px] font-mono text-emerald-200/80"
+              className="text-[10px] font-mono text-theme-hero-subtle/80"
               data-testid="live-lag-text"
             >
               {lagText}
@@ -199,7 +199,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                 onLoadScenario('live');
               }
             }}
-            className="w-full mt-1 py-1.5 px-3 bg-white hover:bg-emerald-50 text-[#14532D] text-xs font-semibold rounded-full shadow-sm transition-all text-center cursor-pointer"
+            className="w-full mt-1 py-1.5 px-3 bg-theme-hero-btn-bg hover:bg-theme-hero-btn-hover text-theme-hero-btn-text text-xs font-semibold rounded-full shadow-sm transition-all text-center cursor-pointer"
           >
             {isLiveScenario ? 'Pull New Records' : 'Load Live Capture'}
           </button>

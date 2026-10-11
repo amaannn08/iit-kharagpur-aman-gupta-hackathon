@@ -45,8 +45,8 @@ export const Gauge: React.FC<GaugeProps> = ({
                 patternUnits="userSpaceOnUse"
                 patternTransform="rotate(45)"
               >
-                <line x1="0" y1="0" x2="0" y2="6" stroke="#2F9E62" strokeWidth="2" />
-                <rect width="6" height="6" fill="#E8F5EE" opacity="0.3" />
+                <line x1="0" y1="0" x2="0" y2="6" stroke="var(--theme-primary-light)" strokeWidth="2" />
+                <rect width="6" height="6" fill="var(--theme-primary-tint)" opacity="0.3" />
               </pattern>
             </defs>
             <Pie
@@ -59,17 +59,17 @@ export const Gauge: React.FC<GaugeProps> = ({
               outerRadius="98%"
               paddingAngle={total > 0 ? 3 : 0}
               dataKey="value"
-              stroke="#FFFFFF"
+              stroke="var(--theme-card)"
               strokeWidth={2}
             >
               {total > 0 ? (
                 <>
-                  <Cell key="cell-0" fill="#14532D" />
-                  <Cell key="cell-1" fill="#2F9E62" />
-                  <Cell key="cell-2" fill={`url(#${hatchId})`} stroke="#2F9E62" />
+                  <Cell key="cell-0" fill="var(--theme-primary-fill)" />
+                  <Cell key="cell-1" fill="var(--theme-primary-light)" />
+                  <Cell key="cell-2" fill={`url(#${hatchId})`} stroke="var(--theme-primary-light)" />
                 </>
               ) : (
-                <Cell fill="#E5E7EB" />
+                <Cell fill="var(--theme-border-light)" />
               )}
             </Pie>
           </PieChart>
@@ -77,29 +77,29 @@ export const Gauge: React.FC<GaugeProps> = ({
 
         {/* Center label inside semicircle */}
         <div className="absolute bottom-2 text-center pointer-events-none select-none">
-          <div className="text-3xl font-bold font-mono tracking-tight text-[#111827]">
+          <div className="text-3xl font-bold font-mono tracking-tight text-theme-text">
             {pct !== null ? `${pct}%` : '—'}
           </div>
-          <div className="text-xs text-[#6B7280] font-medium">{label}</div>
+          <div className="text-xs text-theme-muted font-medium">{label}</div>
         </div>
       </div>
 
       {/* Legend with circular dots */}
-      <div className="mt-3 flex flex-wrap items-center justify-center gap-4 text-xs text-[#374151]">
+      <div className="mt-3 flex flex-wrap items-center justify-center gap-4 text-xs text-theme-text-body">
         <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#14532D]" />
+          <span className="w-2.5 h-2.5 rounded-full bg-theme-primary-fill" />
           <span>Eligible ({eligibleCount})</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#2F9E62]" />
+          <span className="w-2.5 h-2.5 rounded-full bg-theme-primary-light" />
           <span>Blocked ({blockedCount})</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span
-            className="w-2.5 h-2.5 rounded-full border border-[#2F9E62]"
+            className="w-2.5 h-2.5 rounded-full border border-theme-primary-light"
             style={{
               background:
-                'repeating-linear-gradient(45deg, #7FD1A4, #7FD1A4 2px, #E8F5EE 2px, #E8F5EE 4px)',
+                'repeating-linear-gradient(45deg, var(--theme-chart-hatch), var(--theme-chart-hatch) 2px, var(--theme-primary-tint) 2px, var(--theme-primary-tint) 4px)',
             }}
           />
           <span>Duplicates ({duplicateCount})</span>

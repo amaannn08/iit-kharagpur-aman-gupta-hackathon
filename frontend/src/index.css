@@ -1,49 +1,136 @@
 @import "tailwindcss";
 
-@theme {
-  --font-sans: 'Plus Jakarta Sans Variable', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-
-  /* Donezo Green Palette */
-  --color-donezo-dark: #14532D;
-  --color-donezo-primary: #1F6B45;
-  --color-donezo-mid: #2F9E62;
-  --color-donezo-light: #7FD1A4;
-  --color-donezo-tint: #E8F5EE;
-
-  /* Surfaces & Neutrals */
-  --color-donezo-bg: #F3F4F3;
-  --color-donezo-card: #FFFFFF;
-  --color-donezo-border: #ECEDEC;
-  --color-donezo-text: #111827;
-  --color-donezo-muted: #6B7280;
-
-  /* Alert States */
-  --color-donezo-loss: #DC2626;
-  --color-donezo-loss-bg: #FEE2E2;
-  --color-donezo-warn: #B45309;
-  --color-donezo-warn-bg: #FEF3C7;
-
-  /* Backward Compatibility Aliases for components */
-  --color-terminal-bg: #F3F4F3;
-  --color-terminal-card: #FFFFFF;
-  --color-terminal-border: #ECEDEC;
-  --color-terminal-text: #111827;
-  --color-terminal-muted: #6B7280;
-  --color-terminal-accent: #14532D;
-  --color-terminal-warning: #B45309;
-  --color-terminal-danger: #DC2626;
-  --color-terminal-success: #1F6B45;
-}
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
   color-scheme: light;
+
+  /* Surfaces & Canvas */
+  --theme-bg: #F3F4F3;
+  --theme-workspace: #FAFAFA;
+  --theme-card: #FFFFFF;
+  --theme-card-subtle: #F9FAF9;
+  --theme-card-subtle-alt: #F9FAFB;
+  --theme-card-hover: #F9FAF9;
+  --theme-border: #ECEDEC;
+  --theme-border-subtle: #F3F4F6;
+  --theme-border-light: #E5E7EB;
+  --theme-border-strong: #D1D5DB;
+
+  /* Typography */
+  --theme-text: #111827;
+  --theme-text-dark: #1F2937;
+  --theme-text-body: #374151;
+  --theme-text-secondary: #4B5563;
+  --theme-muted: #6B7280;
+  --theme-subtle: #9CA3AF;
+  --theme-on-primary: #FFFFFF;
+
+  /* Primary Green Palette - Text vs Fill Split */
+  --theme-primary: #1F6B45;
+  --theme-primary-fill: #14532D;
+  --theme-primary-text: #14532D;
+  --theme-primary-dark: #14532D; /* backwards compatibility */
+  --theme-primary-hover: #1F6B45;
+  --theme-primary-tint: #E8F5EE;
+  --theme-primary-light: #2F9E62;
+  --theme-chart-hatch: #7FD1A4;
+  --theme-cursor-fill: rgba(232, 245, 238, 0.4);
+
+  /* Hero / Accent Cards */
+  --theme-hero-from: #14532D;
+  --theme-hero-to: #1F6B45;
+  --theme-hero-text: #FFFFFF;
+  --theme-hero-subtle: #A7E3C4;
+  --theme-hero-btn-bg: #FFFFFF;
+  --theme-hero-btn-text: #14532D;
+  --theme-hero-btn-hover: #E8F5EE;
+
+  /* Semantic Feedback States */
+  --theme-success: #15803D;
+  --theme-success-dark: #166534;
+  --theme-success-bg: #DCFCE7;
+  --theme-loss: #DC2626;
+  --theme-loss-dark: #991B1B;
+  --theme-loss-deeper: #7F1D1D;
+  --theme-loss-bg: #FEE2E2;
+  --theme-loss-bg-alt: #FEF2F2;
+  --theme-warn: #B45309;
+  --theme-warn-dark: #92400E;
+  --theme-warn-bg: #FEF3C7;
+  --theme-warn-border: #FDE68A;
+}
+
+@theme inline {
+  --font-sans: 'Plus Jakarta Sans Variable', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  --color-theme-bg: var(--theme-bg);
+  --color-theme-workspace: var(--theme-workspace);
+  --color-theme-card: var(--theme-card);
+  --color-theme-card-subtle: var(--theme-card-subtle);
+  --color-theme-card-subtle-alt: var(--theme-card-subtle-alt);
+  --color-theme-card-hover: var(--theme-card-hover);
+  --color-theme-border: var(--theme-border);
+  --color-theme-border-subtle: var(--theme-border-subtle);
+  --color-theme-border-light: var(--theme-border-light);
+  --color-theme-border-strong: var(--theme-border-strong);
+
+  --color-theme-text: var(--theme-text);
+  --color-theme-text-dark: var(--theme-text-dark);
+  --color-theme-text-body: var(--theme-text-body);
+  --color-theme-text-secondary: var(--theme-text-secondary);
+  --color-theme-muted: var(--theme-muted);
+  --color-theme-subtle: var(--theme-subtle);
+  --color-theme-on-primary: var(--theme-on-primary);
+
+  --color-theme-primary: var(--theme-primary);
+  --color-theme-primary-fill: var(--theme-primary-fill);
+  --color-theme-primary-text: var(--theme-primary-text);
+  --color-theme-primary-dark: var(--theme-primary-dark);
+  --color-theme-primary-hover: var(--theme-primary-hover);
+  --color-theme-primary-tint: var(--theme-primary-tint);
+  --color-theme-primary-light: var(--theme-primary-light);
+  --color-theme-chart-hatch: var(--theme-chart-hatch);
+  --color-theme-cursor-fill: var(--theme-cursor-fill);
+
+  --color-theme-hero-from: var(--theme-hero-from);
+  --color-theme-hero-to: var(--theme-hero-to);
+  --color-theme-hero-text: var(--theme-hero-text);
+  --color-theme-hero-subtle: var(--theme-hero-subtle);
+  --color-theme-hero-btn-bg: var(--theme-hero-btn-bg);
+  --color-theme-hero-btn-text: var(--theme-hero-btn-text);
+  --color-theme-hero-btn-hover: var(--theme-hero-btn-hover);
+
+  --color-theme-success: var(--theme-success);
+  --color-theme-success-dark: var(--theme-success-dark);
+  --color-theme-success-bg: var(--theme-success-bg);
+  --color-theme-loss: var(--theme-loss);
+  --color-theme-loss-dark: var(--theme-loss-dark);
+  --color-theme-loss-deeper: var(--theme-loss-deeper);
+  --color-theme-loss-bg: var(--theme-loss-bg);
+  --color-theme-loss-bg-alt: var(--theme-loss-bg-alt);
+  --color-theme-warn: var(--theme-warn);
+  --color-theme-warn-dark: var(--theme-warn-dark);
+  --color-theme-warn-bg: var(--theme-warn-bg);
+  --color-theme-warn-border: var(--theme-warn-border);
+
+  /* Legacy terminal aliases */
+  --color-terminal-bg: var(--theme-bg);
+  --color-terminal-card: var(--theme-card);
+  --color-terminal-border: var(--theme-border);
+  --color-terminal-text: var(--theme-text);
+  --color-terminal-muted: var(--theme-muted);
+  --color-terminal-accent: var(--theme-primary-fill);
+  --color-terminal-warning: var(--theme-warn);
+  --color-terminal-danger: var(--theme-loss);
+  --color-terminal-success: var(--theme-success);
 }
 
 body {
   margin: 0;
   font-family: var(--font-sans);
-  background-color: #F3F4F3;
-  color: #111827;
+  background-color: var(--theme-bg);
+  color: var(--theme-text);
   font-feature-settings: 'tnum' 1, 'cv02' 1, 'cv03' 1, 'cv04' 1;
   -webkit-font-smoothing: antialiased;
 }

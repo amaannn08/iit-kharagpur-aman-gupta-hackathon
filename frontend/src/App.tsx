@@ -181,9 +181,9 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F3F4F3] text-[#111827] flex items-center justify-center p-3 sm:p-5 md:p-7">
-      {/* Donezo Main Shell: Large White Rounded Container with Subtle Shadow */}
-      <div className="w-full max-w-[1740px] bg-white rounded-[28px] border border-[#ECEDEC] shadow-[0_12px_40px_rgba(0,0,0,0.06)] flex overflow-hidden min-h-[94vh]">
+    <div className="min-h-screen bg-theme-bg text-theme-text flex items-center justify-center p-3 sm:p-5 md:p-7">
+      {/* Donezo Main Shell: Large Rounded Container with Subtle Shadow */}
+      <div className="w-full max-w-[1740px] bg-theme-card rounded-[28px] border border-theme-border shadow-[0_12px_40px_rgba(0,0,0,0.06)] flex overflow-hidden min-h-[94vh]">
         {/* Left Sidebar Navigation */}
         <SidebarNav
           activeTab={activeTab}
@@ -197,7 +197,7 @@ export function App() {
         />
 
         {/* Right Main Content Area */}
-        <div className="flex-1 flex flex-col min-w-0 bg-[#FAFAFA]">
+        <div className="flex-1 flex flex-col min-w-0 bg-theme-workspace">
           {/* Top Bar with Search, Honesty Badge, Stream Status, Profile */}
           <TopBar
             searchQuery={searchQuery}

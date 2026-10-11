@@ -157,10 +157,10 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
       {/* 1. Page Header matching Donezo */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-[#111827]">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-theme-text">
             Risk Dashboard
           </h1>
-          <p className="text-xs md:text-sm text-[#6B7280] mt-0.5">
+          <p className="text-xs md:text-sm text-theme-muted mt-0.5">
             Real-time text &rarr; signals &rarr; stress tests, all offline.
           </p>
         </div>
@@ -219,10 +219,10 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
         <Card className="lg:col-span-5 flex flex-col justify-between">
           <div className="flex items-center justify-between mb-2">
             <div>
-              <h2 className="text-sm md:text-base font-bold text-[#111827]">
+              <h2 className="text-sm md:text-base font-bold text-theme-text">
                 Signals by Event Class
               </h2>
-              <p className="text-xs text-[#6B7280]">
+              <p className="text-xs text-theme-muted">
                 Action-eligible vs blocked across taxonomy
               </p>
             </div>
@@ -234,24 +234,24 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
         <Card className="lg:col-span-4 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-2">
-              <h2 className="text-sm md:text-base font-bold text-[#111827]">
+              <h2 className="text-sm md:text-base font-bold text-theme-text">
                 Replay Control
               </h2>
-              <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-[#E8F5EE] text-[#14532D] font-bold">
+              <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-theme-primary-tint text-theme-primary-dark font-bold">
                 {replayStatus?.state?.toUpperCase() || 'IDLE'}
               </span>
             </div>
 
             {/* Replay Source Selector Dropdown */}
-            <div className="p-3 rounded-xl bg-[#F3F4F3] border border-[#ECEDEC] space-y-1.5 my-3">
-              <label className="text-[10px] text-[#6B7280] font-medium uppercase font-mono block">
+            <div className="p-3 rounded-xl bg-theme-bg border border-theme-border space-y-1.5 my-3">
+              <label className="text-[10px] text-theme-muted font-medium uppercase font-mono block">
                 Replay Source Preset
               </label>
               <select
                 value={selectedScenario}
                 onChange={(e) => onLoadScenario(e.target.value)}
                 disabled={replayLoading}
-                className="w-full bg-white border border-[#ECEDEC] hover:border-gray-300 rounded-lg px-2.5 py-1.5 text-xs font-bold text-[#111827] cursor-pointer focus:outline-none focus:border-[#14532D]"
+                className="w-full bg-theme-card border border-theme-border hover:border-theme-muted rounded-lg px-2.5 py-1.5 text-xs font-bold text-theme-text cursor-pointer focus:outline-none focus:border-theme-primary"
               >
                 {Object.entries(SOURCE_PRESETS).map(([id, p]) => (
                   <option key={id} value={id}>
@@ -259,7 +259,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
                   </option>
                 ))}
               </select>
-              <div className="text-[11px] font-mono text-[#6B7280]">
+              <div className="text-[11px] font-mono text-theme-muted">
                 {replayStatus?.current_simulated_at
                   ? replayStatus.current_simulated_at.replace('T', ' ').slice(0, 19)
                   : 'STANDBY'}
@@ -269,14 +269,14 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
             {/* Processed Counter (matches vitest test for '5 / 25'!) */}
             <div className="space-y-1 mb-3">
               <div className="flex items-center justify-between text-xs font-mono">
-                <span className="text-[#6B7280]">Progress:</span>
-                <span className="font-bold text-[#111827]">
+                <span className="text-theme-muted">Progress:</span>
+                <span className="font-bold text-theme-text">
                   {replayStatus ? `${replayStatus.processed_count} / ${replayStatus.total_records}` : '—'}
                 </span>
               </div>
-              <div className="w-full bg-[#ECEDEC] h-2 rounded-full overflow-hidden">
+              <div className="w-full bg-theme-border h-2 rounded-full overflow-hidden">
                 <div
-                  className="bg-[#1F6B45] h-full transition-all duration-300"
+                  className="bg-theme-primary h-full transition-all duration-300"
                   style={{
                     width: `${
                       replayStatus && replayStatus.total_records > 0
@@ -292,7 +292,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
           <div className="space-y-3 pt-2">
             {/* Speed Selector (existing options: 1, 5, 20) */}
             <div className="flex items-center justify-between gap-2">
-              <span className="text-xs text-[#6B7280]">Speed:</span>
+              <span className="text-xs text-theme-muted">Speed:</span>
               <div className="flex items-center gap-1 font-mono">
                 {[1, 5, 20].map((spd) => (
                   <button
@@ -301,8 +301,8 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
                     onClick={() => onSpeed(spd)}
                     className={`px-2.5 py-0.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
                       replayStatus?.speed === spd
-                        ? 'bg-[#14532D] text-white shadow-xs'
-                        : 'bg-[#F3F4F3] text-[#4B5563] hover:bg-gray-200'
+                        ? 'bg-theme-primary-fill text-theme-on-primary shadow-xs'
+                        : 'bg-theme-bg text-theme-text hover:bg-theme-border'
                     }`}
                   >
                     {spd}x
@@ -320,7 +320,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
                   disabled={replayLoading}
                   className="flex-1"
                 >
-                  <Pause className="w-4 h-4 fill-white" />
+                  <Pause className="w-4 h-4 fill-current" />
                   <span>Pause</span>
                 </PillButton>
               ) : (
@@ -330,7 +330,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
                   disabled={replayLoading}
                   className="flex-1"
                 >
-                  <Play className="w-4 h-4 fill-white" />
+                  <Play className="w-4 h-4 fill-current" />
                   <span>Start Replay</span>
                 </PillButton>
               )}
@@ -341,7 +341,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
                 disabled={replayLoading}
                 aria-label="Step forward 1 record"
                 title="Step 1 record forward"
-                className="w-9 h-9 rounded-full border border-[#ECEDEC] hover:bg-[#F3F4F3] flex items-center justify-center text-[#111827] cursor-pointer transition-colors"
+                className="w-9 h-9 rounded-full border border-theme-border hover:bg-theme-bg flex items-center justify-center text-theme-text cursor-pointer transition-colors"
               >
                 <StepForward className="w-4 h-4" />
               </button>
@@ -352,7 +352,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
                 disabled={replayLoading}
                 aria-label="Reset replay"
                 title="Reset Replay"
-                className="w-9 h-9 rounded-full border border-[#ECEDEC] hover:bg-[#F3F4F3] flex items-center justify-center text-[#6B7280] hover:text-[#DC2626] cursor-pointer transition-colors"
+                className="w-9 h-9 rounded-full border border-theme-border hover:bg-theme-bg flex items-center justify-center text-theme-muted hover:text-theme-loss cursor-pointer transition-colors"
               >
                 <RotateCcw className="w-4 h-4" />
               </button>
@@ -363,7 +363,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
                 type="button"
                 onClick={onAppendLive}
                 disabled={replayLoading}
-                className="w-full py-1.5 px-3 rounded-full text-xs font-semibold bg-[#E8F5EE] text-[#14532D] hover:bg-emerald-100 transition-colors"
+                className="w-full py-1.5 px-3 rounded-full text-xs font-semibold bg-theme-primary-tint text-theme-primary-text hover:opacity-90 transition-colors"
               >
                 Pull new live records
               </button>
@@ -375,13 +375,13 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
         <Card className="lg:col-span-3 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm md:text-base font-bold text-[#111827]">
+              <h2 className="text-sm md:text-base font-bold text-theme-text">
                 High-Impact Signals
               </h2>
               <button
                 type="button"
                 onClick={() => setActiveTab('playground')}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-[#14532D] hover:underline cursor-pointer"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-theme-primary-text hover:underline cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>New</span>
@@ -399,26 +399,26 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
                       onClick={() => handleSelectHighImpact(sig)}
                       className={`w-full p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
                         isSelected
-                          ? 'border-[#14532D] bg-[#E8F5EE]/60'
-                          : 'border-[#ECEDEC] hover:border-gray-300 hover:bg-[#F9FAF9]'
+                          ? 'border-theme-primary-fill bg-theme-primary-tint/60'
+                          : 'border-theme-border hover:border-theme-border-strong hover:bg-theme-card-subtle'
                       }`}
                     >
                       <div className="flex items-center justify-between gap-1 mb-1">
-                        <span className="font-mono font-bold text-xs text-[#111827]">
+                        <span className="font-mono font-bold text-xs text-theme-text">
                           {sig.entity.ticker || sig.entity.name.slice(0, 12)}
                         </span>
-                        <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold bg-[#FEE2E2] text-[#DC2626]">
+                        <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold bg-theme-loss-bg text-theme-loss">
                           Score {sig.impact.score}
                         </span>
                       </div>
-                      <div className="text-[11px] text-[#4B5563] truncate">
+                      <div className="text-[11px] text-theme-text-secondary truncate">
                         {sig.evidence?.[0]?.text || sig.event.label}
                       </div>
                     </button>
                   );
                 })
               ) : (
-                <div className="p-4 text-center text-xs text-[#9CA3AF]">
+                <div className="p-4 text-center text-xs text-theme-subtle">
                   No signals with impact &gt; 7 in run
                 </div>
               )}
@@ -426,7 +426,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
           </div>
 
           <div className="pt-2 text-center">
-            <span className="text-[11px] text-[#6B7280]">
+            <span className="text-[11px] text-theme-muted">
               Filter threshold: impact &gt; 7
             </span>
           </div>
@@ -440,17 +440,17 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
           <div>
             <div className="flex items-center justify-between mb-3">
               <div>
-                <h2 className="text-sm md:text-base font-bold text-[#111827]">
+                <h2 className="text-sm md:text-base font-bold text-theme-text">
                   Recent Stress Runs
                 </h2>
-                <p className="text-xs text-[#6B7280]">
+                <p className="text-xs text-theme-muted">
                   Portfolio reconciliation &amp; shock impacts
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setActiveTab('stress')}
-                className="text-xs font-semibold text-[#14532D] hover:underline cursor-pointer"
+                className="text-xs font-semibold text-theme-primary-text hover:underline cursor-pointer"
               >
                 View all &rarr;
               </button>
@@ -485,24 +485,24 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
                   return (
                     <div
                       key={run.stress_id}
-                      className="p-2.5 rounded-xl border border-[#ECEDEC] hover:bg-[#F9FAF9] flex items-center justify-between gap-3"
+                      className="p-2.5 rounded-xl border border-theme-border hover:bg-theme-card-subtle flex items-center justify-between gap-3"
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-8 h-8 rounded-full bg-[#E8F5EE] text-[#14532D] flex items-center justify-center shrink-0">
-                          <TrendingDown className="w-4 h-4 text-[#14532D]" />
+                        <div className="w-8 h-8 rounded-full bg-theme-primary-tint text-theme-primary-text flex items-center justify-center shrink-0">
+                          <TrendingDown className="w-4 h-4 text-theme-primary-text" />
                         </div>
                         <div className="min-w-0">
-                          <div className="text-xs font-bold text-[#111827] truncate">
+                          <div className="text-xs font-bold text-theme-text truncate">
                             {targetName}
                           </div>
-                          <div className="text-[10px] text-[#6B7280] font-mono truncate">
+                          <div className="text-[10px] text-theme-muted font-mono truncate">
                             ID: {run.stress_id.slice(0, 10)}
                           </div>
                         </div>
                       </div>
 
                       <div className="text-right shrink-0">
-                        <div className="text-xs font-bold font-mono text-[#DC2626]">
+                        <div className="text-xs font-bold font-mono text-theme-loss">
                           -${lossM}M
                         </div>
                         {statusText !== '—' && (
@@ -515,7 +515,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
                   );
                 })
               ) : (
-                <div className="p-4 text-center text-xs text-[#9CA3AF]">
+                <div className="p-4 text-center text-xs text-theme-subtle">
                   No stress simulations executed yet
                 </div>
               )}
@@ -523,7 +523,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
           </div>
 
           <div className="pt-2">
-            <span className="text-[11px] text-[#6B7280]">
+            <span className="text-[11px] text-theme-muted">
               Showing last {hydratedRuns.length} runs with verified loss attribution
             </span>
           </div>
@@ -532,10 +532,10 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
         {/* Project Progress: Signal Funnel Semicircle Gauge (4 cols) */}
         <Card className="lg:col-span-4 flex flex-col justify-between">
           <div className="flex items-center justify-between mb-1">
-            <h2 className="text-sm md:text-base font-bold text-[#111827]">
+            <h2 className="text-sm md:text-base font-bold text-theme-text">
               Signal Funnel
             </h2>
-            <span className="text-xs text-[#6B7280] font-mono">
+            <span className="text-xs text-theme-muted font-mono">
               {totalSignalsCount} total
             </span>
           </div>
@@ -550,31 +550,31 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
         {/* Time Tracker: Replay Clock (Hero Accent Card) (3 cols) */}
         <Card
           variant="hero"
-          className="lg:col-span-3 flex flex-col justify-between text-white"
+          className="lg:col-span-3 flex flex-col justify-between text-theme-hero-text"
         >
           <div>
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-semibold text-emerald-100 flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-emerald-200" />
+              <span className="text-xs font-semibold text-theme-hero-subtle flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-theme-hero-subtle" />
                 Replay Clock
               </span>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-white/20 text-white">
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-theme-hero-text/20 text-theme-hero-text">
                 {replayStatus?.state?.toUpperCase() || 'IDLE'}
               </span>
             </div>
 
             <div className="my-5 text-center">
-              <div className="text-3xl md:text-4xl font-bold font-mono tracking-tight text-white">
+              <div className="text-3xl md:text-4xl font-bold font-mono tracking-tight text-theme-hero-text">
                 {simulatedTimeFormatted}
               </div>
-              <div className="text-[11px] text-emerald-200 mt-1 font-mono">
+              <div className="text-[11px] text-theme-hero-subtle mt-1 font-mono">
                 {replayStatus?.current_simulated_at?.slice(0, 10) || '—'}
               </div>
             </div>
           </div>
 
           <div className="pt-2 text-center">
-            <span className="text-[11px] text-emerald-200/90 font-mono">
+            <span className="text-[11px] text-theme-hero-subtle/90 font-mono">
               Controlled via Replay Control panel
             </span>
           </div>

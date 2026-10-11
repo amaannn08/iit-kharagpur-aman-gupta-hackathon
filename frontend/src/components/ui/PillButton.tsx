@@ -19,13 +19,13 @@ export const PillButton: React.FC<PillButtonProps> = ({
 
   const variantClasses = {
     primary:
-      'bg-[#14532D] hover:bg-[#1F6B45] text-white shadow-sm border border-[#14532D] disabled:opacity-50 disabled:hover:bg-[#14532D]',
+      'bg-theme-primary-fill hover:bg-theme-primary-hover text-theme-on-primary shadow-sm border border-theme-primary-fill disabled:opacity-50 disabled:hover:bg-theme-primary-fill',
     secondary:
-      'bg-white hover:bg-[#E8F5EE] text-[#14532D] border border-[#14532D] disabled:opacity-50',
+      'bg-theme-card hover:bg-theme-primary-tint text-theme-primary-text border border-theme-primary-text disabled:opacity-50',
     outline:
-      'bg-white hover:bg-[#F3F4F3] text-[#374151] border border-[#ECEDEC] hover:border-gray-300 disabled:opacity-50',
+      'bg-theme-card hover:bg-theme-bg text-theme-text-body border border-theme-border hover:border-theme-muted disabled:opacity-50',
     danger:
-      'bg-[#DC2626] hover:bg-red-700 text-white border border-[#DC2626] disabled:opacity-50',
+      'bg-theme-loss hover:opacity-90 text-theme-on-primary border border-theme-loss disabled:opacity-50',
   }[variant];
 
   return (

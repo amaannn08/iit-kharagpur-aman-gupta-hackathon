@@ -116,66 +116,66 @@ export function StressCharts({ result, onResult }: Props) {
       {/* PS Benchmark Reference Card */}
       {psBenchmark && (
         <div
-          className="bg-[#F9FAF9] border border-[#ECEDEC] rounded-2xl p-4 text-xs space-y-3"
+          className="bg-theme-card-subtle border border-theme-border rounded-2xl p-4 text-xs space-y-3"
           data-testid="ps-benchmark-card"
         >
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <span className="font-bold text-[#111827]">
+            <span className="font-bold text-theme-text">
               Problem Statement Benchmark: &ldquo;Geopolitical event, impact 8 &rarr; equities -10%, rates +200 bp&rdquo;
             </span>
             <button
               type="button"
               onClick={() => run('ps', () => runCustomStress({ equity_shock_pct: -0.1, benchmark_yield_shift_bps: 200 }))}
               disabled={busy !== null}
-              className="px-3.5 py-1.5 rounded-full bg-[#14532D] hover:bg-[#1F6B45] text-white font-semibold shadow-xs transition-colors cursor-pointer"
+              className="px-3.5 py-1.5 rounded-full bg-theme-primary-fill hover:bg-theme-primary text-theme-on-primary font-semibold shadow-xs transition-colors cursor-pointer"
             >
               Run live
             </button>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-[#111827] font-mono">
-            <div className="p-2.5 rounded-xl bg-white border border-[#ECEDEC]">
-              <span className="text-[#6B7280] block text-[10px] uppercase font-sans">Funded Baseline</span>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-theme-text font-mono">
+            <div className="p-2.5 rounded-xl bg-theme-card border border-theme-border">
+              <span className="text-theme-muted block text-[10px] uppercase font-sans">Funded Baseline</span>
               <span className="font-bold text-sm">
                 ${((psBenchmark.funded_baseline_usd ?? 610000000) / 1e6).toFixed(1)}M
               </span>
             </div>
-            <div className="p-2.5 rounded-xl bg-white border border-[#ECEDEC]">
-              <span className="text-[#6B7280] block text-[10px] uppercase font-sans">Funded Stressed</span>
+            <div className="p-2.5 rounded-xl bg-theme-card border border-theme-border">
+              <span className="text-theme-muted block text-[10px] uppercase font-sans">Funded Stressed</span>
               <span className="font-bold text-sm">
                 ${((psBenchmark.funded_stressed_usd ?? 588240467.2) / 1e6).toFixed(1)}M
               </span>
             </div>
-            <div className="p-2.5 rounded-xl bg-white border border-[#ECEDEC]">
-              <span className="text-[#6B7280] block text-[10px] uppercase font-sans">Total P&amp;L</span>
-              <span className="text-[#DC2626] font-bold text-sm">
+            <div className="p-2.5 rounded-xl bg-theme-card border border-theme-border">
+              <span className="text-theme-muted block text-[10px] uppercase font-sans">Total P&amp;L</span>
+              <span className="text-theme-loss font-bold text-sm">
                 {usd(psBenchmark.total_pnl_usd)}
               </span>
             </div>
-            <div className="p-2.5 rounded-xl bg-white border border-[#ECEDEC]">
-              <span className="text-[#6B7280] block text-[10px] uppercase font-sans">Derivative MTM</span>
-              <span className="text-[#1F6B45] font-bold text-sm">
+            <div className="p-2.5 rounded-xl bg-theme-card border border-theme-border">
+              <span className="text-theme-muted block text-[10px] uppercase font-sans">Derivative MTM</span>
+              <span className="text-theme-primary font-bold text-sm">
                 +${(psBenchmark.derivative_mtm_change_usd / 1e3).toFixed(0)}k
               </span>
             </div>
           </div>
 
           {psBenchmark.by_sleeve_usd && (
-            <div className="flex flex-wrap gap-3 pt-1 border-t border-[#ECEDEC] text-[11px]">
-              <span className="text-[#6B7280] font-medium">P&amp;L by sleeve:</span>
+            <div className="flex flex-wrap gap-3 pt-1 border-t border-theme-border text-[11px]">
+              <span className="text-theme-muted font-medium">P&amp;L by sleeve:</span>
               {Object.entries(psBenchmark.by_sleeve_usd).map(([sleeve, pnl]: [string, any]) => (
-                <span key={sleeve} className="text-[#374151]">
-                  <span className="capitalize text-[#6B7280]">{sleeve}:</span> {usd(Number(pnl))}
+                <span key={sleeve} className="text-theme-text-body">
+                  <span className="capitalize text-theme-muted">{sleeve}:</span> {usd(Number(pnl))}
                 </span>
               ))}
             </div>
           )}
 
           {psBenchmark.top_drivers && psBenchmark.top_drivers.length > 0 && (
-            <div className="flex flex-wrap gap-2 text-[10px] text-[#6B7280] pt-1 border-t border-[#ECEDEC]">
+            <div className="flex flex-wrap gap-2 text-[10px] text-theme-muted pt-1 border-t border-theme-border">
               <span className="font-medium">Top loss drivers:</span>
               {psBenchmark.top_drivers.slice(0, 3).map((d: any, idx: number) => (
-                <span key={idx} className="bg-white px-2 py-0.5 rounded-full text-[#374151] border border-[#ECEDEC]">
+                <span key={idx} className="bg-theme-card px-2 py-0.5 rounded-full text-theme-text-body border border-theme-border">
                   {d.counterparty_name || d.position_id} ({d.dominant_component}): {usd(d.pnl_usd)}
                 </span>
               ))}
@@ -186,12 +186,12 @@ export function StressCharts({ result, onResult }: Props) {
 
       {/* Scenario Presets Strip */}
       <div className="flex flex-wrap items-center gap-2 text-xs">
-        <span className="text-[#6B7280] font-semibold mr-1">One-click scenario:</span>
+        <span className="text-theme-muted font-semibold mr-1">One-click scenario:</span>
         <button
           type="button"
           onClick={() => run('ps', () => runCustomStress({ equity_shock_pct: -0.1, benchmark_yield_shift_bps: 200 }))}
           disabled={busy !== null}
-          className="px-3 py-1 rounded-full border border-[#14532D] bg-[#E8F5EE] text-[#14532D] hover:bg-emerald-100 transition-colors font-semibold cursor-pointer"
+          className="px-3 py-1 rounded-full border border-theme-primary-fill bg-theme-primary-tint text-theme-primary-text hover:opacity-90 transition-colors font-semibold cursor-pointer"
         >
           PS example: equities -10%, rates +2%
         </button>
@@ -202,27 +202,27 @@ export function StressCharts({ result, onResult }: Props) {
             onClick={() => run(s.scenario_id, () => runStressScenario(s.scenario_id))}
             disabled={busy !== null}
             title={s.description}
-            className="px-3 py-1 rounded-full border border-[#ECEDEC] bg-white text-[#374151] hover:bg-[#F3F4F3] transition-colors cursor-pointer"
+            className="px-3 py-1 rounded-full border border-theme-border bg-theme-card text-theme-text-body hover:bg-theme-bg transition-colors cursor-pointer"
           >
             {s.name.replace('Historical: ', '').replace(/ \(.*\)$/, '')}
           </button>
         ))}
-        {busy && <span className="text-[#6B7280] font-mono">running...</span>}
+        {busy && <span className="text-theme-muted font-mono">running...</span>}
       </div>
 
       {!result ? (
-        <div className="py-8 text-center text-xs text-[#9CA3AF] font-mono">
+        <div className="py-8 text-center text-xs text-theme-subtle font-mono">
           Run a scenario or wait for an event-triggered stress test.
         </div>
       ) : result.status === 'NO_EXPOSURE' ? (
-        <div className="py-6 text-center text-xs text-[#6B7280] font-mono p-4 rounded-xl bg-[#F9FAF9] border border-[#ECEDEC]">
+        <div className="py-6 text-center text-xs text-theme-muted font-mono p-4 rounded-xl bg-theme-card-subtle border border-theme-border">
           NO EXPOSURE: the {result.event_class} shock on {result.target_entity ?? 'target'} touches no position in the book.
         </div>
       ) : (
         <div className="grid grid-cols-12 gap-5 pt-2">
           {/* Before vs After Chart */}
-          <div className="col-span-12 lg:col-span-6 p-4 rounded-2xl bg-[#F9FAF9] border border-[#ECEDEC]">
-            <h3 className="text-xs font-bold text-[#111827] mb-3">
+          <div className="col-span-12 lg:col-span-6 p-4 rounded-2xl bg-theme-card-subtle border border-theme-border">
+            <h3 className="text-xs font-bold text-theme-text mb-3">
               Portfolio value before vs after, by sleeve
             </h3>
             <ResponsiveContainer width="100%" height={250}>
@@ -235,47 +235,47 @@ export function StressCharts({ result, onResult }: Props) {
                     patternUnits="userSpaceOnUse"
                     patternTransform="rotate(45)"
                   >
-                    <line x1="0" y1="0" x2="0" y2="6" stroke="#9CA3AF" strokeWidth="2" />
-                    <rect width="6" height="6" fill="#F3F4F3" opacity="0.3" />
+                    <line x1="0" y1="0" x2="0" y2="6" stroke="var(--theme-subtle)" strokeWidth="2" />
+                    <rect width="6" height="6" fill="var(--theme-bg)" opacity="0.3" />
                   </pattern>
                 </defs>
-                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#ECEDEC" />
-                <XAxis dataKey="sleeve" tick={{ fill: '#6B7280', fontSize: 11 }} />
-                <YAxis tickFormatter={(v) => `$${Math.round(v / 1e6)}M`} tick={{ fill: '#6B7280', fontSize: 10 }} />
+                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="var(--theme-border)" />
+                <XAxis dataKey="sleeve" tick={{ fill: 'var(--theme-muted)', fontSize: 11 }} />
+                <YAxis tickFormatter={(v) => `$${Math.round(v / 1e6)}M`} tick={{ fill: 'var(--theme-muted)', fontSize: 10 }} />
                 <Tooltip
                   formatter={(v: number) => usd(v)}
-                  contentStyle={{ background: '#FFFFFF', border: '1px solid #ECEDEC', borderRadius: 12, fontSize: 11 }}
+                  contentStyle={{ background: 'var(--theme-card)', border: '1px solid var(--theme-border)', borderRadius: 12, fontSize: 11, color: 'var(--theme-text)' }}
                 />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Bar dataKey="Before" fill={`url(#${hatchId})`} stroke="#6B7280" strokeWidth={1} radius={[8, 8, 8, 8]} />
-                <Bar dataKey="After" fill="#1F6B45" radius={[8, 8, 8, 8]} />
+                <Bar dataKey="Before" fill={`url(#${hatchId})`} stroke="var(--theme-muted)" strokeWidth={1} radius={[8, 8, 8, 8]} />
+                <Bar dataKey="After" fill="var(--theme-primary)" radius={[8, 8, 8, 8]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
 
           {/* Loss Waterfall Chart */}
-          <div className="col-span-12 lg:col-span-6 p-4 rounded-2xl bg-[#F9FAF9] border border-[#ECEDEC]">
-            <h3 className="text-xs font-bold text-[#111827] mb-3 flex items-center justify-between">
+          <div className="col-span-12 lg:col-span-6 p-4 rounded-2xl bg-theme-card-subtle border border-theme-border">
+            <h3 className="text-xs font-bold text-theme-text mb-3 flex items-center justify-between">
               <span>Loss waterfall: total {usd(result.total_pnl_usd)} ({(result.total_pnl_pct * 100).toFixed(2)}%)</span>
-              <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold ${result.reconciliation_passed ? 'bg-[#E8F5EE] text-[#14532D]' : 'bg-[#FEE2E2] text-[#DC2626]'}`}>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold ${result.reconciliation_passed ? 'bg-theme-primary-tint text-theme-primary-text' : 'bg-theme-loss-bg text-theme-loss'}`}>
                 {result.reconciliation_passed ? 'Reconciled' : 'Reconciliation Failed'}
               </span>
             </h3>
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={waterfallData(result)}>
-                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#ECEDEC" />
-                <XAxis dataKey="name" tick={{ fill: '#6B7280', fontSize: 10 }} />
-                <YAxis domain={['auto', 'auto']} tickFormatter={(v) => `$${Math.round(v / 1e6)}M`} tick={{ fill: '#6B7280', fontSize: 10 }} />
+                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="var(--theme-border)" />
+                <XAxis dataKey="name" tick={{ fill: 'var(--theme-muted)', fontSize: 10 }} />
+                <YAxis domain={['auto', 'auto']} tickFormatter={(v) => `$${Math.round(v / 1e6)}M`} tick={{ fill: 'var(--theme-muted)', fontSize: 10 }} />
                 <Tooltip
                   formatter={(v: number, k: string) => (k === 'base' ? null : usd(v))}
-                  contentStyle={{ background: '#FFFFFF', border: '1px solid #ECEDEC', borderRadius: 12, fontSize: 11 }}
+                  contentStyle={{ background: 'var(--theme-card)', border: '1px solid var(--theme-border)', borderRadius: 12, fontSize: 11, color: 'var(--theme-text)' }}
                 />
                 <Bar dataKey="base" stackId="w" fill="transparent" />
                 <Bar dataKey="delta" stackId="w" radius={[6, 6, 6, 6]}>
                   {waterfallData(result).map((d, i) => (
                     <Cell
                       key={i}
-                      fill={d.kind === 'total' ? '#14532D' : d.kind === 'loss' ? '#DC2626' : '#2F9E62'}
+                      fill={d.kind === 'total' ? 'var(--theme-primary-fill)' : d.kind === 'loss' ? 'var(--theme-loss)' : 'var(--theme-primary-light)'}
                     />
                   ))}
                 </Bar>

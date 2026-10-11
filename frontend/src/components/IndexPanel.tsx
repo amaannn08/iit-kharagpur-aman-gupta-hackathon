@@ -16,11 +16,18 @@ import { Card } from './ui/Card';
 import { Pill } from './ui/Pill';
 import { PillButton } from './ui/PillButton';
 
-const DONEZO_PALETTE = [
+export const DONEZO_PALETTE_LIGHT = [
   '#14532D', '#1F6B45', '#2F9E62', '#52B788', '#7FD1A4', '#A7E3C4',
   '#0F766E', '#14B8A6', '#2DD4BF', '#5EEAD4', '#0284C7', '#38BDF8',
   '#334155', '#475569', '#64748B', '#94A3B8', '#CBD5E1', '#E2E8F0',
   '#15803D', '#166534',
+];
+
+export const DONEZO_PALETTE_DARK = [
+  '#4ADE80', '#22C55E', '#86EFAC', '#52B788', '#7FD1A4', '#A7E3C4',
+  '#2DD4BF', '#14B8A6', '#5EEAD4', '#99F6E4', '#38BDF8', '#60A5FA',
+  '#94A3B8', '#CBD5E1', '#E2E8F0', '#F1F5F9', '#A5B4FC', '#C4B5FD',
+  '#86EFAC', '#4ADE80',
 ];
 
 const pct = (v: number) => `${(v * 100).toFixed(1)}%`;
@@ -31,6 +38,9 @@ export function IndexPanel() {
   const [history, setHistory] = useState<IndexRecord[]>([]);
   const [error, setError] = useState<string | null>(null);
   const patternId = useId();
+
+  const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
+  const palette = isDark ? DONEZO_PALETTE_DARK : DONEZO_PALETTE_LIGHT;
 
   const refresh = async () => {
     try {
@@ -52,14 +62,14 @@ export function IndexPanel() {
   if (error && !current) {
     return (
       <Card className="p-8 text-center">
-        <p className="text-xs font-semibold text-[#DC2626]">Index unavailable: {error}</p>
+        <p className="text-xs font-semibold text-theme-loss">Index unavailable: {error}</p>
       </Card>
     );
   }
   if (!current) {
     return (
       <Card className="p-8 text-center">
-        <p className="text-xs font-medium text-[#6B7280]">Loading mock index...</p>
+        <p className="text-xs font-medium text-theme-muted">Loading mock index...</p>
       </Card>
     );
   }
@@ -76,10 +86,10 @@ export function IndexPanel() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-bold tracking-tight text-[#111827]">Module A: Sentiment-Driven Index Rebalancer</h2>
+            <h2 className="text-xl font-bold tracking-tight text-theme-text">Module A: Sentiment-Driven Index Rebalancer</h2>
             <Pill variant="neutral" size="sm">Mock Model</Pill>
           </div>
-          <p className="text-xs text-[#6B7280] mt-1 max-w-3xl leading-relaxed">
+          <p className="text-xs text-theme-muted mt-1 max-w-3xl leading-relaxed">
             {current.label}. Positive sentiment raises a weight, negative lowers it; caps {pct(current.constraints.name_cap)} per
             name, {pct(current.constraints.sector_cap)} per sector; sentiment half-life {current.constraints.halflife_days} days.
           </p>
@@ -109,30 +119,30 @@ export function IndexPanel() {
         <div className="h-[320px] w-full mt-2">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={series} stackOffset="expand">
-              <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--theme-border-subtle)" vertical={false} />
               <XAxis
                 dataKey="step"
-                tick={{ fill: '#6B7280', fontSize: 10, fontFamily: 'Plus Jakarta Sans' }}
-                axisLine={{ stroke: '#E5E7EB' }}
+                tick={{ fill: 'var(--theme-muted)', fontSize: 10, fontFamily: 'Plus Jakarta Sans' }}
+                axisLine={{ stroke: 'var(--theme-border-light)' }}
                 tickLine={false}
-                label={{ value: 'rebalance #', fill: '#9CA3AF', fontSize: 10, position: 'insideBottom', offset: -2 }}
+                label={{ value: 'rebalance #', fill: 'var(--theme-subtle)', fontSize: 10, position: 'insideBottom', offset: -2 }}
               />
               <YAxis
                 tickFormatter={(v) => `${Math.round(v * 100)}%`}
-                tick={{ fill: '#6B7280', fontSize: 10, fontFamily: 'Plus Jakarta Sans' }}
-                axisLine={{ stroke: '#E5E7EB' }}
+                tick={{ fill: 'var(--theme-muted)', fontSize: 10, fontFamily: 'Plus Jakarta Sans' }}
+                axisLine={{ stroke: 'var(--theme-border-light)' }}
                 tickLine={false}
               />
               <Tooltip
                 formatter={(v: number) => pct(v)}
                 labelFormatter={(i) => series[Number(i)]?.label ?? i}
                 contentStyle={{
-                  background: '#FFFFFF',
-                  border: '1px solid #ECEDEC',
+                  background: 'var(--theme-card)',
+                  border: '1px solid var(--theme-border)',
                   borderRadius: '12px',
                   boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
                   fontSize: '11px',
-                  color: '#111827',
+                  color: 'var(--theme-text)',
                   fontFamily: 'Plus Jakarta Sans',
                 }}
               />
@@ -143,7 +153,7 @@ export function IndexPanel() {
                   dataKey={t}
                   stackId="w"
                   stroke="none"
-                  fill={DONEZO_PALETTE[i % DONEZO_PALETTE.length]}
+                  fill={palette[i % palette.length]}
                   fillOpacity={0.88}
                 />
               ))}
@@ -164,33 +174,34 @@ export function IndexPanel() {
                 <BarChart data={bars} layout="vertical" margin={{ left: 10, right: 20 }}>
                   <defs>
                     <pattern id={`base-hatch-${patternId}`} width="6" height="6" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
-                      <line x1="0" y1="0" x2="0" y2="6" stroke="#D1D5DB" strokeWidth="2" />
+                      <line x1="0" y1="0" x2="0" y2="6" stroke="var(--theme-border-strong)" strokeWidth="2" />
                     </pattern>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" horizontal={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--theme-border-subtle)" horizontal={false} />
                   <XAxis
                     type="number"
                     tickFormatter={(v) => pct(v)}
-                    tick={{ fill: '#6B7280', fontSize: 10, fontFamily: 'Plus Jakarta Sans' }}
-                    axisLine={{ stroke: '#E5E7EB' }}
+                    tick={{ fill: 'var(--theme-muted)', fontSize: 10, fontFamily: 'Plus Jakarta Sans' }}
+                    axisLine={{ stroke: 'var(--theme-border-light)' }}
                     tickLine={false}
                   />
                   <YAxis
                     type="category"
                     dataKey="ticker"
                     width={55}
-                    tick={{ fill: '#111827', fontSize: 11, fontWeight: 600, fontFamily: 'Plus Jakarta Sans' }}
-                    axisLine={{ stroke: '#E5E7EB' }}
+                    tick={{ fill: 'var(--theme-text)', fontSize: 11, fontWeight: 600, fontFamily: 'Plus Jakarta Sans' }}
+                    axisLine={{ stroke: 'var(--theme-border-light)' }}
                     tickLine={false}
                   />
                   <Tooltip
                     formatter={(v: number) => pct(v)}
                     contentStyle={{
-                      background: '#FFFFFF',
-                      border: '1px solid #ECEDEC',
+                      background: 'var(--theme-card)',
+                      border: '1px solid var(--theme-border)',
                       borderRadius: '12px',
                       boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
                       fontSize: '11px',
+                      color: 'var(--theme-text)',
                       fontFamily: 'Plus Jakarta Sans',
                     }}
                   />
@@ -201,14 +212,14 @@ export function IndexPanel() {
                     dataKey="base"
                     name="Base"
                     fill={`url(#base-hatch-${patternId})`}
-                    stroke="#9CA3AF"
+                    stroke="var(--theme-subtle)"
                     strokeWidth={1}
                     radius={[0, 4, 4, 0]}
                   />
                   <Bar
                     dataKey="current"
                     name="Current"
-                    fill="#1F6B45"
+                    fill="var(--theme-primary)"
                     radius={[0, 4, 4, 0]}
                   />
                 </BarChart>
@@ -225,30 +236,30 @@ export function IndexPanel() {
             <div className="overflow-x-auto mt-2 max-h-[360px] overflow-y-auto">
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="border-b border-[#F3F4F6] text-[#6B7280] font-semibold">
+                  <tr className="border-b border-theme-border-subtle text-theme-muted font-semibold">
                     <th className="text-left pb-2 font-medium">Ticker</th>
                     <th className="text-right pb-2 font-medium">Weight</th>
                     <th className="text-right pb-2 font-medium">Sentiment</th>
                     <th className="text-left pl-3 pb-2 font-medium">Reason</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#F3F4F6]">
+                <tbody className="divide-y divide-theme-border-subtle">
                   {bars.map((b) => (
-                    <tr key={b.ticker} className="hover:bg-[#F9FAFB] transition-colors">
-                      <td className="py-2 font-bold text-[#111827]">{b.ticker}</td>
-                      <td className="text-right font-semibold text-[#111827]">{pct(b.current)}</td>
+                    <tr key={b.ticker} className="hover:bg-theme-card-subtle-alt transition-colors">
+                      <td className="py-2 font-bold text-theme-text">{b.ticker}</td>
+                      <td className="text-right font-semibold text-theme-text">{pct(b.current)}</td>
                       <td className="text-right">
                         <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-bold ${
                           b.ema > 0
-                            ? 'bg-[#DCFCE7] text-[#15803D]'
+                            ? 'bg-theme-success-bg text-theme-success'
                             : b.ema < 0
-                            ? 'bg-[#FEE2E2] text-[#DC2626]'
-                            : 'bg-[#F3F4F6] text-[#6B7280]'
+                            ? 'bg-theme-loss-bg text-theme-loss'
+                            : 'bg-theme-border-subtle text-theme-muted'
                         }`}>
                           {b.ema > 0 ? `+${b.ema.toFixed(2)}` : b.ema.toFixed(2)}
                         </span>
                       </td>
-                      <td className="pl-3 py-2 text-[#4B5563] text-[11px] leading-snug">{current.reasons[b.ticker]}</td>
+                      <td className="pl-3 py-2 text-theme-text-secondary text-[11px] leading-snug">{current.reasons[b.ticker]}</td>
                     </tr>
                   ))}
                 </tbody>
