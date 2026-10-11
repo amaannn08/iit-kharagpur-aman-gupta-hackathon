@@ -1,12 +1,18 @@
 import React from 'react';
 
-export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface CardProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'title'> {
   variant?: 'default' | 'hero';
+  title?: React.ReactNode;
+  subtitle?: React.ReactNode;
+  action?: React.ReactNode;
   children: React.ReactNode;
 }
 
 export const Card: React.FC<CardProps> = ({
   variant = 'default',
+  title,
+  subtitle,
+  action,
   className = '',
   children,
   ...props
@@ -43,7 +49,26 @@ export const Card: React.FC<CardProps> = ({
             strokeLinecap="round"
           />
         </svg>
-        <div className="relative z-10">{children}</div>
+        <div className="relative z-10">
+          {(title || subtitle || action) && (
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <div>
+                {title && (
+                  typeof title === 'string' ? (
+                    <h3 className="text-sm font-bold text-white tracking-tight">{title}</h3>
+                  ) : title
+                )}
+                {subtitle && (
+                  typeof subtitle === 'string' ? (
+                    <p className="text-xs text-white/70 mt-0.5">{subtitle}</p>
+                  ) : subtitle
+                )}
+              </div>
+              {action && <div>{action}</div>}
+            </div>
+          )}
+          {children}
+        </div>
       </div>
     );
   }
@@ -53,6 +78,23 @@ export const Card: React.FC<CardProps> = ({
       className={`rounded-[20px] bg-white border border-[#ECEDEC] shadow-[0_2px_12px_rgba(0,0,0,0.03)] p-5 md:p-6 text-[#111827] ${className}`}
       {...props}
     >
+      {(title || subtitle || action) && (
+        <div className="flex items-start justify-between gap-4 mb-4">
+          <div>
+            {title && (
+              typeof title === 'string' ? (
+                <h3 className="text-sm font-bold text-[#111827] tracking-tight">{title}</h3>
+              ) : title
+            )}
+            {subtitle && (
+              typeof subtitle === 'string' ? (
+                <p className="text-xs text-[#6B7280] mt-0.5">{subtitle}</p>
+              ) : subtitle
+            )}
+          </div>
+          {action && <div>{action}</div>}
+        </div>
+      )}
       {children}
     </div>
   );

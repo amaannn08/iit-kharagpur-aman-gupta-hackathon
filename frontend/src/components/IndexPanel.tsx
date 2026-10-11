@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import {
   Area,
   AreaChart,
@@ -12,11 +12,15 @@ import {
   YAxis,
 } from 'recharts';
 import { fetchIndexCurrent, fetchIndexHistory, IndexCurrent, IndexRecord, resetIndex } from '../api/client';
+import { Card } from './ui/Card';
+import { Pill } from './ui/Pill';
+import { PillButton } from './ui/PillButton';
 
-const PALETTE = [
-  '#f4f4f5', '#e4e4e7', '#d4d4d8', '#a1a1aa', '#71717a', '#52525b', '#3f3f46', '#27272a',
-  '#e2e8f0', '#cbd5e1', '#94a3b8', '#64748b', '#475569', '#334155', '#1e293b', '#0f172a',
-  '#d1d5db', '#9ca3af', '#6b7280', '#4b5563',
+const DONEZO_PALETTE = [
+  '#14532D', '#1F6B45', '#2F9E62', '#52B788', '#7FD1A4', '#A7E3C4',
+  '#0F766E', '#14B8A6', '#2DD4BF', '#5EEAD4', '#0284C7', '#38BDF8',
+  '#334155', '#475569', '#64748B', '#94A3B8', '#CBD5E1', '#E2E8F0',
+  '#15803D', '#166534',
 ];
 
 const pct = (v: number) => `${(v * 100).toFixed(1)}%`;
@@ -26,6 +30,7 @@ export function IndexPanel() {
   const [current, setCurrent] = useState<IndexCurrent | null>(null);
   const [history, setHistory] = useState<IndexRecord[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const patternId = useId();
 
   const refresh = async () => {
     try {
@@ -45,10 +50,18 @@ export function IndexPanel() {
   }, []);
 
   if (error && !current) {
-    return <div className="p-6 text-xs text-zinc-500 font-mono">Index unavailable: {error}</div>;
+    return (
+      <Card className="p-8 text-center">
+        <p className="text-xs font-semibold text-[#DC2626]">Index unavailable: {error}</p>
+      </Card>
+    );
   }
   if (!current) {
-    return <div className="p-6 text-xs text-zinc-500 font-mono">Loading mock index...</div>;
+    return (
+      <Card className="p-8 text-center">
+        <p className="text-xs font-medium text-[#6B7280]">Loading mock index...</p>
+      </Card>
+    );
   }
 
   const tickers = Object.keys(current.weights);
@@ -59,79 +72,189 @@ export function IndexPanel() {
 
   return (
     <div className="flex-1 overflow-y-auto space-y-6" data-testid="index-panel">
-      <div className="flex items-center justify-between">
+      {/* Header bar */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-sm font-bold text-white">Module A: Sentiment-Driven Index Rebalancer</h2>
-          <p className="text-xs text-zinc-400">
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-bold tracking-tight text-[#111827]">Module A: Sentiment-Driven Index Rebalancer</h2>
+            <Pill variant="neutral" size="sm">Mock Model</Pill>
+          </div>
+          <p className="text-xs text-[#6B7280] mt-1 max-w-3xl leading-relaxed">
             {current.label}. Positive sentiment raises a weight, negative lowers it; caps {pct(current.constraints.name_cap)} per
             name, {pct(current.constraints.sector_cap)} per sector; sentiment half-life {current.constraints.halflife_days} days.
           </p>
         </div>
-        <div className="flex items-center gap-3 text-xs">
-          <span className="font-mono text-white bg-zinc-900 border border-zinc-700 px-2.5 py-1 rounded font-semibold">{current.rebalances} rebalances</span>
-          <button
+        <div className="flex items-center gap-3">
+          <Pill variant="primary" size="md">
+            {current.rebalances} rebalances
+          </Pill>
+          <PillButton
+            variant="secondary"
+            size="sm"
             onClick={async () => {
               await resetIndex();
               refresh();
             }}
-            className="px-3 py-1.5 rounded border border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800 transition-colors"
           >
             Reset index
-          </button>
+          </PillButton>
         </div>
       </div>
 
-      <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-4">
-        <h3 className="text-xs font-semibold text-zinc-300 mb-3">Index weights over time</h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <AreaChart data={series} stackOffset="expand">
-            <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
-            <XAxis dataKey="step" tick={{ fill: '#a1a1aa', fontSize: 10 }} label={{ value: 'rebalance #', fill: '#71717a', fontSize: 10, position: 'insideBottom' }} />
-            <YAxis tickFormatter={(v) => `${Math.round(v * 100)}%`} tick={{ fill: '#a1a1aa', fontSize: 10 }} />
-            <Tooltip
-              formatter={(v: number) => pct(v)}
-              labelFormatter={(i) => series[Number(i)]?.label ?? i}
-              contentStyle={{ background: '#09090b', border: '1px solid #27272a', fontSize: 11 }}
-            />
-            {tickers.map((t, i) => (
-              <Area key={t} type="stepAfter" dataKey={t} stackId="w" stroke="none" fill={PALETTE[i % PALETTE.length]} fillOpacity={0.85} />
-            ))}
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
-
-      <div className="grid grid-cols-12 gap-6">
-        <div className="col-span-12 lg:col-span-7 bg-zinc-950 border border-zinc-800 rounded-lg p-4">
-          <h3 className="text-xs font-semibold text-zinc-300 mb-3">Current weight vs base (equal weight)</h3>
-          <ResponsiveContainer width="100%" height={320}>
-            <BarChart data={bars} layout="vertical" margin={{ left: 10 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
-              <XAxis type="number" tickFormatter={(v) => pct(v)} tick={{ fill: '#a1a1aa', fontSize: 10 }} />
-              <YAxis type="category" dataKey="ticker" width={50} tick={{ fill: '#d4d4d8', fontSize: 10 }} />
-              <Tooltip formatter={(v: number) => pct(v)} contentStyle={{ background: '#09090b', border: '1px solid #27272a', fontSize: 11 }} />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar dataKey="base" name="Base" fill="#52525b" />
-              <Bar dataKey="current" name="Current" fill="#ffffff" />
-            </BarChart>
+      {/* Main Area Chart Card */}
+      <Card
+        title="Index weights over time"
+        subtitle={`Historical rebalance trajectory across ${tickers.length} constituent names`}
+      >
+        <div className="h-[320px] w-full mt-2">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={series} stackOffset="expand">
+              <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
+              <XAxis
+                dataKey="step"
+                tick={{ fill: '#6B7280', fontSize: 10, fontFamily: 'Plus Jakarta Sans' }}
+                axisLine={{ stroke: '#E5E7EB' }}
+                tickLine={false}
+                label={{ value: 'rebalance #', fill: '#9CA3AF', fontSize: 10, position: 'insideBottom', offset: -2 }}
+              />
+              <YAxis
+                tickFormatter={(v) => `${Math.round(v * 100)}%`}
+                tick={{ fill: '#6B7280', fontSize: 10, fontFamily: 'Plus Jakarta Sans' }}
+                axisLine={{ stroke: '#E5E7EB' }}
+                tickLine={false}
+              />
+              <Tooltip
+                formatter={(v: number) => pct(v)}
+                labelFormatter={(i) => series[Number(i)]?.label ?? i}
+                contentStyle={{
+                  background: '#FFFFFF',
+                  border: '1px solid #ECEDEC',
+                  borderRadius: '12px',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+                  fontSize: '11px',
+                  color: '#111827',
+                  fontFamily: 'Plus Jakarta Sans',
+                }}
+              />
+              {tickers.map((t, i) => (
+                <Area
+                  key={t}
+                  type="stepAfter"
+                  dataKey={t}
+                  stackId="w"
+                  stroke="none"
+                  fill={DONEZO_PALETTE[i % DONEZO_PALETTE.length]}
+                  fillOpacity={0.88}
+                />
+              ))}
+            </AreaChart>
           </ResponsiveContainer>
         </div>
-        <div className="col-span-12 lg:col-span-5 bg-zinc-950 border border-zinc-800 rounded-lg p-4 text-xs">
-          <h3 className="font-semibold text-zinc-300 mb-3">Why each weight moved</h3>
-          <table className="w-full font-mono">
-            <thead className="text-zinc-500">
-              <tr><th className="text-left">Ticker</th><th className="text-right">Weight</th><th className="text-right">Sentiment</th><th className="text-left pl-3">Reason</th></tr>
-            </thead>
-            <tbody>
-              {bars.map((b) => (
-                <tr key={b.ticker} className="border-t border-zinc-800">
-                  <td className="py-1 text-zinc-200">{b.ticker}</td>
-                  <td className="text-right text-white font-semibold">{pct(b.current)}</td>
-                  <td className={`text-right ${b.ema > 0 ? 'text-emerald-400' : b.ema < 0 ? 'text-red-400' : 'text-zinc-500'}`}>{b.ema.toFixed(2)}</td>
-                  <td className="pl-3 text-zinc-400">{current.reasons[b.ticker]}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      </Card>
+
+      {/* Lower Dual Cards */}
+      <div className="grid grid-cols-12 gap-6">
+        <div className="col-span-12 lg:col-span-7">
+          <Card
+            title="Current weight vs base (equal weight)"
+            subtitle="Constituent weighting adjusted by sentiment signal"
+          >
+            <div className="h-[360px] w-full mt-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={bars} layout="vertical" margin={{ left: 10, right: 20 }}>
+                  <defs>
+                    <pattern id={`base-hatch-${patternId}`} width="6" height="6" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
+                      <line x1="0" y1="0" x2="0" y2="6" stroke="#D1D5DB" strokeWidth="2" />
+                    </pattern>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" horizontal={false} />
+                  <XAxis
+                    type="number"
+                    tickFormatter={(v) => pct(v)}
+                    tick={{ fill: '#6B7280', fontSize: 10, fontFamily: 'Plus Jakarta Sans' }}
+                    axisLine={{ stroke: '#E5E7EB' }}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    type="category"
+                    dataKey="ticker"
+                    width={55}
+                    tick={{ fill: '#111827', fontSize: 11, fontWeight: 600, fontFamily: 'Plus Jakarta Sans' }}
+                    axisLine={{ stroke: '#E5E7EB' }}
+                    tickLine={false}
+                  />
+                  <Tooltip
+                    formatter={(v: number) => pct(v)}
+                    contentStyle={{
+                      background: '#FFFFFF',
+                      border: '1px solid #ECEDEC',
+                      borderRadius: '12px',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+                      fontSize: '11px',
+                      fontFamily: 'Plus Jakarta Sans',
+                    }}
+                  />
+                  <Legend
+                    wrapperStyle={{ fontSize: 11, paddingTop: 10, fontFamily: 'Plus Jakarta Sans' }}
+                  />
+                  <Bar
+                    dataKey="base"
+                    name="Base"
+                    fill={`url(#base-hatch-${patternId})`}
+                    stroke="#9CA3AF"
+                    strokeWidth={1}
+                    radius={[0, 4, 4, 0]}
+                  />
+                  <Bar
+                    dataKey="current"
+                    name="Current"
+                    fill="#1F6B45"
+                    radius={[0, 4, 4, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+        </div>
+
+        <div className="col-span-12 lg:col-span-5">
+          <Card
+            title="Why each weight moved"
+            subtitle="Exponential moving average sentiment & attribution"
+          >
+            <div className="overflow-x-auto mt-2 max-h-[360px] overflow-y-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-[#F3F4F6] text-[#6B7280] font-semibold">
+                    <th className="text-left pb-2 font-medium">Ticker</th>
+                    <th className="text-right pb-2 font-medium">Weight</th>
+                    <th className="text-right pb-2 font-medium">Sentiment</th>
+                    <th className="text-left pl-3 pb-2 font-medium">Reason</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#F3F4F6]">
+                  {bars.map((b) => (
+                    <tr key={b.ticker} className="hover:bg-[#F9FAFB] transition-colors">
+                      <td className="py-2 font-bold text-[#111827]">{b.ticker}</td>
+                      <td className="text-right font-semibold text-[#111827]">{pct(b.current)}</td>
+                      <td className="text-right">
+                        <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                          b.ema > 0
+                            ? 'bg-[#DCFCE7] text-[#15803D]'
+                            : b.ema < 0
+                            ? 'bg-[#FEE2E2] text-[#DC2626]'
+                            : 'bg-[#F3F4F6] text-[#6B7280]'
+                        }`}>
+                          {b.ema > 0 ? `+${b.ema.toFixed(2)}` : b.ema.toFixed(2)}
+                        </span>
+                      </td>
+                      <td className="pl-3 py-2 text-[#4B5563] text-[11px] leading-snug">{current.reasons[b.ticker]}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
         </div>
       </div>
     </div>
