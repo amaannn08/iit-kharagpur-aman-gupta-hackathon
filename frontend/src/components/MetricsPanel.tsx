@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { fetchMetrics } from '../api/client';
+import { Card } from './ui/Card';
 
 /** Real-data evaluation results, read from docs/metrics.json (scripts/run_evaluation.py). */
 export function MetricsPanel() {
@@ -13,9 +14,11 @@ export function MetricsPanel() {
 
   if (failed || (m && !m.public_real)) {
     return (
-      <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-4 text-xs text-zinc-500 font-mono" data-testid="metrics-panel">
-        Real-data metrics unavailable: run <code>uv run python scripts/run_evaluation.py</code>.
-      </div>
+      <Card className="p-4" data-testid="metrics-panel">
+        <p className="text-xs text-[#6B7280] font-mono">
+          Real-data metrics unavailable: run <code className="text-[#111827] font-semibold">uv run python scripts/run_evaluation.py</code>.
+        </p>
+      </Card>
     );
   }
   if (!m) return null;
@@ -40,36 +43,58 @@ export function MetricsPanel() {
     : [];
 
   return (
-    <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-4 grid grid-cols-12 gap-4" data-testid="metrics-panel">
-      <div className="col-span-12 lg:col-span-7 text-xs">
-        <h3 className="font-semibold text-zinc-300 mb-2">Measured on real held-out data</h3>
-        <table className="w-full font-mono">
-          <tbody>
-            {rows.map(([k, v, c]) => (
-              <tr key={k} className="border-t border-zinc-800/80">
-                <td className="py-1.5 text-zinc-400 pr-2">{k}</td>
-                <td className="py-1.5 text-white font-bold whitespace-nowrap">{v}</td>
-                <td className="py-1.5 text-zinc-500 pl-2">{c}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <p className="mt-2 text-zinc-500">Generated {m.generated_at} by scripts/run_evaluation.py</p>
-      </div>
-      {deciles.length > 0 && (
-        <div className="col-span-12 lg:col-span-5">
-          <h3 className="text-xs font-semibold text-zinc-300 mb-2">Mean |abnormal return z| by impact decile</h3>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={deciles}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
-              <XAxis dataKey="decile" tick={{ fill: '#71717a', fontSize: 10 }} />
-              <YAxis tick={{ fill: '#71717a', fontSize: 10 }} />
-              <Tooltip contentStyle={{ background: '#09090b', border: '1px solid #27272a', fontSize: 11 }} />
-              <Bar dataKey="z" fill="#ffffff" />
-            </BarChart>
-          </ResponsiveContainer>
+    <Card className="p-6" data-testid="metrics-panel">
+      <div className="grid grid-cols-12 gap-6">
+        <div className="col-span-12 lg:col-span-7 text-xs">
+          <h3 className="font-bold text-sm text-[#111827] mb-3">Measured on real held-out data</h3>
+          <table className="w-full text-xs">
+            <tbody className="divide-y divide-[#F3F4F6]">
+              {rows.map(([k, v, c]) => (
+                <tr key={k} className="hover:bg-[#F9FAFB] transition-colors">
+                  <td className="py-2 text-[#4B5563] pr-2 font-medium">{k}</td>
+                  <td className="py-2 text-[#111827] font-bold font-mono whitespace-nowrap">{v}</td>
+                  <td className="py-2 text-[#6B7280] pl-2 text-[11px]">{c}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="mt-3 text-[11px] text-[#9CA3AF] font-mono">Generated {m.generated_at} by scripts/run_evaluation.py</p>
         </div>
-      )}
-    </div>
+        {deciles.length > 0 && (
+          <div className="col-span-12 lg:col-span-5">
+            <h3 className="text-xs font-bold text-[#111827] mb-3">Mean |abnormal return z| by impact decile</h3>
+            <div className="h-[220px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={deciles} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
+                  <XAxis
+                    dataKey="decile"
+                    tick={{ fill: '#6B7280', fontSize: 10, fontFamily: 'Plus Jakarta Sans' }}
+                    axisLine={{ stroke: '#E5E7EB' }}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tick={{ fill: '#6B7280', fontSize: 10, fontFamily: 'Plus Jakarta Sans' }}
+                    axisLine={{ stroke: '#E5E7EB' }}
+                    tickLine={false}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      background: '#FFFFFF',
+                      border: '1px solid #ECEDEC',
+                      borderRadius: '12px',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+                      fontSize: '11px',
+                      fontFamily: 'Plus Jakarta Sans',
+                    }}
+                  />
+                  <Bar dataKey="z" fill="#1F6B45" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
+      </div>
+    </Card>
   );
 }
