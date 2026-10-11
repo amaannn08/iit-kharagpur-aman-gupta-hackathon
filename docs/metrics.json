@@ -476,10 +476,10 @@
  },
  "perf": {
   "records": 2000,
-  "records_per_s": 124.2,
-  "latency_p50_s": 0.0075,
-  "latency_p95_s": 0.0115,
-  "peak_rss_gb": 0.348,
+  "records_per_s": 120.3,
+  "latency_p50_s": 0.0077,
+  "latency_p95_s": 0.0118,
+  "peak_rss_gb": 0.343,
   "note": "single process, CPU, full pipeline (linking, sentiment, event, impact)"
  },
  "synthetic_regression": {
@@ -489,7 +489,7 @@
   "sentiment_macro_f1": 0.3477,
   "severity_mae": 2.943
  },
- "generated_at": "2026-10-11T07:12:36+00:00",
+ "generated_at": "2026-10-11T07:16:07+00:00",
  "targets": {
   "event_macro_f1": 0.7,
   "sentiment_macro_f1": 0.75,
