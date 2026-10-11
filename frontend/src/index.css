@@ -192,4 +192,5 @@ body {
   color: var(--theme-text);
   font-feature-settings: 'tnum' 1, 'cv02' 1, 'cv03' 1, 'cv04' 1;
   -webkit-font-smoothing: antialiased;
+  overflow: hidden;
 }

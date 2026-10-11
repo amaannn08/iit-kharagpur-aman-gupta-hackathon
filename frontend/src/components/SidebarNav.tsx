@@ -79,10 +79,10 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
   })();
 
   return (
-    <aside className="w-64 bg-theme-card border-r border-theme-border flex flex-col justify-between p-5 select-none shrink-0">
-      <div className="space-y-6">
+    <aside className="w-64 h-full bg-theme-card border-r border-theme-border flex flex-col justify-between p-5 select-none shrink-0 min-h-0">
+      <div className="flex-1 flex flex-col space-y-6 min-h-0 overflow-hidden">
         {/* Brand / Logo */}
-        <div className="flex items-center gap-3 px-2">
+        <div className="flex items-center gap-3 px-2 shrink-0">
           <div className="w-9 h-9 rounded-full bg-theme-primary-fill flex items-center justify-center text-theme-on-primary shadow-sm">
             <Shield className="w-5 h-5 fill-current/20 stroke-current" />
           </div>
@@ -97,11 +97,11 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
         </div>
 
         {/* MENU Section */}
-        <div className="space-y-1">
-          <div className="text-[10px] font-bold tracking-wider text-theme-subtle uppercase px-3 mb-2 font-mono">
+        <div className="flex-1 flex flex-col space-y-1 min-h-0">
+          <div className="text-[10px] font-bold tracking-wider text-theme-subtle uppercase px-3 mb-2 font-mono shrink-0">
             MENU
           </div>
-          <nav className="space-y-1">
+          <nav className="space-y-1 overflow-y-auto flex-1 min-h-0 pr-0.5">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -153,7 +153,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
       </div>
 
       {/* Bottom Promo Card: "Live capture" */}
-      <div className="mt-6 rounded-2xl bg-gradient-to-br from-theme-hero-from to-theme-hero-to text-theme-hero-text p-4 relative overflow-hidden shadow-sm">
+      <div className="mt-4 shrink-0 rounded-2xl bg-gradient-to-br from-theme-hero-from to-theme-hero-to text-theme-hero-text p-4 relative overflow-hidden shadow-sm">
         <svg
           className="absolute -right-6 -bottom-6 w-28 h-28 opacity-15 pointer-events-none select-none text-current"
           viewBox="0 0 100 100"
