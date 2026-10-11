@@ -1,24 +1,49 @@
 @import "tailwindcss";
 
 @theme {
-  --color-terminal-bg: #000000;
-  --color-terminal-card: #09090b;
-  --color-terminal-border: #27272a;
-  --color-terminal-text: #fafafa;
-  --color-terminal-muted: #a1a1aa;
-  --color-terminal-accent: #ffffff;
-  --color-terminal-warning: #e4e4e7;
-  --color-terminal-danger: #ef4444;
-  --color-terminal-success: #10b981;
+  --font-sans: 'Plus Jakarta Sans Variable', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  /* Donezo Green Palette */
+  --color-donezo-dark: #14532D;
+  --color-donezo-primary: #1F6B45;
+  --color-donezo-mid: #2F9E62;
+  --color-donezo-light: #7FD1A4;
+  --color-donezo-tint: #E8F5EE;
+
+  /* Surfaces & Neutrals */
+  --color-donezo-bg: #F3F4F3;
+  --color-donezo-card: #FFFFFF;
+  --color-donezo-border: #ECEDEC;
+  --color-donezo-text: #111827;
+  --color-donezo-muted: #6B7280;
+
+  /* Alert States */
+  --color-donezo-loss: #DC2626;
+  --color-donezo-loss-bg: #FEE2E2;
+  --color-donezo-warn: #B45309;
+  --color-donezo-warn-bg: #FEF3C7;
+
+  /* Backward Compatibility Aliases for components */
+  --color-terminal-bg: #F3F4F3;
+  --color-terminal-card: #FFFFFF;
+  --color-terminal-border: #ECEDEC;
+  --color-terminal-text: #111827;
+  --color-terminal-muted: #6B7280;
+  --color-terminal-accent: #14532D;
+  --color-terminal-warning: #B45309;
+  --color-terminal-danger: #DC2626;
+  --color-terminal-success: #1F6B45;
 }
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  background-color: #000000;
-  color: #fafafa;
+  font-family: var(--font-sans);
+  background-color: #F3F4F3;
+  color: #111827;
+  font-feature-settings: 'tnum' 1, 'cv02' 1, 'cv03' 1, 'cv04' 1;
+  -webkit-font-smoothing: antialiased;
 }
