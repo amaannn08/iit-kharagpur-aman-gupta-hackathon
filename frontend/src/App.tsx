@@ -16,15 +16,15 @@ import {
   StressRunResult,
   WholesalePortfolio,
 } from './api/client';
+import { DashboardTab } from './components/DashboardTab';
 import { DatasetsTab } from './components/DatasetsTab';
 import { EvalTab } from './components/EvalTab';
-import { Feed } from './components/Feed';
-import { Footer } from './components/Footer';
-import { Header, TabType } from './components/Header';
+import { TabType } from './components/Header';
 import { IndexPanel } from './components/IndexPanel';
-import { Inspector } from './components/Inspector';
 import { Sandbox } from './components/Sandbox';
+import { SidebarNav } from './components/SidebarNav';
 import { StressTab } from './components/StressTab';
+import { TopBar } from './components/TopBar';
 import { useLiveStatus } from './hooks/useLiveStatus';
 import { useReplay } from './hooks/useReplay';
 import { useSSE } from './hooks/useSSE';
@@ -111,7 +111,7 @@ export function App() {
         }
       }
       if (strRes.status === 'fulfilled' && strRes.value.length > 0) {
-        // /api/stress/runs returns summaries without breakdowns: load the full recent results
+        // /api/stress/runs returns summaries without breakdowns: load full recent results
         Promise.all(strRes.value.slice(0, 5).map((run: { stress_id: string }) => fetchStressRun(run.stress_id)))
           .then((full) => {
             setStressRuns(full);
@@ -181,95 +181,99 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-zinc-100 flex flex-col font-sans selection:bg-zinc-800 selection:text-white">
-      <Header
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        sseConnected={sseConnected}
-        replayStatus={replayStatus}
-      />
+    <div className="min-h-screen bg-[#F3F4F3] text-[#111827] flex items-center justify-center p-3 sm:p-5 md:p-7">
+      {/* Donezo Main Shell: Large White Rounded Container with Subtle Shadow */}
+      <div className="w-full max-w-[1740px] bg-white rounded-[28px] border border-[#ECEDEC] shadow-[0_12px_40px_rgba(0,0,0,0.06)] flex overflow-hidden min-h-[94vh]">
+        {/* Left Sidebar Navigation */}
+        <SidebarNav
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          signalsCount={signals.length}
+          liveStatus={liveStatus}
+          replayStatus={replayStatus}
+          selectedScenario={selectedScenario}
+          onLoadScenario={handleLoadScenario}
+          onAppendLive={handleAppendLive}
+        />
 
-      {/* Main Workspace Area */}
-      <main className="flex-1 p-6 overflow-hidden flex flex-col">
-        {activeTab === 'feed' && (
-          <div className="flex-1 grid grid-cols-12 gap-6 overflow-hidden">
-            <Feed
-              signals={signals}
-              selectedSignal={selectedSignal}
-              onSelectSignal={setSelectedSignal}
-              searchQuery={searchQuery}
-              onSearchChange={setSearchQuery}
-              filterEvent={filterEvent}
-              onFilterEventChange={setFilterEvent}
-              showDuplicates={showDuplicates}
-              onShowDuplicatesChange={setShowDuplicates}
-              onLoadScenario={handleLoadScenario}
-              onPlay={handlePlay}
-              totalLossUsd={activeStressResult?.total_pnl_usd}
-            />
-            <Inspector
-              selectedSignal={selectedSignal}
-              activeStressResult={activeStressResult}
-              onViewStressPnL={() => setActiveTab('stress')}
-              onSelectTopSignal={() => {
-                if (signals.length > 0) {
-                  const top = [...signals].sort((a, b) => b.impact.score - a.impact.score)[0];
-                  setSelectedSignal(top);
-                }
-              }}
-            />
-          </div>
-        )}
-
-        {activeTab === 'stress' && (
-          <StressTab
-            portfolio={portfolio}
-            activeStressResult={activeStressResult}
-            setActiveStressResult={setActiveStressResult}
-            stressRuns={stressRuns}
-            stressForm={stressForm}
-            setStressForm={setStressForm}
-            simulatingStress={simulatingStress}
-            onRunStressSimulation={handleRunStressSimulation}
-            signals={signals}
+        {/* Right Main Content Area */}
+        <div className="flex-1 flex flex-col min-w-0 bg-[#FAFAFA]">
+          {/* Top Bar with Search, Honesty Badge, Stream Status, Profile */}
+          <TopBar
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            sseConnected={sseConnected}
+            replayStatus={replayStatus}
           />
-        )}
 
-        {activeTab === 'index' && <IndexPanel />}
+          {/* Main Tab Workspace */}
+          <main className="flex-1 p-5 md:p-7 overflow-y-auto">
+            {activeTab === 'feed' && (
+              <DashboardTab
+                signals={signals}
+                selectedSignal={selectedSignal}
+                onSelectSignal={setSelectedSignal}
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                filterEvent={filterEvent}
+                onFilterEventChange={setFilterEvent}
+                showDuplicates={showDuplicates}
+                onShowDuplicatesChange={setShowDuplicates}
+                activeStressResult={activeStressResult}
+                stressRuns={stressRuns}
+                replayStatus={replayStatus}
+                selectedScenario={selectedScenario}
+                replayLoading={replayLoading}
+                onLoadScenario={handleLoadScenario}
+                onAppendLive={handleAppendLive}
+                onPlay={handlePlay}
+                onPause={handlePause}
+                onStep={handleStep}
+                onReset={handleReset}
+                onSpeed={handleSpeed}
+                setActiveTab={setActiveTab}
+              />
+            )}
 
-        {activeTab === 'playground' && (
-          <Sandbox
-            playgroundText={playgroundText}
-            onTextChange={setPlaygroundText}
-            playgroundSource={playgroundSource}
-            onSourceChange={setPlaygroundSource}
-            playgroundLoading={playgroundLoading}
-            playgroundResult={playgroundResult}
-            onAnalyze={handleAnalyzePlayground}
-            onOpenStressTab={() => setActiveTab('stress')}
-          />
-        )}
+            {activeTab === 'stress' && (
+              <StressTab
+                portfolio={portfolio}
+                activeStressResult={activeStressResult}
+                setActiveStressResult={setActiveStressResult}
+                stressRuns={stressRuns}
+                stressForm={stressForm}
+                setStressForm={setStressForm}
+                simulatingStress={simulatingStress}
+                onRunStressSimulation={handleRunStressSimulation}
+                signals={signals}
+              />
+            )}
 
-        {activeTab === 'overview' && <DatasetsTab manifest={manifest} health={health} />}
+            {activeTab === 'index' && <IndexPanel />}
 
-        {activeTab === 'eval' && <EvalTab />}
-      </main>
+            {activeTab === 'playground' && (
+              <Sandbox
+                playgroundText={playgroundText}
+                onTextChange={setPlaygroundText}
+                playgroundSource={playgroundSource}
+                onSourceChange={setPlaygroundSource}
+                playgroundLoading={playgroundLoading}
+                playgroundResult={playgroundResult}
+                onAnalyze={handleAnalyzePlayground}
+                onOpenStressTab={() => setActiveTab('stress')}
+              />
+            )}
 
-      {/* Bottom Replay Control Toolbar */}
-      <Footer
-        replayStatus={replayStatus}
-        liveStatus={liveStatus}
-        selectedScenario={selectedScenario}
-        replayLoading={replayLoading}
-        onLoadScenario={handleLoadScenario}
-        onAppendLive={handleAppendLive}
-        onPlay={handlePlay}
-        onPause={handlePause}
-        onStep={handleStep}
-        onReset={handleReset}
-        onSpeed={handleSpeed}
-      />
+            {activeTab === 'overview' && (
+              <DatasetsTab manifest={manifest} health={health} />
+            )}
+
+            {activeTab === 'eval' && <EvalTab />}
+          </main>
+        </div>
+      </div>
     </div>
   );
 }
+
 export default App;
