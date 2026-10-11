@@ -1,6 +1,6 @@
 # Third-Party Notices & Open-Source Licensing
 
-This project incorporates open-source software and references candidate libraries identified during design research (`docs/OPEN_SOURCE_RESEARCH.md`). All dependencies and candidate models are governed by their respective licenses as detailed below.
+This project incorporates open-source software and references candidate libraries evaluated during design. All dependencies and candidate models are governed by their respective licenses as detailed below.
 
 ---
 
@@ -94,7 +94,7 @@ The following open-source dependencies are currently declared in `pyproject.toml
 
 > [!IMPORTANT]
 > **NO model checkpoints, neural weights, or unverified packages are bundled with this repository.**
-> The following entries represent candidate technologies evaluated during open-source research and architectural planning (`docs/OPEN_SOURCE_RESEARCH.md`). No redistribution of weights is made. Any eventual deployment will require local user downloading subject to upstream model card terms.
+> The following entries represent candidate technologies evaluated during design. No redistribution of weights is made. Any eventual deployment will require local user downloading subject to upstream model card terms.
 
 - **ProsusAI / finBERT**
   - **Code License:** Apache-2.0
