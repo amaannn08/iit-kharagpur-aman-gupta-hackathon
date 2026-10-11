@@ -45,8 +45,8 @@ export const Gauge: React.FC<GaugeProps> = ({
                 patternUnits="userSpaceOnUse"
                 patternTransform="rotate(45)"
               >
-                <line x1="0" y1="0" x2="0" y2="6" stroke="var(--theme-primary-light)" strokeWidth="2" />
-                <rect width="6" height="6" fill="var(--theme-primary-tint)" opacity="0.3" />
+                <line x1="0" y1="0" x2="0" y2="6" stroke="var(--theme-border-strong)" strokeWidth="2" />
+                <rect width="6" height="6" fill="var(--theme-card-subtle)" />
               </pattern>
             </defs>
             <Pie
@@ -65,8 +65,8 @@ export const Gauge: React.FC<GaugeProps> = ({
               {total > 0 ? (
                 <>
                   <Cell key="cell-0" fill="var(--theme-primary-fill)" />
-                  <Cell key="cell-1" fill="var(--theme-primary-light)" />
-                  <Cell key="cell-2" fill={`url(#${hatchId})`} stroke="var(--theme-primary-light)" />
+                  <Cell key="cell-1" fill={`url(#${hatchId})`} stroke="var(--theme-border-strong)" strokeWidth={1} />
+                  <Cell key="cell-2" fill="var(--theme-warn)" />
                 </>
               ) : (
                 <Cell fill="var(--theme-border-light)" />
@@ -87,21 +87,21 @@ export const Gauge: React.FC<GaugeProps> = ({
       {/* Legend with circular dots */}
       <div className="mt-3 flex flex-wrap items-center justify-center gap-4 text-xs text-theme-text-body">
         <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-theme-primary-fill" />
+          <span className="w-2.5 h-2.5 rounded-full bg-theme-primary-fill shrink-0" />
           <span>Eligible ({eligibleCount})</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-theme-primary-light" />
+          <span
+            className="w-2.5 h-2.5 rounded-full border border-theme-border-strong shrink-0"
+            style={{
+              background:
+                'repeating-linear-gradient(45deg, var(--theme-border-strong), var(--theme-border-strong) 2px, var(--theme-card-subtle) 2px, var(--theme-card-subtle) 4px)',
+            }}
+          />
           <span>Blocked ({blockedCount})</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span
-            className="w-2.5 h-2.5 rounded-full border border-theme-primary-light"
-            style={{
-              background:
-                'repeating-linear-gradient(45deg, var(--theme-chart-hatch), var(--theme-chart-hatch) 2px, var(--theme-primary-tint) 2px, var(--theme-primary-tint) 4px)',
-            }}
-          />
+          <span className="w-2.5 h-2.5 rounded-full bg-theme-warn shrink-0" />
           <span>Duplicates ({duplicateCount})</span>
         </div>
       </div>
