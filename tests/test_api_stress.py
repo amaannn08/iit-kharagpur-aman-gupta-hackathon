@@ -168,3 +168,27 @@ def test_custom_stress_applies_explicit_shocks_untiered(client: TestClient):
     bonds = [p for p in body["position_deltas"] if p["asset_class"] == "bond" and p["sleeve"] == "wholesale"]
     # every bond moves by -duration x 100 bp regardless of rating
     assert all("x1.00" in p["applied_shock_summary"] or "x" not in p["applied_shock_summary"] for p in bonds)
+
+
+def test_unknown_profile_is_404_everywhere(client: TestClient):
+    assert client.post("/api/stress/scenario/HIST-SVB_2023?profile=nope").status_code == 404
+    assert client.post("/api/stress/custom", json={"profile": "nope"}).status_code == 404
+    r = client.post("/api/stress/simulate", json={"event_class": "CREDIT", "target_entity": "JPM",
+                                                  "profile": "nope"})
+    assert r.status_code == 404
+
+
+def test_scenario_default_profile_follows_settings(client: TestClient):
+    from sentinel.config import settings
+
+    body = client.post("/api/stress/scenario/HIST-SVB_2023").json()
+    assert body["portfolio_profile"] == settings.default_portfolio_profile
+
+
+def test_engine_rejects_unknown_profile():
+    import pytest
+
+    from sentinel.stress.engine import StressEngine
+
+    with pytest.raises(KeyError):
+        StressEngine().get_valuation_engine("nope")

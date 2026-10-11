@@ -41,12 +41,14 @@ class StressEngine:
             self.valuation_engine = ValuationEngine(self.portfolio)
             self.profiles["custom"] = custom_p
             self.valuation_engines["custom"] = self.valuation_engine
+            self.default_profile = "custom"
         else:
             for prof_name, rel_paths in settings.portfolio_profiles.items():
                 files = [settings.data_dir / f for f in rel_paths]
-                existing = [f for f in files if f.exists()]
-                if existing:
-                    prof_port = WholesalePortfolio.load_many(existing)
+                if not all(f.exists() for f in files):  # never load a partial book
+                    continue
+                if files:
+                    prof_port = WholesalePortfolio.load_many(files)
                     self.profiles[prof_name] = prof_port
                     graph_file = (
                         settings.data_dir / "graph_edges_demo.csv"
@@ -58,11 +60,14 @@ class StressEngine:
                         prof_port, contagion_graph=c_graph
                     )
 
-            default_prof = settings.default_portfolio_profile
-            self.portfolio = self.profiles.get(default_prof) or next(iter(self.profiles.values()))
-            self.valuation_engine = self.valuation_engines.get(default_prof) or next(
-                iter(self.valuation_engines.values())
-            )
+            self.default_profile = settings.default_portfolio_profile
+            if self.default_profile not in self.profiles:
+                raise RuntimeError(
+                    f"Default portfolio profile '{self.default_profile}' is missing files: "
+                    f"{settings.portfolio_profiles.get(self.default_profile)}"
+                )
+            self.portfolio = self.profiles[self.default_profile]
+            self.valuation_engine = self.valuation_engines[self.default_profile]
 
         self.confidence_threshold = (
             confidence_threshold
@@ -75,10 +80,15 @@ class StressEngine:
         self.acted_signal_ids: Set[str] = set()
 
     def get_valuation_engine(self, profile: Optional[str] = None) -> Tuple[ValuationEngine, str]:
-        prof_name = profile or settings.default_portfolio_profile
-        if prof_name in self.valuation_engines:
-            return self.valuation_engines[prof_name], prof_name
-        return self.valuation_engine, prof_name
+        """Engine for a profile (default: settings.default_portfolio_profile).
+
+        An unknown or unloaded profile raises KeyError instead of silently valuing another
+        book under the requested name.
+        """
+        prof_name = profile or self.default_profile
+        if prof_name not in self.valuation_engines:
+            raise KeyError(f"Unknown or unloaded portfolio profile '{prof_name}'")
+        return self.valuation_engines[prof_name], prof_name
 
     def _macro_is_easing(self, signal: RiskSignal) -> Optional[bool]:
         """True = easing/benign, False = tightening/adverse, None = no direction (skip)."""

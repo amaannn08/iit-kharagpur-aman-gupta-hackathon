@@ -50,6 +50,11 @@ class ManualStressRequest(BaseModel):
     profile: Optional[str] = Field(None, description="Portfolio profile: real_issuers or synthetic_demo")
 
 
+def _check_profile(profile: Optional[str]) -> None:
+    if profile is not None and profile not in stress_engine.profiles:
+        raise HTTPException(status_code=404, detail=f"Unknown portfolio profile '{profile}'")
+
+
 def _resolve_target(target: Optional[str]) -> Optional[str]:
     """Accept a ticker ('APEX') or a company name ('Apex Industrial Holdings')."""
     if not target:
@@ -104,7 +109,7 @@ class PersistedStressSummary(BaseModel):
 @router.get("/portfolio")
 def get_portfolio(profile: Optional[str] = None) -> Dict[str, Any]:
     """Baseline portfolio of a profile (default: the one stress runs use)."""
-    prof_name = profile or settings.default_portfolio_profile
+    prof_name = profile or stress_engine.default_profile
     if prof_name not in stress_engine.profiles:
         raise HTTPException(status_code=404, detail=f"Unknown portfolio profile '{prof_name}'")
     prof = stress_engine.profiles[prof_name]
@@ -117,6 +122,7 @@ def simulate_stress(
     db: Session = Depends(get_db),
 ) -> StressRunResult:
     """Execute a user-triggered / sandbox multi-asset stress simulation."""
+    _check_profile(req.profile)
     target = req.target_entity
     if req.target_scope == "entity":
         target = _resolve_target(target)
@@ -138,11 +144,12 @@ def simulate_stress(
     prof = req.profile
     if not prof:
         demo_port = stress_engine.profiles.get("synthetic_demo", stress_engine.portfolio)
-        real_port = stress_engine.profiles.get("real_issuers", stress_engine.portfolio)
+        real_port = stress_engine.profiles.get(settings.default_portfolio_profile,
+                                               stress_engine.portfolio)
         if target and target.upper() in demo_port.held_tickers and target.upper() not in real_port.held_tickers:
             prof = "synthetic_demo"
         else:
-            prof = "real_issuers"
+            prof = settings.default_portfolio_profile
 
     result = stress_engine.run_manual_stress(
         event_class=req.event_class,
@@ -169,15 +176,16 @@ def list_stress_scenarios() -> Dict[str, Any]:
 @router.post("/scenario/{scenario_id}", response_model=StressRunResult)
 def run_stress_scenario(
     scenario_id: str,
-    profile: Optional[str] = "real_issuers",
+    profile: Optional[str] = None,
     db: Session = Depends(get_db),
 ) -> StressRunResult:
     """Run a named scenario file against the full portfolio and persist the result."""
+    _check_profile(profile)
     try:
         result = stress_engine.run_scenario(
             scenario_id,
             run_id=f"scenario-{scenario_id}",
-            profile=profile or "real_issuers",
+            profile=profile,
         )
     except KeyError:
         raise HTTPException(status_code=404, detail=f"Scenario '{scenario_id}' not found.")
@@ -188,6 +196,7 @@ def run_stress_scenario(
 @router.post("/custom", response_model=StressRunResult)
 def run_custom_stress(req: CustomStressRequest, db: Session = Depends(get_db)) -> StressRunResult:
     """Run an explicit systemic shock set and persist the result."""
+    _check_profile(req.profile)
     result = stress_engine.run_custom_stress(**req.model_dump())
     ReplayRepository(db).save_stress_run(result)
     return result
