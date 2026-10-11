@@ -489,7 +489,7 @@
   "sentiment_macro_f1": 0.3477,
   "severity_mae": 2.943
  },
- "generated_at": "2026-10-10T23:50:22+00:00",
+ "generated_at": "2026-10-11T07:10:06+00:00",
  "targets": {
   "event_macro_f1": 0.7,
   "sentiment_macro_f1": 0.75,
@@ -569,6 +569,8 @@
   "human_reviewed": false,
   "label_note": "The gold_* and should_trigger columns were written in one pass by an AI coding agent (2026-10-10), not by a person. They are independent of the repository's models (agreement with the pipeline: event 67%, sentiment 60%) but are NOT human ground truth.",
   "annotator_agreement_kappa": null,
+  "agreement_rows": 0,
+  "agreement_note": "no second labeling pass",
   "sha256": "c278abb251f0d52a7262591b14b69a57d85c6e96c5ed645a3e5e35b3858f5302",
   "sha256_matches_frozen": true,
   "severity_mae": 1.5167,

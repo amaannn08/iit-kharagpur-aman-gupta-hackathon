@@ -562,16 +562,19 @@ def suite_news_holdout() -> Dict[str, Any]:
     prov = json.loads(prov_path.read_text()) if prov_path.exists() else {}
     label_source = prov.get("label_source", "unknown")
     frozen = (DATA / "eval" / "FROZEN.txt").read_text() if (DATA / "eval" / "FROZEN.txt").exists() else ""
-    # agreement only from a genuine second labeling pass, never assumed
+    # agreement only from a genuine second labeling pass (label_cli.validate_relabel), never assumed
     relabel = DATA / "eval" / "holdout_v2_news.relabel.csv"
-    kappa = None
+    kappa, kappa_rows, kappa_note = None, 0, "no second labeling pass"
     if relabel.exists():
-        rl = pd.read_csv(relabel).merge(df, on="record_id", suffixes=("_test", "_ref"))
-        if len(rl):
-            from sklearn.metrics import cohen_kappa_score
-
-            kappa = round(float(cohen_kappa_score(rl.gold_event_class_ref,
-                                                  rl.gold_event_class_test)), 3)  # fmt: skip
+        lc_spec = importlib.util.spec_from_file_location(
+            "label_cli", REPO_ROOT / "scripts" / "eval" / "label_cli.py"
+        )
+        lc = importlib.util.module_from_spec(lc_spec)
+        lc_spec.loader.exec_module(lc)
+        rows, kappa_note = lc.validate_relabel(df, pd.read_csv(relabel))
+        kappa_rows = len(rows)
+        if kappa_rows:
+            kappa = lc.agreement_from_merged(rows)[0]
 
     return {
         "dataset": "Real-news holdout (120 rows, stratified Polygon/GDELT/SEC 8-K)",
@@ -580,6 +583,8 @@ def suite_news_holdout() -> Dict[str, Any]:
         "human_reviewed": bool(prov.get("human_reviewed", False)),
         "label_note": prov.get("description", ""),
         "annotator_agreement_kappa": kappa,
+        "agreement_rows": kappa_rows,
+        "agreement_note": kappa_note,
         "sha256": sha256(path),
         "sha256_matches_frozen": sha256(path) in frozen,
         "severity_mae": mae,

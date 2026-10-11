@@ -2,7 +2,6 @@
 
 import importlib.util
 import json
-from pathlib import Path
 
 from sentinel.config import settings
 
@@ -42,9 +41,8 @@ def test_holdout_label_provenance_is_honest():
     assert nh["label_source"] in ("human", "ai_agent")
     if nh["label_source"] != "human":
         assert not nh["human_reviewed"]
-    # agreement is only reported from a genuine second labeling pass
-    relabel = Path(__file__).resolve().parent.parent / "data" / "eval" / "holdout_v2_news.relabel.csv"
-    assert (nh["annotator_agreement_kappa"] is None) == (not relabel.exists())
+    # agreement is only reported from validated second-pass rows (label_cli.validate_relabel)
+    assert (nh["annotator_agreement_kappa"] is None) == (nh["agreement_rows"] == 0)
 
 
 def test_synthetic_set_is_labeled_regression_only():
