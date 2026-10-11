@@ -90,6 +90,13 @@ def build_presentation_pdf() -> None:
         t.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP")]))
         return t
 
+    def screenshot_row(shots, w=232):
+        cells = [[Image(str(DOCS / "screenshots" / f), width=w, height=w * 0.625),
+                  Paragraph(cap, small)] for f, cap in shots]  # fmt: skip
+        t = Table([cells], colWidths=[w + 8] * len(shots))
+        t.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP")]))
+        return t
+
     el = []
 
     # 1. Title
@@ -153,6 +160,14 @@ def build_presentation_pdf() -> None:
                     "app itself makes no network calls.",
                 ]
             ),
+        ),
+        Spacer(1, 10),
+        screenshot_row(
+            [
+                ("dashboard.png", "Live signals: replay of real Polygon 2023 news"),
+                ("stress.png", "Module B: PS benchmark, before/after and loss waterfall"),
+                ("index.png", "Module A: index weights over time, with reasons"),
+            ]
         ),
         PageBreak(),
     ]
