@@ -24,15 +24,19 @@
 
 Fallback if the network is unavailable: everything above runs strictly from committed local datasets.
 
-## Video walkthrough (10 minutes, unlisted YouTube; link in README)
+## Video walkthrough (4:42, unlisted YouTube: https://youtu.be/2oVdwJt_VmY)
+
+Recorded from the running app on the committed data, with narration.
 
 | Time | Segment |
 |---|---|
-| 0:00-0:30 | Problem statement and system architecture overview |
-| 0:30-1:30 | Setup verification: `make setup`, `make test`, `verify_hygiene.py`, and running `scripts/dev/demo.sh` |
-| 1:30-3:30 | End-to-end signal pipeline: Polygon 2023 news replay and SVB-weekend GDELT replay -> signal inspection -> deduplication |
-| 3:30-5:00 | NLP Sandbox and real-time stress shock triggering |
-| 5:00-7:00 | Module B Wholesale Stress Testing: real issuer book (SEC XBRL), rating-tiered spreads, credit triangle, and loss attribution |
-| 7:00-8:30 | Module A Index Rebalancer: backtest results, costs, and turnover analysis |
-| 8:30-9:30 | Evaluation suite: temporal holdouts, the AI-labeled news holdout and its limits, FRED OAS validation, and performance benchmarks |
-| 9:30-10:00 | Assumptions, limitations, and future work |
+| 0:00-0:22 | Title: problem, engine and the two modules |
+| 0:22-0:52 | Architecture and data flow |
+| 0:52-1:24 | Live replay of real Polygon 2023 news; counters and the action gate |
+| 1:24-1:50 | Signal inspector: entity, evidence span, sentiment, event class, impact |
+| 1:50-2:15 | NLP sandbox: a credit-default headline triggers a stress run |
+| 2:15-2:51 | Module B: PS benchmark (equities -10%, rates +200 bp), waterfall, attribution |
+| 2:51-3:16 | Historical scenarios (COVID-19 window) |
+| 3:16-3:48 | Module A: weights over time and the reason for each move |
+| 3:48-4:18 | Evaluation on real held-out data, and its limits |
+| 4:18-4:42 | Dark mode and summary |
