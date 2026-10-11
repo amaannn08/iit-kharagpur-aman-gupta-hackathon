@@ -645,46 +645,6 @@
       "record_count": 120
     },
     {
-      "file_path": "data/portfolio/wholesale_real.json",
-      "format": "json",
-      "description": "Synthetic wholesale book constructed on real S&P 100 debt issuers",
-      "is_synthetic": true,
-      "license": "CC-BY-4.0",
-      "primary_keys": [],
-      "derived_from": [
-        "data/raw/real/sec/xbrl",
-        "data/raw/real/fred",
-        "data/universe/entities.csv"
-      ],
-      "byte_size": 27252,
-      "sha256": "250acf3d92afa681f5d7520c63d7ac14a49a8fab895cd3517f2eb0c381ca82ae",
-      "record_count": 43
-    },
-    {
-      "file_path": "data/portfolio/demo_book.json",
-      "format": "json",
-      "description": "Fictional wholesale book for synthetic demo scenarios",
-      "is_synthetic": true,
-      "license": "MIT",
-      "primary_keys": [],
-      "byte_size": 5911,
-      "sha256": "1b0cd7921c1709e9d7c4da5f569b81c82f8147afc8ff1b347c9422fe6b9c1e4d",
-      "record_count": 13
-    },
-    {
-      "file_path": "data/graph_edges_demo.csv",
-      "format": "csv",
-      "description": "Synthetic demo supply-chain and counterparty contagion graph",
-      "is_synthetic": true,
-      "license": "MIT",
-      "primary_keys": [
-        "record_id"
-      ],
-      "byte_size": 1236,
-      "sha256": "d23e1032c12b83428e6aa750ed008d1616c06f4c66cf2e591d11f5e644df2ae1",
-      "record_count": 10
-    },
-    {
       "file_path": "data/graph_edges.csv",
       "format": "csv",
       "description": "Contagion graph: same-sector residual return correlations ex-SPY (252d, 2023-03-01 to 2024-02-29)",
@@ -712,7 +672,47 @@
       "byte_size": 25997,
       "sha256": "a71c59cb7a87064f84f382ef9dbd50f19f2ee27f9b290633dcc23e99a38cd215",
       "record_count": 162
+    },
+    {
+      "file_path": "data/portfolio/wholesale_real.json",
+      "format": "json",
+      "description": "Synthetic wholesale book constructed on real S&P 100 debt issuers",
+      "is_synthetic": true,
+      "license": "CC-BY-4.0",
+      "primary_keys": [],
+      "derived_from": [
+        "data/raw/real/sec/xbrl",
+        "data/raw/real/fred",
+        "data/universe/entities.csv"
+      ],
+      "byte_size": 28269,
+      "sha256": "a4d3b4ad4d2bc5802e021ddd17762b420bfc0d41dd70dfe4e4e8c6d6f7b96fd7",
+      "record_count": 43
+    },
+    {
+      "file_path": "data/portfolio/demo_book.json",
+      "format": "json",
+      "description": "Fictional wholesale book for synthetic demo scenarios",
+      "is_synthetic": true,
+      "license": "MIT",
+      "primary_keys": [],
+      "byte_size": 5911,
+      "sha256": "1b0cd7921c1709e9d7c4da5f569b81c82f8147afc8ff1b347c9422fe6b9c1e4d",
+      "record_count": 13
+    },
+    {
+      "file_path": "data/graph_edges_demo.csv",
+      "format": "csv",
+      "description": "Synthetic demo supply-chain and counterparty contagion graph",
+      "is_synthetic": true,
+      "license": "MIT",
+      "primary_keys": [
+        "record_id"
+      ],
+      "byte_size": 1236,
+      "sha256": "d23e1032c12b83428e6aa750ed008d1616c06f4c66cf2e591d11f5e644df2ae1",
+      "record_count": 10
     }
   ],
-  "updated_at": "2026-10-10T23:54:25.321076+00:00"
+  "updated_at": "2026-10-11T07:07:47.634572+00:00"
 }

@@ -24,6 +24,7 @@
       "coverage": 4.371,
       "equity_to_assets": 0.262,
       "rating": "A",
+      "rating_basis": "interest_coverage",
       "rating_bucket": "A"
     },
     {
@@ -36,6 +37,7 @@
       "coverage": 3.551,
       "equity_to_assets": 0.301,
       "rating": "A-",
+      "rating_basis": "interest_coverage",
       "rating_bucket": "A"
     },
     {
@@ -48,6 +50,7 @@
       "coverage": 35.169,
       "equity_to_assets": 0.502,
       "rating": "AAA",
+      "rating_basis": "interest_coverage",
       "rating_bucket": "AAA"
     },
     {
@@ -60,6 +63,7 @@
       "coverage": 8.661,
       "equity_to_assets": 0.122,
       "rating": "AAA",
+      "rating_basis": "interest_coverage",
       "rating_bucket": "AAA"
     },
     {
@@ -72,6 +76,7 @@
       "coverage": 9.384,
       "equity_to_assets": -0.144,
       "rating": "AAA",
+      "rating_basis": "interest_coverage",
       "rating_bucket": "AAA"
     },
     {
@@ -84,6 +89,7 @@
       "coverage": 10.257,
       "equity_to_assets": 0.19,
       "rating": "AAA",
+      "rating_basis": "interest_coverage",
       "rating_bucket": "AAA"
     },
     {
@@ -96,6 +102,7 @@
       "coverage": 17.223,
       "equity_to_assets": 0.575,
       "rating": "AAA",
+      "rating_basis": "interest_coverage",
       "rating_bucket": "AAA"
     },
     {
@@ -108,6 +115,7 @@
       "coverage": 11.762,
       "equity_to_assets": 0.529,
       "rating": "AAA",
+      "rating_basis": "interest_coverage",
       "rating_bucket": "AAA"
     },
     {
@@ -117,9 +125,10 @@
       "total_debt": 435206000000.0,
       "debt_tag": "LongTermDebtAndCapitalLeaseObligationsIncludingCurrentMaturities",
       "fiscal_year_end": "2025-12-31",
-      "coverage": 1.753,
+      "coverage": null,
       "equity_to_assets": 0.082,
       "rating": "A",
+      "rating_basis": "equity_to_assets",
       "rating_bucket": "A"
     },
     {
@@ -129,9 +138,10 @@
       "total_debt": 355959000000.0,
       "debt_tag": "DebtLongtermAndShorttermCombinedAmount",
       "fiscal_year_end": "2025-12-31",
-      "coverage": 1.327,
+      "coverage": null,
       "equity_to_assets": 0.069,
       "rating": "BBB",
+      "rating_basis": "equity_to_assets",
       "rating_bucket": "BBB"
     },
     {
@@ -144,6 +154,7 @@
       "coverage": 4.739,
       "equity_to_assets": 0.323,
       "rating": "A",
+      "rating_basis": "interest_coverage",
       "rating_bucket": "A"
     },
     {
@@ -156,6 +167,7 @@
       "coverage": 5.211,
       "equity_to_assets": -0.024,
       "rating": "A",
+      "rating_basis": "interest_coverage",
       "rating_bucket": "A"
     },
     {
@@ -168,6 +180,7 @@
       "coverage": 1.545,
       "equity_to_assets": 0.032,
       "rating": "B",
+      "rating_basis": "interest_coverage",
       "rating_bucket": "B"
     },
     {
@@ -180,6 +193,7 @@
       "coverage": 5.005,
       "equity_to_assets": 0.381,
       "rating": "A",
+      "rating_basis": "interest_coverage",
       "rating_bucket": "A"
     },
     {
@@ -192,6 +206,7 @@
       "coverage": 4.481,
       "equity_to_assets": 0.162,
       "rating": "A",
+      "rating_basis": "interest_coverage",
       "rating_bucket": "A"
     },
     {
@@ -201,9 +216,10 @@
       "total_debt": 90678000000.0,
       "debt_tag": "LongTermDebt",
       "fiscal_year_end": "2025-09-27",
-      "coverage": NaN,
+      "coverage": null,
       "equity_to_assets": 0.205,
       "rating": "BBB",
+      "rating_basis": "default: no positive interest-expense fact for the fiscal year",
       "rating_bucket": "BBB"
     },
     {
@@ -216,6 +232,7 @@
       "coverage": 34.992,
       "equity_to_assets": 0.441,
       "rating": "AAA",
+      "rating_basis": "interest_coverage",
       "rating_bucket": "AAA"
     },
     {
@@ -228,6 +245,7 @@
       "coverage": 3.565,
       "equity_to_assets": 0.058,
       "rating": "A-",
+      "rating_basis": "interest_coverage",
       "rating_bucket": "A"
     },
     {
@@ -240,6 +258,7 @@
       "coverage": 2.365,
       "equity_to_assets": 0.257,
       "rating": "BB+",
+      "rating_basis": "interest_coverage",
       "rating_bucket": "BB"
     },
     {
@@ -252,13 +271,15 @@
       "coverage": 2.374,
       "equity_to_assets": 0.265,
       "rating": "BB+",
+      "rating_basis": "interest_coverage",
       "rating_bucket": "BB"
     }
   ],
   "excluded_issuers": {
     "ANET": "no total-debt fact for fiscal year 2025-12-31",
     "BRK-B": "no total-debt fact for fiscal year 2025-12-31",
-    "DE": "no total-debt fact for fiscal year 2025-11-02",
+    "CAT": "captive finance arm (Cat Financial): interest coverage not meaningful",
+    "DE": "captive finance arm (John Deere Financial): interest coverage not meaningful",
     "GEV": "no total-debt fact for fiscal year 2025-12-31",
     "GM": "captive finance arm (GM Financial): interest coverage not meaningful",
     "ISRG": "no total-debt fact for fiscal year 2025-12-31",

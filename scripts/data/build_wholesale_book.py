@@ -89,7 +89,10 @@ MIN_FISCAL_YEAR_END = "2024-06-30"
 
 # Consolidated interest of issuers with a captive finance arm includes that arm's funding costs,
 # so EBIT / interest says nothing about the industrial credit (Damodaran separates the two).
-CAPTIVE_FINANCE = {"GM": "GM Financial", "F": "Ford Credit"}
+# There is no standard XBRL flag for this (GM reports its finance receivables under
+# company-specific tags), so the S&P 100 industrials with large captive lenders are listed.
+CAPTIVE_FINANCE = {"GM": "GM Financial", "F": "Ford Credit", "DE": "John Deere Financial",
+                   "CAT": "Cat Financial"}
 
 TOTAL_DEBT_TAGS = (  # tags that already include current maturities
     "DebtLongtermAndShorttermCombinedAmount",
@@ -165,8 +168,8 @@ def issuer_financials(facts: Dict[str, Any]) -> Dict[str, Any]:
         "fiscal_year_end": fy,
         "total_debt": debt,
         "debt_tag": debt_tag,
-        "coverage": (ebit / interest) if ebit is not None and interest else None,
-        "equity_to_assets": (equity / assets) if equity is not None and assets else None,
+        "coverage": (ebit / interest) if ebit is not None and interest and interest > 0 else None,
+        "equity_to_assets": (equity / assets) if equity is not None and assets and assets > 0 else None,
     }
 
 
@@ -184,16 +187,19 @@ def load_fred_series(series_name: str) -> float:
     return float(df.iloc[-1, 1])
 
 
-def synthetic_rating(cov: Optional[float], equity_to_assets: Optional[float], sector: str) -> str:
+def synthetic_rating(cov: Optional[float], equity_to_assets: Optional[float],
+                     sector: str) -> Tuple[str, str]:
+    """(rating, basis). Interest coverage is meaningless for lenders, whose interest expense is
+    a funding cost of operations, so Financials are rated on equity/assets instead."""
     if sector == "Financials":
         e2a = equity_to_assets or 0.0
-        return "A" if e2a >= 0.08 else "BBB" if e2a >= 0.06 else "BB"
+        return ("A" if e2a >= 0.08 else "BBB" if e2a >= 0.06 else "BB"), "equity_to_assets"
     if cov is None:
-        return "BBB"  # documented conservative default for unmeasured interest coverage
+        return "BBB", "default: no positive interest-expense fact for the fiscal year"
     for lim, r in COVERAGE_TO_RATING:
         if cov >= lim:
-            return r
-    return "BBB"
+            return r, "interest_coverage"
+    return "BBB", "interest_coverage"
 
 
 def build_wholesale_book() -> Dict[str, Any]:
@@ -233,6 +239,8 @@ def build_wholesale_book() -> Dict[str, Any]:
             excluded[t] = fin["excluded"]
             continue
         cov, e2a = fin["coverage"], fin["equity_to_assets"]
+        if normalize_sector(uni_map[t]["sector"] if t in uni_map else "") == "Financials":
+            cov = None  # lenders are rated on equity/assets; see synthetic_rating
 
         uni_meta = uni_map.get(t)
         raw_sector = (
@@ -245,7 +253,7 @@ def build_wholesale_book() -> Dict[str, Any]:
         )
 
         sector = normalize_sector(raw_sector)
-        synth_rat = synthetic_rating(cov, e2a, sector)
+        synth_rat, rating_basis = synthetic_rating(cov, e2a, sector)
 
         issuer_records.append({
             "ticker": t,
@@ -257,6 +265,7 @@ def build_wholesale_book() -> Dict[str, Any]:
             "coverage": cov,
             "equity_to_assets": e2a,
             "rating": synth_rat,
+            "rating_basis": rating_basis,
             "rating_bucket": rating_bucket(synth_rat),
         })
 
@@ -447,7 +456,8 @@ def build_wholesale_book() -> Dict[str, Any]:
         "base_currency": "USD",
         "valuation_date": fred_last_date("DGS5"),
         "issuers": [
-            {k: (round(v, 3) if isinstance(v, float) and k != "total_debt" else v)
+            {k: (None if isinstance(v, float) and v != v  # NaN -> null (valid JSON)
+                 else round(v, 3) if isinstance(v, float) and k != "total_debt" else v)
              for k, v in r.items() if k != "allocated_exposure"}
             for r in picks.drop(columns=["sector_rank"]).to_dict("records")
         ],
@@ -456,7 +466,7 @@ def build_wholesale_book() -> Dict[str, Any]:
         "positions": positions,
     }
 
-    OUTPUT_REAL_PATH.write_text(json.dumps(out, indent=2) + "\n", encoding="utf-8")
+    OUTPUT_REAL_PATH.write_text(json.dumps(out, indent=2, allow_nan=False) + "\n", encoding="utf-8")
     print(f"Wrote {OUTPUT_REAL_PATH} with {len(picks)} issuers, {len(positions)} positions, total=${summary['total_book_value_usd']:,.2f}")
 
     # Also ensure demo_book.json exists (profile: synthetic_demo)
