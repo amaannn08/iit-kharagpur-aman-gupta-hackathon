@@ -15,7 +15,7 @@ import {
   StressRunResult,
 } from '../api/client';
 import { SOURCE_PRESETS } from '../hooks/useReplay';
-import { TabType } from './Header';
+import { TabType } from '../types/navigation';
 import { Feed } from './Feed';
 import { Inspector } from './Inspector';
 import { Card } from './ui/Card';
@@ -163,38 +163,6 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
           <p className="text-xs md:text-sm text-[#6B7280] mt-0.5">
             Real-time text &rarr; signals &rarr; stress tests, all offline.
           </p>
-        </div>
-
-        {/* Right Action Buttons */}
-        <div className="flex items-center gap-3">
-          {replayStatus?.state === 'running' ? (
-            <PillButton
-              variant="secondary"
-              onClick={onPause}
-              disabled={replayLoading}
-            >
-              <Pause className="w-4 h-4 fill-[#14532D]" />
-              <span>Pause Replay</span>
-            </PillButton>
-          ) : (
-            <PillButton
-              variant="primary"
-              onClick={onPlay}
-              disabled={replayLoading}
-            >
-              <Play className="w-4 h-4 fill-white" />
-              <span>Start Replay</span>
-            </PillButton>
-          )}
-
-          <PillButton
-            variant="secondary"
-            onClick={onStep}
-            disabled={replayLoading}
-          >
-            <StepForward className="w-4 h-4 text-[#14532D]" />
-            <span>Step Record</span>
-          </PillButton>
         </div>
       </div>
 
@@ -600,43 +568,15 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
                 {simulatedTimeFormatted}
               </div>
               <div className="text-[11px] text-emerald-200 mt-1 font-mono">
-                {replayStatus?.current_simulated_at?.slice(0, 10) || '2026-03-01'}
+                {replayStatus?.current_simulated_at?.slice(0, 10) || '—'}
               </div>
             </div>
           </div>
 
-          <div className="flex items-center justify-center gap-3 pt-2">
-            {replayStatus?.state === 'running' ? (
-              <button
-                type="button"
-                onClick={onPause}
-                disabled={replayLoading}
-                aria-label="Pause clock"
-                className="w-10 h-10 rounded-full bg-white text-[#14532D] hover:bg-emerald-50 flex items-center justify-center shadow-sm cursor-pointer transition-transform active:scale-95"
-              >
-                <Pause className="w-4 h-4 fill-[#14532D]" />
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={onPlay}
-                disabled={replayLoading}
-                aria-label="Play clock"
-                className="w-10 h-10 rounded-full bg-white text-[#14532D] hover:bg-emerald-50 flex items-center justify-center shadow-sm cursor-pointer transition-transform active:scale-95"
-              >
-                <Play className="w-4 h-4 fill-[#14532D] translate-x-0.5" />
-              </button>
-            )}
-
-            <button
-              type="button"
-              onClick={onReset}
-              disabled={replayLoading}
-              aria-label="Reset clock"
-              className="w-10 h-10 rounded-full bg-[#DC2626] text-white hover:bg-red-700 flex items-center justify-center shadow-sm cursor-pointer transition-transform active:scale-95"
-            >
-              <RotateCcw className="w-4 h-4" />
-            </button>
+          <div className="pt-2 text-center">
+            <span className="text-[11px] text-emerald-200/90 font-mono">
+              Controlled via Replay Control panel
+            </span>
           </div>
         </Card>
       </div>

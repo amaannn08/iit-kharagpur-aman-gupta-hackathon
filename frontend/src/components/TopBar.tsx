@@ -1,5 +1,4 @@
-import React from 'react';
-import { Bell, Mail, Search, ShieldAlert } from 'lucide-react';
+import { Search, ShieldAlert } from 'lucide-react';
 import { ReplayStatus } from '../api/client';
 
 export interface TopBarProps {
@@ -63,27 +62,8 @@ export const TopBar: React.FC<TopBarProps> = ({
           </span>
         </div>
 
-        {/* Notification icons matching Donezo */}
-        <button
-          type="button"
-          aria-label="Messages"
-          className="w-8 h-8 rounded-full border border-[#ECEDEC] flex items-center justify-center text-[#6B7280] hover:bg-[#F3F4F3] transition-colors"
-        >
-          <Mail className="w-4 h-4" />
-        </button>
-        <button
-          type="button"
-          aria-label="Notifications"
-          className="w-8 h-8 rounded-full border border-[#ECEDEC] flex items-center justify-center text-[#6B7280] hover:bg-[#F3F4F3] transition-colors"
-        >
-          <Bell className="w-4 h-4" />
-        </button>
-
-        {/* User Profile Chip */}
+        {/* Candidate Identity */}
         <div className="flex items-center gap-2.5 pl-2 border-l border-[#ECEDEC]">
-          <div className="w-9 h-9 rounded-full bg-[#14532D] text-white flex items-center justify-center font-bold text-xs shadow-sm">
-            AG
-          </div>
           <div className="hidden sm:block text-left leading-tight">
             <div className="text-xs font-bold text-[#111827]">
               Candidate: Aman Gupta (IIT Kharagpur)

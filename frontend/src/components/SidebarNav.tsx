@@ -1,18 +1,15 @@
-import React from 'react';
 import {
   Activity,
   Database,
   FileCheck,
-  HelpCircle,
   LineChart,
   Radio,
-  Settings,
   Shield,
   Sparkles,
   TrendingDown,
 } from 'lucide-react';
 import { LiveStatusResponse, ReplayStatus } from '../api/client';
-import { TabType } from './Header';
+import { TabType } from '../types/navigation';
 
 export interface SidebarNavProps {
   activeTab: TabType;
@@ -152,29 +149,6 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
               );
             })}
           </nav>
-        </div>
-
-        {/* GENERAL Section */}
-        <div className="space-y-1 pt-2">
-          <div className="text-[10px] font-bold tracking-wider text-[#9CA3AF] uppercase px-3 mb-2 font-mono">
-            GENERAL
-          </div>
-          <button
-            type="button"
-            onClick={() => setActiveTab('overview')}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-[#4B5563] hover:text-[#111827] hover:bg-[#F9FAF9] transition-colors"
-          >
-            <Settings className="w-4 h-4 text-[#6B7280]" />
-            <span>Environment Specs</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('eval')}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-[#4B5563] hover:text-[#111827] hover:bg-[#F9FAF9] transition-colors"
-          >
-            <HelpCircle className="w-4 h-4 text-[#6B7280]" />
-            <span>Audit &amp; Methodology</span>
-          </button>
         </div>
       </div>
 
