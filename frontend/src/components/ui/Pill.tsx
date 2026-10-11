@@ -16,12 +16,12 @@ export const Pill: React.FC<PillProps> = ({
   const sizeClasses = size === 'sm' ? 'px-2.5 py-0.5 text-[11px]' : 'px-3 py-1 text-xs';
 
   const variantClasses = {
-    success: 'bg-theme-success-bg text-theme-success border border-theme-success/30',
-    loss: 'bg-theme-loss-bg text-theme-loss border border-theme-loss/30',
+    success: 'bg-theme-success-bg text-theme-success-dark border border-theme-success/30',
+    loss: 'bg-theme-loss-bg text-theme-loss-dark border border-theme-loss/30',
     warning: 'bg-theme-warn-bg text-theme-warn border border-theme-warn/30',
     neutral: 'bg-theme-bg text-theme-text border border-theme-border',
     primary: 'bg-theme-primary-fill text-theme-on-primary border border-theme-primary-fill',
-    muted: 'bg-theme-card-subtle text-theme-muted border border-theme-border-subtle',
+    muted: 'bg-theme-card-subtle text-theme-text-secondary border border-theme-border-subtle',
   }[variant];
 
   return (

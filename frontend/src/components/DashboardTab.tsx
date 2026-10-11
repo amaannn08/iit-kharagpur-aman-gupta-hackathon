@@ -254,7 +254,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
               <h2 className="text-sm md:text-base font-bold text-theme-text">
                 Replay Control
               </h2>
-              <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-theme-primary-tint text-theme-primary-dark font-bold">
+              <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-theme-primary-tint text-theme-primary-text font-bold">
                 {replayStatus?.state?.toUpperCase() || 'IDLE'}
               </span>
             </div>

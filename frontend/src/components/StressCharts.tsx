@@ -314,7 +314,7 @@ export function StressCharts({ result, onResult }: Props) {
           <div className="col-span-12 lg:col-span-6 p-4 rounded-2xl bg-theme-card-subtle border border-theme-border">
             <h3 className="text-xs font-bold text-theme-text mb-3 flex items-center justify-between">
               <span>Loss waterfall: total {usd(result.total_pnl_usd)} ({(result.total_pnl_pct * 100).toFixed(2)}%)</span>
-              <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold ${result.reconciliation_passed ? 'bg-theme-primary-tint text-theme-primary-text' : 'bg-theme-loss-bg text-theme-loss'}`}>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold ${result.reconciliation_passed ? 'bg-theme-primary-tint text-theme-primary-text' : 'bg-theme-loss-bg text-theme-loss-dark'}`}>
                 {result.reconciliation_passed ? 'Reconciled' : 'Reconciliation Failed'}
               </span>
             </h3>

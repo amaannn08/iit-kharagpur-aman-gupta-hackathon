@@ -54,21 +54,21 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
   );
 
   let liveBadge = 'REPLAY';
-  let badgeColor = 'bg-theme-bg text-theme-muted border-theme-border';
+  let badgeColor = 'bg-theme-bg text-theme-text-secondary border-theme-border';
 
   if (isLiveScenario) {
     const lag = liveStatus?.lag_seconds;
     const alive = liveStatus?.recorder_alive ?? false;
     if (lag !== null && lag !== undefined && lag < 600 && alive) {
       liveBadge = 'LIVE';
-      badgeColor = 'bg-theme-primary-tint text-theme-primary-dark border-theme-primary/40';
+      badgeColor = 'bg-theme-primary-tint text-theme-primary-text border-theme-primary/40';
     } else {
       liveBadge = 'STALE';
       badgeColor = 'bg-theme-warn-bg text-theme-warn border-theme-warn/40';
     }
   } else if (isSynthetic) {
     liveBadge = 'SYNTHETIC';
-    badgeColor = 'bg-theme-primary-tint text-theme-primary-dark border-theme-primary/40';
+    badgeColor = 'bg-theme-primary-tint text-theme-primary-text border-theme-primary/40';
   }
 
   const lagText = (() => {
