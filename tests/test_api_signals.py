@@ -1,4 +1,4 @@
-"""Integration tests for RiskSignal streaming and query API (PRD Section 6.2 & 16 M3)."""
+"""Integration tests for RiskSignal streaming and query API."""
 
 import pytest
 from fastapi.testclient import TestClient

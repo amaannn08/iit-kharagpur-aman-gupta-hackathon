@@ -1,4 +1,4 @@
-"""Risk signal contracts conforming to PRD Section 6.2."""
+"""Risk signal contracts for the NLP pipeline."""
 
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -18,6 +18,7 @@ class EntityReference(BaseModel):
     scope: str = Field(default="company", description="Entity scope e.g. company, sector, macro")
     resolved: bool = Field(default=True, description="Whether entity resolution was confident")
     sector: Optional[str] = Field(None, description="Sector of the resolved company, if known")
+    role: Optional[str] = Field(None, description="Role in multi-party event e.g. acquirer, target")
 
 
 class SentimentProbabilities(BaseModel):
@@ -74,7 +75,7 @@ class ImpactOutput(BaseModel):
 
 
 class RiskSignal(BaseModel):
-    """Auditable risk signal emitted by the NLP engine (PRD Section 6.2)."""
+    """Auditable risk signal emitted by the NLP engine."""
 
     schema_version: str = Field(default="1.0")
     signal_id: str = Field(..., description="Stable unique signal identifier")

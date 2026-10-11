@@ -1,4 +1,4 @@
-"""Unit tests for wholesale banking stress valuation engine (PRD 9.4 & 13.3)."""
+"""Unit tests for wholesale banking stress valuation engine."""
 
 import pytest
 
@@ -23,7 +23,7 @@ def engine(portfolio: WholesalePortfolio) -> ValuationEngine:
 
 
 def test_portfolio_funded_and_derivative_segregation(portfolio: WholesalePortfolio):
-    """PRD 9.1: Verify funded exposure is $500M and derivative notional is segregated."""
+    """Verify funded exposure is $500M and derivative notional is segregated."""
     assert portfolio.total_funded_exposure == 500_000_000.0
     # Swap gross notional is $150M ($75M + $75M)
     assert portfolio.total_derivative_notional == 150_000_000.0
@@ -33,7 +33,7 @@ def test_portfolio_funded_and_derivative_segregation(portfolio: WholesalePortfol
 
 
 def test_bond_duration_valuation_and_bps_conversion(engine: ValuationEngine):
-    """PRD 9.4 & 13.3: Verify delta = -duration * value * shift with exact bps conversion."""
+    """Verify delta = -duration * value * shift with exact bps conversion."""
     bond = BondPosition(
         position_id="TEST-BOND-1",
         asset_class=AssetClass.BOND,
@@ -59,6 +59,7 @@ def test_bond_duration_valuation_and_bps_conversion(engine: ValuationEngine):
         scale_multiplier=1.0,
         target_entity="APEX",
         target_scope="entity",
+        rating_tiered=False,
     )
 
     delta = engine.value_bond(bond, shock)
@@ -70,7 +71,7 @@ def test_bond_duration_valuation_and_bps_conversion(engine: ValuationEngine):
 
 
 def test_loan_ecl_valuation_and_clamping(engine: ValuationEngine):
-    """PRD 9.4 & 13.3: Incremental ECL = EAD * delta_PD * LGD and PD/LGD clamped."""
+    """Incremental ECL = EAD * delta_PD * LGD and PD/LGD clamped."""
     loan = LoanPosition(
         position_id="TEST-LOAN-1",
         asset_class=AssetClass.LOAN,
@@ -94,6 +95,7 @@ def test_loan_ecl_valuation_and_clamping(engine: ValuationEngine):
         scale_multiplier=1.0,
         target_entity="APEX",
         target_scope="entity",
+        rating_tiered=False,
     )
 
     delta = engine.value_loan(loan, shock)
@@ -109,7 +111,7 @@ def test_loan_ecl_valuation_and_clamping(engine: ValuationEngine):
 
 
 def test_swap_sign_convention_pay_fixed_loses_on_rate_increase(engine: ValuationEngine):
-    """PRD 13.3 Invariant: Pay-fixed loses value under rate increase, and gains under rate cut."""
+    """Invariant: Pay-fixed loses value under rate increase, and gains under rate cut."""
     # SWAP-002 is pay-fixed with signed_dv01 = -34,500
     pay_fixed_swap = next(s for s in engine.portfolio.swaps if s.pay_receive == "pay_fixed")
 
@@ -146,7 +148,7 @@ def test_swap_sign_convention_pay_fixed_loses_on_rate_increase(engine: Valuation
 
 
 def test_cash_zero_delta(engine: ValuationEngine):
-    """PRD 9.4: Cash has zero market or credit delta under stress."""
+    """Cash has zero market or credit delta under stress."""
     cash = engine.portfolio.cash[0]
     shock = ScaledShock(
         bond_spread_shift_bps=200.0,
@@ -164,7 +166,7 @@ def test_cash_zero_delta(engine: ValuationEngine):
 
 
 def test_zero_shock_zero_change(engine: ValuationEngine):
-    """PRD 13.3 Invariant: Zero shock produces exactly zero P&L."""
+    """Invariant: Zero shock produces exactly zero P&L."""
     zero_shock = ScaledShock(
         bond_spread_shift_bps=0.0,
         loan_pd_increment=0.0,
@@ -183,7 +185,7 @@ def test_zero_shock_zero_change(engine: ValuationEngine):
 
 
 def test_unrelated_entity_exposure_unchanged(engine: ValuationEngine):
-    """PRD 13.3 Invariant: Unrelated exposure remains unchanged under entity-scoped shock."""
+    """Invariant: Unrelated exposure remains unchanged under entity-scoped shock."""
     apex_shock = build_scaled_shock(
         "CREDIT", impact_score=8, target_entity="APEX", target_scope="entity"
     )
@@ -201,7 +203,7 @@ def test_unrelated_entity_exposure_unchanged(engine: ValuationEngine):
 
 
 def test_full_portfolio_reconciliation_invariants(engine: ValuationEngine):
-    """PRD 13.3 Invariant: Sum of position P&L equals total P&L, before + P&L = after."""
+    """Invariant: Sum of position P&L equals total P&L, before + P&L = after."""
     systemic_shock = build_scaled_shock("CREDIT", impact_score=9, target_scope="systemic")
     result = engine.run_stress_test(systemic_shock)
 
@@ -230,7 +232,7 @@ def test_full_portfolio_reconciliation_invariants(engine: ValuationEngine):
 
 
 def test_contagion_propagates_to_downstream_counterparties(engine: ValuationEngine):
-    """PRD 9.3 & Bug B6 fix: Verify contagion propagates shocks to connected counterparties."""
+    """Verify contagion propagates shocks to connected counterparties."""
     apex_shock = build_scaled_shock(
         "CREDIT", impact_score=8, target_entity="APEX", target_scope="entity"
     )
@@ -279,3 +281,68 @@ def test_combined_portfolio_reports_sleeves_and_separates_derivative_mtm():
         abs(result.funded_stressed_value_usd - (result.funded_baseline_value_usd + sleeve_pnl))
         < 0.05
     )
+
+
+def test_attribution_sums_equal_pnl_across_scenarios(engine: ValuationEngine):
+    """Item 13: Attribution sums must equal P&L for every position across scenarios."""
+    scenarios = [
+        build_scaled_shock("CREDIT", impact_score=9, target_scope="systemic"),
+        build_scaled_shock("MACRO", impact_score=8, target_scope="systemic"),
+        build_scaled_shock("M_AND_A", impact_score=7, target_entity="JPM", target_scope="entity"),
+    ]
+    for shock in scenarios:
+        res = engine.run_stress_test(shock)
+        assert res.reconciliation_passed
+        for p in res.position_deltas:
+            comp_sum = (
+                p.attribution.rates_usd
+                + p.attribution.spread_usd
+                + p.attribution.pd_usd
+                + p.attribution.lgd_usd
+                + p.attribution.equity_usd
+                + p.attribution.operational_usd
+                + p.attribution.clamp_usd
+            )
+            assert pytest.approx(comp_sum, abs=0.02) == p.pnl_usd
+        assert (
+            pytest.approx(sum(res.attribution["by_component"].values()), abs=0.05)
+            == res.total_pnl_usd
+        )
+
+
+def test_pure_rates_shock_has_zero_spread_attribution(engine: ValuationEngine):
+    """Item 13: Pure rates shock gives spread_usd == 0."""
+    pure_rates = ScaledShock(
+        bond_spread_shift_bps=0.0,
+        loan_pd_increment=0.0,
+        lgd_increment=0.0,
+        benchmark_yield_shift_bps=100.0,
+        scale_multiplier=1.0,
+        target_entity=None,
+        target_scope="systemic",
+    )
+    res = engine.run_stress_test(pure_rates)
+    assert res.attribution["by_component"]["spread_usd"] == 0.0
+    assert res.attribution["by_component"]["rates_usd"] != 0.0
+    assert res.reconciliation_passed
+
+
+def test_cyber_run_has_negative_operational_attribution():
+    """Item 13: CYBER shock produces negative operational loss attribution."""
+    from sentinel.config import settings
+
+    combined = WholesalePortfolio.load_many(
+        [settings.data_dir / f for f in settings.portfolio_files]
+    )
+    engine = ValuationEngine(combined)
+    cyber_shock = build_scaled_shock(
+        "CYBER",
+        impact_score=9,
+        target_entity="JPM",
+        target_scope="entity",
+        target_sector="Financials",
+    )
+    res = engine.run_stress_test(cyber_shock)
+    assert res.attribution["by_component"]["operational_usd"] < 0.0
+    assert res.reconciliation_passed
+

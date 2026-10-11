@@ -1,4 +1,4 @@
-"""Entity recognition and resolution engine conforming to PRD Section 7.1.
+"""Entity recognition and resolution engine.
 
 Universe: data/universe/entities.csv (real S&P 500 constituents + flagged synthetic demo
 issuers, built by scripts/data/build_universe.py). Falls back to data/entity_aliases.csv.
@@ -19,6 +19,7 @@ from typing import Dict, List, Optional, Set, Tuple, Union
 
 from sentinel.config import settings
 from sentinel.contracts.signals import EntityReference, EvidenceSpan
+from sentinel.stress.sectors import GICS_SECTORS
 
 
 @dataclass
@@ -29,6 +30,7 @@ class KnownEntity:
     aliases: List[str]
     ambiguous_aliases: Set[str] = field(default_factory=set)
     is_synthetic: bool = False
+    is_historical: bool = False
 
 
 FINANCIAL_CONTEXT = re.compile(
@@ -79,9 +81,44 @@ PHRASE_EXCLUSIONS = {
     "TGT": (re.compile(r"\bprice\s*$", re.I), None),  # "price target"
     "DD": (None, re.compile(r"^\s+analysis\b", re.I)),  # "DuPont analysis"
 }
+CANONICAL_SHARE_CLASSES: Dict[str, str] = {
+    "GOOG": "GOOGL",
+    "FOX": "FOXA",
+    "NWS": "NWSA",
+    "BRK-A": "BRK-B",
+    "BRK.A": "BRK-B",
+}
+
+EXTRA_ALIASES: Dict[str, List[Tuple[str, bool]]] = {
+    "GOOGL": [
+        ("Alphabet", False),
+        ("Google", False),
+        ("Alphabet Inc.", False),
+        ("Alphabet Inc", False),
+        ("GOOG", False),
+    ],
+    "META": [
+        ("Meta", True),
+        ("Meta Platforms", False),
+    ],
+    "ADM": [
+        ("Archer-Daniels-Midland", False),
+        ("Archer Daniels Midland", False),
+        ("Archer Daniels", False),
+        ("Archer-Daniels", False),
+    ],
+    "CSCO": [
+        ("Cisco Systems", False),
+    ],
+    "EBAY": [
+        ("eBay Inc.", False),
+        ("eBay", False),
+    ],
+}
+
 TOKEN = re.compile(r"[A-Za-z0-9][A-Za-z0-9&'’\-.]*")
 NEXT_PROPER = re.compile(
-    r"^\s+(?!Inc\b|Corp\b|Co\b|Group\b|Holdings\b|Shares\b|Stock\b)[A-Z][a-z]+"
+    r"^\s+(?!Inc\b|Corp\b|Co\b|Group\b|Holdings\b|Shares\b|Stock\b|Systems\b|Technologies\b|Enterprises\b|Networks\b|Services\b|Platforms\b)[A-Z][a-z]+"
 )
 PUNCT = re.compile(r"[.,:;!?'’]*$")
 TRAILING = re.compile(r"(?:'s|’s|\.com)?[.,:;!?'’]*$")
@@ -89,6 +126,14 @@ MACRO_TERMS = [
     "federal reserve", "central bank", "treasury yield", "treasury yields", "fomc",
     "european central bank", "ecb", "macro", "sovereign bond",
 ]  # fmt: skip
+SECTOR_PHRASES = [
+    (re.compile(r"\b(regional banks|bank stocks|lenders)\b", re.I), "Financials"),
+    (re.compile(r"\b(chipmakers|semiconductor stocks)\b", re.I), "Information Technology"),
+    (re.compile(r"\b(airlines)\b", re.I), "Industrials"),
+    (re.compile(r"\b(oil producers|oil majors)\b", re.I), "Energy"),
+    (re.compile(r"\b(automakers)\b", re.I), "Consumer Discretionary"),
+    (re.compile(r"\b(drugmakers|pharma stocks)\b", re.I), "Health Care"),
+]
 
 
 def _universe_path() -> Path:
@@ -116,12 +161,14 @@ class EntityLinker:
                     aliases = [a for a in row["aliases"].split("|") if a]
                     ambiguous = {a for a in row["ambiguous_aliases"].split("|") if a}
                     synthetic = row.get("is_synthetic", "false").lower() == "true"
+                    historical = row.get("is_historical", "false").lower() == "true"
                 else:  # legacy data/entity_aliases.csv format
                     aliases = [a.strip() for a in row.get("aliases", "").split(",") if a.strip()]
                     aliases.append(canonical)
                     flag = row.get("is_ambiguous", "false").strip().lower() == "true"
                     ambiguous = set(aliases) if flag else set()
                     synthetic = False
+                    historical = False
                 entity = KnownEntity(
                     ticker=ticker,
                     canonical_name=canonical,
@@ -129,16 +176,29 @@ class EntityLinker:
                     aliases=aliases,
                     ambiguous_aliases=ambiguous,
                     is_synthetic=synthetic,
+                    is_historical=historical,
                 )
                 self.entities[ticker] = entity
                 for alias in aliases:
                     if alias.upper() == ticker and len(alias) <= 5:
                         continue  # bare tickers are handled by the ticker rules
-                    self.alias_lookup.setdefault(alias.lower(), (ticker, alias))
+                    target_ticker = CANONICAL_SHARE_CLASSES.get(ticker, ticker)
+                    self.alias_lookup.setdefault(alias.lower(), (target_ticker, alias))
+                    self.max_alias_tokens = max(self.max_alias_tokens, len(alias.split()))
+
+        for t, extra_list in EXTRA_ALIASES.items():
+            if t in self.entities:
+                for alias, is_ambig in extra_list:
+                    if alias not in self.entities[t].aliases:
+                        self.entities[t].aliases.append(alias)
+                    if is_ambig:
+                        self.entities[t].ambiguous_aliases.add(alias)
+                    self.alias_lookup[alias.lower()] = (t, alias)
                     self.max_alias_tokens = max(self.max_alias_tokens, len(alias.split()))
 
     def _ref(self, ticker: str) -> EntityReference:
-        ke = self.entities[ticker]
+        t = CANONICAL_SHARE_CLASSES.get(ticker, ticker)
+        ke = self.entities[t]
         return EntityReference(
             name=ke.canonical_name, ticker=ke.ticker, scope="company", resolved=True,
             sector=ke.sector or None,
@@ -146,6 +206,7 @@ class EntityLinker:
 
     def _ticker_in_universe(self, raw: str) -> Optional[str]:
         t = raw.upper().replace(".", "-")
+        t = CANONICAL_SHARE_CLASSES.get(t, t)
         return t if t in self.entities else None
 
     def find_companies(self, text: str) -> Dict[str, List[EvidenceSpan]]:
@@ -153,7 +214,8 @@ class EntityLinker:
         found: Dict[str, List[EvidenceSpan]] = {}
 
         def add(ticker: str, start: int, end: int) -> None:
-            spans = found.setdefault(ticker, [])
+            t = CANONICAL_SHARE_CLASSES.get(ticker, ticker)
+            spans = found.setdefault(t, [])
             overlaps = any(start < s.end and s.start < end for s in spans)  # "$APEX" vs "APEX"
             if len(spans) < 3 and not overlaps:
                 spans.append(EvidenceSpan(start=start, end=end, text=text[start:end]))
@@ -169,8 +231,11 @@ class EntityLinker:
         mostly_upper = letters and sum(c.isupper() for c in letters) / len(letters) > 0.6
         if not mostly_upper:  # all-caps headlines ("FED HIKES RATES") are not ticker lists
             for m in BARE_TICKER.finditer(text):
-                if m.group() not in STOP_TICKERS and m.group() in self.entities:
-                    add(m.group(), m.start(), m.end())
+                raw = m.group()
+                if raw not in STOP_TICKERS:
+                    t = CANONICAL_SHARE_CLASSES.get(raw, raw)
+                    if t in self.entities:
+                        add(t, m.start(), m.end())
 
         has_context = bool(FINANCIAL_CONTEXT.search(text))
         tokens = [(m.start(), m.end()) for m in TOKEN.finditer(text)]
@@ -238,17 +303,31 @@ class EntityLinker:
                 ]
         return None
 
+    def _sector(self, text: str) -> Optional[Tuple[EntityReference, List[EvidenceSpan]]]:
+        for pattern, sector in SECTOR_PHRASES:
+            m = pattern.search(text)
+            if m:
+                ref = EntityReference(
+                    name=sector, ticker=None, scope="sector", sector=sector, resolved=True
+                )
+                return ref, [
+                    EvidenceSpan(start=m.start(), end=m.end(), text=text[m.start() : m.end()])
+                ]
+        return None
+
     def resolve_all(
         self, text: str, hint_entity_id: Optional[str] = None
     ) -> List[Tuple[EntityReference, List[EvidenceSpan]]]:
-        """Every resolved company (PRD 6.2: one signal per entity/event association).
+        """Every resolved company (one signal per entity/event association).
 
-        Falls back to the macro entity, then a valid hint (without fabricated spans), then a
-        single unresolved reference.
+        Falls back to sector phrases, the macro entity, then a valid hint (without fabricated
+        spans), then a single unresolved reference.
         """
         companies = self.find_companies(text)
         if companies:
             return [(self._ref(t), spans) for t, spans in companies.items()]
+        if sector := self._sector(text):
+            return [sector]
         if macro := self._macro(text):
             return [macro]
         if hint_entity_id:
@@ -259,6 +338,11 @@ class EntityLinker:
                 ]
             if hint in self.entities:
                 return [(self._ref(hint), [])]
+            for g in GICS_SECTORS:
+                if hint == g.upper():
+                    return [
+                        (EntityReference(name=g, ticker=None, scope="sector", sector=g, resolved=True), [])
+                    ]
         unknown = EntityReference(
             name="Unknown Entity", ticker=None, scope="unknown", resolved=False
         )

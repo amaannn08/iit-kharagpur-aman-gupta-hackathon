@@ -1,4 +1,4 @@
-"""Server-Sent Events streaming route conforming to PRD Section 11.3 & 12."""
+"""Server-Sent Events streaming route."""
 
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse

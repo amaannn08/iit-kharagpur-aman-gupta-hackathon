@@ -1,4 +1,4 @@
-"""Tests for orchestrated NLPEngine and RiskSignal emission (PRD Section 6.2 & 7)."""
+"""Tests for orchestrated NLPEngine and RiskSignal emission."""
 
 from datetime import datetime, timezone
 

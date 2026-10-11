@@ -1,4 +1,4 @@
-"""Sentiment analysis engine (PRD Section 7.2).
+"""Sentiment analysis engine.
 
 Backends, in priority order:
   1. Local FinBERT weights in .runtime/models/finbert (optional tier 2, `nlp` extra)

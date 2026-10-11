@@ -1,13 +1,17 @@
-"""Event-triggered stress testing orchestrator conforming to PRD Section 9.3."""
+"""Event-triggered stress testing: trigger rules, shock selection and runs."""
 
 import json
 from pathlib import Path
-from typing import List, Optional, Set, Union
+from typing import Dict, List, Optional, Set, Tuple, Union
 
 from sentinel.config import settings
 from sentinel.contracts.signals import RiskSignal
 from sentinel.contracts.stress import StressRunResult
+from sentinel.nlp.roles import get_ma_financing_multiplier
+from sentinel.nlp.sentiment import macro_polarity
+from sentinel.stress.contagion import ContagionGraph
 from sentinel.stress.portfolio import WholesalePortfolio
+from sentinel.stress.sectors import normalize_sector
 from sentinel.stress.shocks import (
     DEFAULT_SHOCK_CATALOG,
     ScaledShock,
@@ -28,12 +32,43 @@ class StressEngine:
         confidence_threshold: Optional[float] = None,
         impact_threshold: Optional[int] = None,
     ) -> None:
+        self.profiles: Dict[str, WholesalePortfolio] = {}
+        self.valuation_engines: Dict[str, ValuationEngine] = {}
+
         if portfolio_path is not None:  # a single explicit file (tests, sandbox)
-            self.portfolio = WholesalePortfolio.load_from_json(portfolio_path)
+            custom_p = WholesalePortfolio.load_from_json(portfolio_path)
+            self.portfolio = custom_p
+            self.valuation_engine = ValuationEngine(self.portfolio)
+            self.profiles["custom"] = custom_p
+            self.valuation_engines["custom"] = self.valuation_engine
+            self.default_profile = "custom"
         else:
-            files = [settings.data_dir / f for f in settings.portfolio_files]
-            self.portfolio = WholesalePortfolio.load_many([f for f in files if f.exists()])
-        self.valuation_engine = ValuationEngine(self.portfolio)
+            for prof_name, rel_paths in settings.portfolio_profiles.items():
+                files = [settings.data_dir / f for f in rel_paths]
+                if not all(f.exists() for f in files):  # never load a partial book
+                    continue
+                if files:
+                    prof_port = WholesalePortfolio.load_many(files)
+                    self.profiles[prof_name] = prof_port
+                    graph_file = (
+                        settings.data_dir / "graph_edges_demo.csv"
+                        if prof_name == "synthetic_demo"
+                        else settings.data_dir / "graph_edges.csv"
+                    )
+                    c_graph = ContagionGraph(graph_file) if graph_file.exists() else None
+                    self.valuation_engines[prof_name] = ValuationEngine(
+                        prof_port, contagion_graph=c_graph
+                    )
+
+            self.default_profile = settings.default_portfolio_profile
+            if self.default_profile not in self.profiles:
+                raise RuntimeError(
+                    f"Default portfolio profile '{self.default_profile}' is missing files: "
+                    f"{settings.portfolio_profiles.get(self.default_profile)}"
+                )
+            self.portfolio = self.profiles[self.default_profile]
+            self.valuation_engine = self.valuation_engines[self.default_profile]
+
         self.confidence_threshold = (
             confidence_threshold
             if confidence_threshold is not None
@@ -43,6 +78,27 @@ class StressEngine:
             impact_threshold if impact_threshold is not None else settings.action_impact_threshold
         )
         self.acted_signal_ids: Set[str] = set()
+
+    def get_valuation_engine(self, profile: Optional[str] = None) -> Tuple[ValuationEngine, str]:
+        """Engine for a profile (default: settings.default_portfolio_profile).
+
+        An unknown or unloaded profile raises KeyError instead of silently valuing another
+        book under the requested name.
+        """
+        prof_name = profile or self.default_profile
+        if prof_name not in self.valuation_engines:
+            raise KeyError(f"Unknown or unloaded portfolio profile '{prof_name}'")
+        return self.valuation_engines[prof_name], prof_name
+
+    def _macro_is_easing(self, signal: RiskSignal) -> Optional[bool]:
+        """True = easing/benign, False = tightening/adverse, None = no direction (skip)."""
+        direction = signal.event.macro_direction or "none"
+        if direction in ("easing", "tightening"):
+            return direction == "easing"
+        pol = macro_polarity(signal.text_excerpt or "")
+        if pol is not None:
+            return pol[0] > 0
+        return None
 
     def should_trigger(self, signal: RiskSignal) -> bool:
         """Evaluate if an incoming RiskSignal meets criteria for automated stress testing."""
@@ -62,9 +118,17 @@ class StressEngine:
         if signal.signal_id in self.acted_signal_ids:
             return False
 
+        if signal.event.label.upper() == "MACRO" and self._macro_is_easing(signal) is None:
+            return False  # direction unknown: do not guess
+
+        if signal.event.label.upper() == "M_AND_A" and signal.entity.role != "acquirer":
+            return False  # only acquirer is stressed; target/undetermined skipped
+
         return True
 
-    def trigger_from_signal(self, signal: RiskSignal) -> Optional[StressRunResult]:
+    def trigger_from_signal(
+        self, signal: RiskSignal, profile: Optional[str] = None
+    ) -> Optional[StressRunResult]:
         """Automatically execute stress test against baseline portfolio for eligible signal."""
         if not self.should_trigger(signal):
             return None
@@ -72,43 +136,38 @@ class StressEngine:
         event_class = signal.event.label.upper()
         impact = signal.impact.score
 
-        # Correct Scope assignment (conforming to PRD Section 9.3 & Bug B1 fix):
-        # Systemic macro and geopolitical events must shock the entire benchmark curve
+        # Scope assignment:
+        # Systemic macro and geopolitical events shock the entire benchmark curve
         # or broad market. Sector events shock sector-specific loans and bonds.
         # Single entity shocks require a valid ticker.
         if (
             event_class in {"MACRO", "GEOPOLITICAL"}
             or signal.entity.scope == "macro"
-            or not signal.entity.ticker
         ):
             scope = "systemic"
             target_entity = None
+            target_sector = None
         elif signal.entity.scope == "sector":
             scope = "sector"
-            target_entity = signal.entity.name
+            target_entity = None
+            target_sector = normalize_sector(signal.entity.sector or signal.entity.name)
+        elif not signal.entity.ticker:
+            scope = "systemic"
+            target_entity = None
+            target_sector = None
         else:
             scope = "entity"
             # Always use ticker symbol (e.g. 'APEX'), never company name string
             target_entity = signal.entity.ticker
+            target_sector = normalize_sector(signal.entity.sector)
 
-        # Easing detection for macro rate events (Bug B2 fix)
-        is_easing = False
-        if getattr(signal.event, "macro_direction", None) == "easing":
-            is_easing = True
-        else:
-            evidence_text = " ".join(e.text for e in signal.evidence).lower()
-            if any(
-                w in evidence_text
-                for w in (
-                    "rate cut",
-                    "cuts rate",
-                    "cutting rate",
-                    "easing",
-                    "lower rate",
-                    "lowers rate",
-                )
-            ):
-                is_easing = True
+        is_easing = bool(self._macro_is_easing(signal)) if event_class == "MACRO" else False
+
+        financing_multiplier = (
+            get_ma_financing_multiplier(signal.text_excerpt or "")
+            if event_class == "M_AND_A"
+            else 1.0
+        )
 
         shock = build_scaled_shock(
             event_class=event_class,
@@ -116,12 +175,14 @@ class StressEngine:
             target_entity=target_entity,
             target_scope=scope,
             is_easing=is_easing,
-            target_sector=signal.entity.sector,
+            target_sector=target_sector,
+            financing_multiplier=financing_multiplier,
         )
 
         enable_contagion = scope == "entity" and event_class in {"CREDIT", "SUPPLY_CHAIN"}
 
-        result = self.valuation_engine.run_stress_test(
+        val_engine, prof_name = self.get_valuation_engine(profile)
+        result = val_engine.run_stress_test(
             shock=shock,
             run_id=signal.run_id,
             trigger_type="EVENT_TRIGGERED",
@@ -130,6 +191,7 @@ class StressEngine:
             impact_score=impact,
             enable_contagion=enable_contagion,
         )
+        result.portfolio_profile = prof_name
 
         self.acted_signal_ids.add(signal.signal_id)
         return self._mark_exposure(result)
@@ -143,6 +205,8 @@ class StressEngine:
         is_easing: bool = False,
         enable_contagion: bool = False,
         run_id: str = "manual-run",
+        target_sector: Optional[str] = None,
+        profile: Optional[str] = None,
     ) -> StressRunResult:
         """Execute a user-triggered / sandbox stress simulation with custom shock parameters."""
         shock = build_scaled_shock(
@@ -151,9 +215,11 @@ class StressEngine:
             target_entity=target_entity,
             target_scope=target_scope,
             is_easing=is_easing,
+            target_sector=target_sector,
         )
 
-        return self.valuation_engine.run_stress_test(
+        val_engine, prof_name = self.get_valuation_engine(profile)
+        result = val_engine.run_stress_test(
             shock=shock,
             run_id=run_id,
             trigger_type="USER_TRIGGERED",
@@ -162,6 +228,8 @@ class StressEngine:
             impact_score=impact_score,
             enable_contagion=enable_contagion,
         )
+        result.portfolio_profile = prof_name
+        return self._mark_exposure(result)
 
     @staticmethod
     def _mark_exposure(result: StressRunResult) -> StressRunResult:
@@ -176,13 +244,19 @@ class StressEngine:
             out.append(json.loads(path.read_text(encoding="utf-8")))
         return out
 
-    def run_scenario(self, scenario_id: str, run_id: str = "scenario-run") -> StressRunResult:
+    def run_scenario(
+        self,
+        scenario_id: str,
+        run_id: str = "scenario-run",
+        profile: Optional[str] = None,
+    ) -> StressRunResult:
         """Run a named scenario file (e.g. HIST-SVB_2023: the measured SVB-window market move)."""
         scenario = next((s for s in self.list_scenarios() if s["scenario_id"] == scenario_id), None)
         if scenario is None:
             raise KeyError(scenario_id)
         contagion = scenario.get("contagion", {})
-        result = self.valuation_engine.run_stress_test(
+        val_engine, prof_name = self.get_valuation_engine(profile)
+        result = val_engine.run_stress_test(
             shock=shock_from_scenario(scenario),
             run_id=run_id,
             trigger_type="SCENARIO",
@@ -192,6 +266,7 @@ class StressEngine:
             max_hops=int(contagion.get("max_hops", 2) or 2),
             hop_decay=float(contagion.get("hop_decay", 0.6) or 0.6),
         )
+        result.portfolio_profile = prof_name
         return self._mark_exposure(result)
 
     def run_custom_stress(
@@ -202,8 +277,15 @@ class StressEngine:
         loan_pd_increment: float = 0.0,
         lgd_increment: float = 0.0,
         run_id: str = "custom-run",
+        pd_from_spread: bool = False,
+        rating_tiered: bool = False,
+        profile: Optional[str] = None,
     ) -> StressRunResult:
-        """Explicit systemic shock set, e.g. the PS example: equities -10%, rates +200 bp."""
+        """Explicit systemic shock set, e.g. the PS example: equities -10%, rates +200 bp.
+
+        The shocks are applied as given: rating tiers (index-to-rating spread scaling) are off
+        unless requested, because the caller specified the spread move directly.
+        """
         shock = ScaledShock(
             bond_spread_shift_bps=bond_spread_shift_bps,
             loan_pd_increment=loan_pd_increment,
@@ -214,10 +296,14 @@ class StressEngine:
             target_scope="systemic",
             equity_shock_pct=equity_shock_pct,
             catalog_entry="custom",
+            pd_from_spread=pd_from_spread,
+            rating_tiered=rating_tiered,
         )
-        result = self.valuation_engine.run_stress_test(
+        val_engine, prof_name = self.get_valuation_engine(profile)
+        result = val_engine.run_stress_test(
             shock=shock, run_id=run_id, trigger_type="USER_TRIGGERED", event_class="CUSTOM"
         )
+        result.portfolio_profile = prof_name
         return self._mark_exposure(result)
 
     def reset_triggers(self) -> None:

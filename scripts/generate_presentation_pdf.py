@@ -45,6 +45,11 @@ def usd_m(v: float) -> str:
 
 def build_presentation_pdf() -> None:
     m = json.loads((DOCS / "metrics.json").read_text())
+    book = json.loads((REPO_ROOT / "data" / "portfolio" / "wholesale_real.json").read_text())
+    n_issuers = len(book["issuers"])
+    n_sectors = len({i["sector"] for i in book["issuers"]})
+    fred = json.loads((REPO_ROOT / "data" / "market" / "stress_windows.json").read_text()).get(
+        "validation_vs_fred_oas", {}).get("fed_pivot_2023", {}).get("BAMLH0A0HYM2")
     ev, se = m["public_real"]["event"], m["public_real"]["sentiment"]
     ent, imp, perf, sec = m["entity_polygon"], m["market_impact"], m["perf"], m["sec_8k"]
     stress, mod_a = m["stress"], m["module_a"]
@@ -275,7 +280,8 @@ def build_presentation_pdf() -> None:
                     (
                         f"Module A back-test (443 days, k=1.5): active return "
                         f"{a['active_annual_return']:+.2%}/yr, tracking error {a['tracking_error']:.2%}, "
-                        f"t = {a['active_return_t_stat']:.2f}: sentiment reweighting works, no proven alpha."
+                        f"t = {a['active_return_t_stat']:.2f}, break-even cost {a['break_even_cost_bps']:.1f} bp: "
+                        "sentiment reweighting works, no proven alpha."
                     )
                     if a
                     else "Module A back-test: not run.",
@@ -295,9 +301,14 @@ def build_presentation_pdf() -> None:
                 "<b>Flight to quality, measured:</b> in the SVB, COVID and Russia windows the "
                 "10-year Treasury yield <i>fell</i> while spreads widened; only Fed tightening raised "
                 "it. The shock catalog encodes this instead of assuming every crisis lifts yields.",
-                f"<b>Credit triangle:</b> the SVB window's {svb['bond_spread_shift_bps']:+.0f} bp HY "
-                f"spread implies {svb['loan_pd_increment'] * 100:+.1f} pp PD at 60% LGD, independently "
-                "supporting the +150 bp / +2.5 pp single-name credit shock.",
+                f"<b>Duration-corrected spreads, checked against FRED:</b> the SVB window's HY index move is "
+                f"{svb['bond_spread_shift_bps']:+.0f} bp after hedging IEF at matched duration"
+                + (f"; where FRED has ICE BofA OAS history (Fed pivot 2023) the implied move is "
+                   f"{fred['implied_bps']:+.0f} bp vs {fred['actual_oas_bps']:+.0f} bp actual" if fred else "")
+                + ". Loan ECL follows the credit triangle by rating; no provision release in rallies.",
+                f"<b>Real issuers:</b> the wholesale book holds {n_issuers} S&amp;P 100 issuers across "
+                f"{n_sectors} GICS sectors, rated from their latest 10-K interest coverage (SEC XBRL); "
+                "position sizes are synthetic.",
                 f"<b>Retail credit from real transactions:</b> {n_borrowers:,} borrowers and "
                 f"{n_tx:,} card transactions pooled into sector x rating tranches; cyber losses use "
                 "observed fraud rates by sector.",
@@ -311,6 +322,12 @@ def build_presentation_pdf() -> None:
     ]
 
     # 7. Limitations & next steps
+    news_h = m["news_holdout"]
+    human_mae_str = (
+        f"Real-news holdout ({news_h['n_rows']} rows): labels written by an AI agent, not yet "
+        f"human-reviewed; severity MAE vs those labels {news_h['severity_mae']:.2f}, "
+        f"false-trigger rate {news_h['false_auto_trigger_rate']:.1%}."
+    )
     el += [
         Paragraph("Limitations &amp; next steps", title),
         two_col(
@@ -319,15 +336,14 @@ def build_presentation_pdf() -> None:
                     "Headline NLP metrics are on financial <i>tweets</i>; agreement with LLM silver "
                     f"labels on news is lower (sentiment {se['polygon_news_vs_llm_silver_macro_f1']:.2f}).",
                     "Reaction-phrased headlines ('shares slide after...') are often abstained.",
-                    "Severity MAE vs human labels is pending: a 300-row real-news set is sampled "
-                    "(data/eval/holdout_v2_news.todo.csv) and must be labeled by hand.",
+                    human_mae_str,
                     "Simplified valuation: single-period ECL, no convexity, linear DV01; wholesale "
-                    "book and equity sizes are synthetic; retail sleeve is scaled to $50M.",
+                    "positions use representative debt sizing; retail sleeve scaled to $50M.",
                 ]
             ),
             bullets(
                 [
-                    "Label the 300 news rows; report news-domain metrics and intra-annotator agreement.",
+                    "Replace the AI-agent holdout labels with human labels and a second-pass agreement check.",
                     "Fine-tune FinBERT on tweets + news as an optional higher-accuracy tier.",
                     "Systemic impact model on index and yield reactions.",
                     "Longer live capture to evaluate real-time precision of actionable signals.",

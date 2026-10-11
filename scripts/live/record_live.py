@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Live capture recorder: append real GDELT and SEC EDGAR 8-K records to local CSV files.
 
-The application never calls external services (AGENTS.md). Real-time ingestion works by
+The backend application never calls external services directly. Real-time ingestion works by
 running this recorder alongside it: every cycle it appends records it has not seen before to
   data/live/gdelt_live.csv   GDELT 2.0 GKG finance headlines (15-minute files, no API key)
   data/live/sec_8k_live.csv  new Form 8-K filings by S&P 500 issuers (data.sec.gov)
@@ -66,9 +66,19 @@ def save_state(state: dict) -> None:
     STATE.write_text(json.dumps(state, indent=1))
 
 
+def repair_truncated_tail(path: Path) -> None:
+    """Drop a partial last row (recorder killed mid-write) so new rows start on a fresh line."""
+    if not path.exists():
+        return
+    data = path.read_bytes()
+    if data and not data.endswith(b"\n"):
+        path.write_bytes(data[: data.rfind(b"\n") + 1])
+
+
 def append_rows(path: Path, rows: list) -> int:
     if not rows:
         return 0
+    repair_truncated_tail(path)
     existing = set(pd.read_csv(path).record_id) if path.exists() else set()
     fresh = [r for r in rows if r["record_id"] not in existing]
     if fresh:
@@ -173,24 +183,34 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--once", action="store_true")
     ap.add_argument("--interval-min", type=float, default=15.0)
+    ap.add_argument("--interval", type=float, default=None, help="interval in seconds")
     ap.add_argument("--backfill-days", type=int, default=0)
     ap.add_argument("--max-filers", type=int, default=600)
     ap.add_argument("--skip", default="", help="comma list: gdelt,sec")
     args = ap.parse_args()
+    if args.interval is not None:
+        args.interval_min = args.interval / 60.0
     LIVE.mkdir(parents=True, exist_ok=True)
     skip = set(filter(None, args.skip.split(",")))
     while True:
         state = load_state()
         stamp = datetime.now(timezone.utc).isoformat(timespec="seconds")
         g = s = 0
+        ok = False  # at least one source fetched successfully this cycle
         try:  # a failing source must not stop the other one or the recorder
             g = gdelt_cycle(state) if "gdelt" not in skip else 0
+            ok = ok or "gdelt" not in skip
         except Exception as exc:
             print(f"  gdelt cycle failed: {exc}")
         try:
             s = sec_cycle(state, args.backfill_days, args.max_filers) if "sec" not in skip else 0
+            ok = ok or "sec" not in skip
         except Exception as exc:
             print(f"  sec cycle failed: {exc}")
+        state["last_attempt_at"] = stamp
+        state["interval_seconds"] = args.interval_min * 60
+        if ok:  # the live badge measures lag from the last *successful* fetch
+            state["last_fetch_at"] = stamp
         save_state(state)
         print(f"[{stamp}] appended gdelt={g} sec_8k={s}", flush=True)
         if args.once:

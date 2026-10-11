@@ -1,4 +1,4 @@
-"""Counterparty & Supply Chain Contagion Graph Engine (PRD Section 9.3 & Bug B6 fix).
+"""Counterparty & Supply Chain Contagion Graph Engine.
 
 Loads data/graph_edges.csv and computes second-order multi-hop shock propagation
 across customer-supplier and credit linkages using transmission factors and hop decay.
@@ -21,6 +21,7 @@ class ContagionEdge:
     transmission_factor: float
     sign: int
     rationale: str
+    evidence: str = ""
 
 
 class ContagionGraph:
@@ -54,6 +55,7 @@ class ContagionGraph:
                         transmission_factor=float(row.get("transmission_factor", 0.5)),
                         sign=int(row.get("sign", 1)),
                         rationale=row.get("rationale", ""),
+                        evidence=row.get("evidence", ""),
                     )
                     self.edges.append(edge)
                     self.adjacency.setdefault(edge.source_ticker, []).append(edge)

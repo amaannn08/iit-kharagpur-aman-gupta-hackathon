@@ -1,4 +1,4 @@
-"""API tests for manual analysis, SSE events stream, and exports (PRD Section 11 & 12)."""
+"""API tests for manual analysis, SSE events stream, and exports."""
 
 import pytest
 from fastapi.testclient import TestClient
@@ -108,12 +108,12 @@ def test_api_exports_json_and_csv(client: TestClient):
     assert "record_id,source_id,source_type,text" in csv_text
 
 
-def test_api_direct_prd_aliases(client: TestClient):
-    """Verify exact PRD Section 12 endpoints: /api/portfolio and /api/stress."""
+def test_api_direct_route_aliases(client: TestClient):
+    """Verify route aliases: /api/portfolio and /api/stress."""
     # GET /api/portfolio
     port_resp = client.get("/api/portfolio")
     assert port_resp.status_code == 200
-    expected_name = "Synthetic Wholesale Institutional Credit & Rates Portfolio"
+    expected_name = "Wholesale book on real S&P 100 issuers (synthetic positions)"
     assert port_resp.json()["portfolio_name"] == expected_name
 
     # POST /api/stress

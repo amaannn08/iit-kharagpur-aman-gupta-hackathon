@@ -1,4 +1,4 @@
-"""Tests for additive impact severity rubric engine (PRD Section 7.4)."""
+"""Tests for additive impact severity rubric engine."""
 
 from sentinel.contracts.signals import EntityReference
 from sentinel.nlp.severity import SeverityRubricEngine

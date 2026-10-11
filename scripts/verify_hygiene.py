@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Repository hygiene, cryptographic manifest, and offline compliance verifier.
 
-Enforces rules defined in PRD Section 16 and AGENTS.md:
+Enforces compliance and hygiene rules:
 1. Validates all datasets against data/manifest.json (SHA-256 and byte size).
 2. Verifies absence of secrets, credentials, sqlite databases, or model weights (>20MB).
 3. Verifies zero external runtime calls in backend source code.
+4. Verifies zero references to untracked internal process docs in tracked files.
 """
 
 import hashlib
@@ -164,6 +165,54 @@ def check_offline_runtime() -> bool:
     return True
 
 
+def check_no_prd_references() -> bool:
+    """Ensure no git-tracked file references untracked internal process docs."""
+    print("[HYGIENE] Checking for untracked process documentation references in tracked files...")
+    import subprocess
+
+    try:
+        tracked_output = subprocess.check_output(
+            ["git", "ls-files"], cwd=REPO_ROOT, text=True
+        )
+        tracked_files = [line.strip() for line in tracked_output.splitlines() if line.strip()]
+    except Exception as exc:
+        print(f"FAILED to list git tracked files: {exc}", file=sys.stderr)
+        return False
+
+    violations = []
+    # Avoid literal target strings in this verifier itself
+    target_docs = [
+        "docs/" + "PRD",
+        "PRD" + ".md",
+        "AGENTS" + ".md",
+        "CODEBASE_AUDIT_" + "AND_PS_REVIEW_REPORT.md",
+        "PRD" + " Section",
+        "PRD" + " targets",
+    ]
+
+    for rel_path in tracked_files:
+        if rel_path in {"scripts/verify_hygiene.py", ".gitignore"}:
+            continue
+        file_path = REPO_ROOT / rel_path
+        if not file_path.exists() or file_path.is_dir():
+            continue
+        try:
+            content = file_path.read_text(encoding="utf-8", errors="ignore")
+        except Exception:
+            continue
+        for doc in target_docs:
+            if doc in content:
+                violations.append(f"{rel_path} references untracked doc '{doc}'")
+
+    if violations:
+        for v in violations:
+            print(f"FAILED: {v}", file=sys.stderr)
+        return False
+
+    print("  OK: Zero references to untracked process docs in tracked files.")
+    return True
+
+
 def main() -> int:
     print("=" * 70)
     print(" S&P Sentinel Repository Hygiene & Manifest Verification")
@@ -172,8 +221,9 @@ def main() -> int:
     manifest_ok = check_manifest()
     files_ok = check_forbidden_files()
     offline_ok = check_offline_runtime()
+    docs_ok = check_no_prd_references()
 
-    if manifest_ok and files_ok and offline_ok:
+    if manifest_ok and files_ok and offline_ok and docs_ok:
         print("=" * 70)
         print(" ALL HYGIENE AND MANIFEST CHECKS PASSED SUCCESSFULLY.")
         print("=" * 70)

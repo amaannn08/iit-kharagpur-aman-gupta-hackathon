@@ -1,4 +1,4 @@
-"""Event classification engine (PRD Section 7.3).
+"""Event classification engine.
 
 Primary model: models/event_v2.joblib, trained by scripts/models/train_event.py on committed
 real labeled data (HF twitter-financial-news topic, SEC 8-K item statements, weak-labeled real
@@ -72,6 +72,11 @@ GATES: Dict[str, re.Pattern] = {
     "PRODUCT": re.compile(
         r"\b(launch\w*|unveil\w*|introduc\w*|releas\w*|approv\w*|recalls?|recalled|debut\w*|"
         r"rolls? out|new (product|model|chip|drug|device|service|phone|vehicle)|fda|clinical trial)\b",
+        re.I,
+    ),
+    "M_AND_A": re.compile(
+        r"\b(acquire[sd]?|acquiring|acquisition[s]?|buyout|takeover|buys?|bought|buying|"
+        r"purchase[sd]?|purchasing|merger[s]?|merge[sd]?|to be acquired)\b",
         re.I,
     ),
 }
@@ -217,6 +222,20 @@ class EventClassifier:
         top_label = str(self.pipeline.classes_[best])
         top_conf = round(float(probs[best]), 4)
         dist = {str(c): round(float(p), 4) for c, p in zip(self.pipeline.classes_, probs)}
+
+        # Disambiguate M&A deals financed with debt vs actual credit distress
+        ma_syntax = re.compile(
+            r"\b(?:to\s+)?(?:acquire[sd]?|acquiring|to\s+be\s+acquired\s+by|buyout|takeover|merger)\b",
+            re.I,
+        )
+        if (
+            top_label == "CREDIT"
+            and not CREDIT_DISTRESS.search(text)
+            and ma_syntax.search(text)
+            and dist.get("M_AND_A", 0.0) >= 0.15
+        ):
+            top_label = "M_AND_A"
+            top_conf = max(0.65, dist.get("M_AND_A", 0.65))
 
         if top_conf < self.confidence_threshold or top_label == "OTHER":
             return EventOutput(

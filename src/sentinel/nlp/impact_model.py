@@ -1,4 +1,4 @@
-"""Market-calibrated impact model (PRD Section 7.4, plan WS5).
+"""Market-calibrated impact model.
 
 The additive rubric explains a score, but on 1,402 real 2023 article-ticker events it had no
 relationship with the next-day market reaction (Spearman -0.04). This model is trained by
@@ -65,7 +65,14 @@ def impact_features(
 class LearnedImpactModel:
     """Loads models/impact_v2.joblib; predicts expected |abnormal z| and its 1-10 decile."""
 
-    def __init__(self, path: Optional[Union[str, Path]] = None) -> None:
+    def __init__(self, path: Optional[Union[str, Path, dict]] = None) -> None:
+        if isinstance(path, dict):
+            self._model = path["model"]
+            self.features = path["features"]
+            self.decile_edges = np.asarray(path["decile_edges"])
+            self.version = "impact_temporal_holdout"
+            self.available = True
+            return
         self.path = Path(path) if path else settings.base_dir / "models" / "impact_v2.joblib"
         self.available = False
         self.version = "unavailable"

@@ -29,6 +29,7 @@ _spec.loader.exec_module(convert_real)
             TimestampQuality.ORIGINAL,
         ),
         ("real/gdelt/snapshot.csv", NewsAdapter, SourceType.NEWS, TimestampQuality.ORIGINAL),
+        ("real/gdelt/svb_weekend.csv", NewsAdapter, SourceType.NEWS, TimestampQuality.ORIGINAL),
         (
             "real/stock_tweets/sample.csv",
             SocialAdapter,
@@ -103,3 +104,59 @@ def test_committed_data_files_contain_no_carriage_returns():
     """.gitattributes forces eol=lf; any CR would make clone bytes differ from manifest hashes."""
     for p in [p for d in ("real", "train", "universe") for p in (DATA / d).rglob("*.csv")]:
         assert b"\r" not in p.read_bytes(), p
+
+
+def test_wholesale_real_portfolio_contract():
+    """Verify data/portfolio/wholesale_real.json conforms to real-issuer portfolio contract."""
+    path = DATA / "portfolio" / "wholesale_real.json"
+    assert path.exists(), "wholesale_real.json must exist"
+    data = json.loads(path.read_text(encoding="utf-8"))
+
+    assert data["is_synthetic"] is True
+    assert "provenance" in data
+    assert "financials" in data["provenance"]
+    assert "pd" in data["provenance"]
+
+    # Read universe entity IDs
+    universe_tickers = set()
+    with open(DATA / "universe" / "entities.csv", newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for r in reader:
+            universe_tickers.add(r["ticker"].upper())
+
+    positions = data["positions"]
+    issuers = {p["entity_id"] for p in positions}
+    sectors = {p["sector"] for p in positions}
+
+    assert len(issuers) >= 18, f"Expected >= 18 issuers, got {len(issuers)}"
+    assert len(sectors) >= 9, f"Expected >= 9 sectors, got {len(sectors)}"
+
+    total_value = sum(p["market_value"] for p in positions)
+    assert abs(total_value - 500_000_000.0) <= 1.0, f"Expected $500M ± 1, got {total_value}"
+
+    issuer_exposures = {}
+    for p in positions:
+        eid = p["entity_id"]
+        if p["asset_class"] in ("loan", "bond", "equity"):
+            assert eid in universe_tickers, f"Issuer {eid} not in universe entities"
+            issuer_exposures[eid] = issuer_exposures.get(eid, 0.0) + p["market_value"]
+
+    # Single-name cap <= 8% ($40M) on corporate issuers
+    for eid, exposure in issuer_exposures.items():
+        assert exposure <= 40_000_000.0 + 1e-2, f"Issuer {eid} exceeds 8% cap ($40M): {exposure}"
+
+
+
+def test_wholesale_book_is_strict_json_with_rating_basis():
+    import json
+
+    from sentinel.config import settings
+
+    raw = (settings.data_dir / "portfolio" / "wholesale_real.json").read_text()
+    book = json.loads(raw, parse_constant=lambda c: (_ for _ in ()).throw(ValueError(c)))
+    for issuer in book["issuers"]:
+        assert issuer["rating_basis"]
+        if issuer["sector"] == "Financials":
+            assert issuer["rating_basis"] == "equity_to_assets" and issuer["coverage"] is None
+        if issuer["coverage"] is not None:
+            assert issuer["coverage"] > 0

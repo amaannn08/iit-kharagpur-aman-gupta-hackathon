@@ -4,7 +4,7 @@ Subscribes to the NLP engine's sentiment score. For each stock in the mock index
   - positive sentiment increases its weight, negative sentiment decreases it (PS);
   - sentiment is a time-decayed exponential moving average of signal scores per ticker;
   - target weight = base x (1 + k x EMA), long-only, capped at 20% per name and 40% per
-    sector, renormalized to sum to 1 (PRD Section 10).
+    sector, renormalized to sum to 1.
 Every rebalance is recorded with turnover = 0.5 x sum |w_new - w_old| and a reason per name.
 This is a mock index for demonstration, not an S&P product.
 """
@@ -48,6 +48,7 @@ class IndexRebalancer:
     halflife_days: float = 5.0  # sentiment decays toward neutral without new signals
     name_cap: float = 0.20
     sector_cap: float = 0.40
+    no_trade_band: float = 0.0025  # skip trade if |target - current| < band
 
     def __post_init__(self) -> None:
         self.reset()
@@ -127,7 +128,18 @@ class IndexRebalancer:
         self._decay(ticker, now)
         self.ema[ticker] = (1 - self.alpha) * self.ema[ticker] + self.alpha * score
         self.last_seen[ticker] = now
-        new = self._target_weights()
+        raw = self._target_weights()
+        if self.no_trade_band > 0:
+            new = {}
+            for t in self.universe:
+                if abs(raw[t] - self.weights[t]) < self.no_trade_band:
+                    new[t] = self.weights[t]
+                else:
+                    new[t] = raw[t]
+            total = sum(new.values()) or 1.0
+            new = {t: round(v / total, 6) for t, v in new.items()}
+        else:
+            new = raw
         turnover = round(0.5 * sum(abs(new[t] - self.weights[t]) for t in new), 6)
         reasons = {}
         for t, w in new.items():

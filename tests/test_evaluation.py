@@ -1,4 +1,4 @@
-"""Evaluation outputs (docs/metrics.json) meet the PRD targets on real held-out data."""
+"""Evaluation outputs (docs/metrics.json) meet accuracy targets on real held-out data."""
 
 import importlib.util
 import json
@@ -23,10 +23,26 @@ def test_committed_metrics_meet_targets_on_real_data():
     assert m["public_real"]["event"]["precision_when_fired"] >= 0.88
     assert m["public_real"]["sentiment"]["macro_f1"] >= t["sentiment_macro_f1"]
     assert m["entity_polygon"]["precision"] >= t["entity_precision"]
+    assert m["entity_polygon"]["recall_mentioned"] >= t["entity_recall_mentioned"]
     assert m["market_impact"]["learned_oof_spearman_ci95"][0] > 0
     assert m["perf"]["latency_p95_s"] <= t["p95_latency_s"]
     assert m["perf"]["peak_rss_gb"] <= t["peak_rss_gb"]
     assert all(s["reconciled"] for s in m["stress"]["scenarios"].values())
+    pl = m["pipeline"]
+    assert pl["false_trigger_rate_max_source"] <= t["false_trigger_rate_routine"]
+    assert pl["eligible_vs_market"]["lift_vs_base_rate"] > t["trigger_precision_lift"]
+    nh = m["news_holdout"]
+    assert nh["sha256_matches_frozen"]
+    assert nh["false_auto_trigger_rate"] <= t["false_trigger_rate_routine"]
+
+
+def test_holdout_label_provenance_is_honest():
+    nh = _metrics()["news_holdout"]
+    assert nh["label_source"] in ("human", "ai_agent")
+    if nh["label_source"] != "human":
+        assert not nh["human_reviewed"]
+    # agreement is only reported from validated second-pass rows (label_cli.validate_relabel)
+    assert (nh["annotator_agreement_kappa"] is None) == (nh["agreement_rows"] == 0)
 
 
 def test_synthetic_set_is_labeled_regression_only():
@@ -42,3 +58,13 @@ def test_readme_injection_replaces_only_marked_block(tmp_path, monkeypatch):
         readme.read_text()
         == "intro\n<!-- METRICS:START -->\n| new |\n<!-- METRICS:END -->\noutro\n"
     )
+
+
+def test_headline_rows_survive_empty_pipeline_results():
+    m = _metrics()
+    pl = dict(m["pipeline"])
+    empty = {"n_with_market_outcome": 0, "precision_abs_z_ge_2": None, "precision_ci95": None,
+             "lift_vs_base_rate": None, "recall_abs_z_ge_3": None, "recall_ci95": None}
+    pl["eligible_vs_market"] = pl["triggers_vs_market"] = empty
+    rows = run_evaluation.headline_rows({**m, "pipeline": pl})
+    assert any("n/a" in " ".join(r) for r in rows)

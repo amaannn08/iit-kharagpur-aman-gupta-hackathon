@@ -1,4 +1,4 @@
-"""Tests for exact-text hash deduplication (PRD Section 8.1)."""
+"""Tests for exact-text hash deduplication."""
 
 from sentinel.replay.dedup import (
     ExactTextDeduplicator,

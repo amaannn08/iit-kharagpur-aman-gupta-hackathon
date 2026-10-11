@@ -1,4 +1,4 @@
-"""Tests for EntityLinker resolution and disambiguation (PRD Section 7.1)."""
+"""Tests for EntityLinker resolution and disambiguation."""
 
 from sentinel.nlp.entities import EntityLinker
 
@@ -118,3 +118,45 @@ def test_universe_marks_demo_issuers_synthetic():
     assert linker.entities["APEX"].is_synthetic is True
     assert linker.entities["AAPL"].is_synthetic is False
     assert len([e for e in linker.entities.values() if not e.is_synthetic]) >= 500
+
+
+def test_historical_constituents_resolution():
+    linker = EntityLinker()
+    assert linker.entities["SIVB"].is_historical is True
+    assert linker.entities["SIVB"].is_synthetic is False
+    assert linker.entities["FRC"].is_historical is True
+    assert linker.entities["SBNY"].is_historical is True
+
+    ref_svb, _ = linker.resolve("Silicon Valley Bank collapsed amid massive deposit run")
+    assert ref_svb.ticker == "SIVB"
+    assert ref_svb.sector == "Financials"
+
+    ref_frc, _ = linker.resolve("First Republic Bank shares plunged 60% following contagion fears")
+    assert ref_frc.ticker == "FRC"
+
+    ref_sbny, _ = linker.resolve("Regulators close Signature Bank to prevent systemic fallout")
+    assert ref_sbny.ticker == "SBNY"
+
+
+def test_share_classes_and_possessive_entity_names():
+    linker = EntityLinker()
+    # Alphabet / Google share classes resolve to canonical GOOGL
+    ref_goog, _ = linker.resolve("Alphabet's Google unveils new generative AI tools for cloud")
+    assert ref_goog.ticker == "GOOGL"
+
+    # Bare GOOG resolves to GOOGL
+    ref_bare, _ = linker.resolve("Trading volume surged for GOOG shares in after-hours")
+    assert ref_bare.ticker == "GOOGL"
+
+    # Cisco with shares
+    ref_csco, _ = linker.resolve("Cisco shares gained 3% on earnings beat")
+    assert ref_csco.ticker == "CSCO"
+
+    # Archer-Daniels-Midland
+    ref_adm, _ = linker.resolve("Archer-Daniels-Midland reports higher quarterly operating profit")
+    assert ref_adm.ticker == "ADM"
+
+    # Meta possessive with financial context
+    ref_meta, _ = linker.resolve("Meta's advertising revenue gained 15% year-over-year")
+    assert ref_meta.ticker == "META"
+

@@ -34,15 +34,28 @@ class Settings(BaseSettings):
     default_replay_speed: str = "1x"
     max_queue_size: int = 1000
 
-    # Module B portfolio: wholesale book first, then sleeves (relative to data_dir)
+    # Module B portfolio profiles: real_issuers (default) vs synthetic_demo
+    portfolio_profiles: Dict[str, List[str]] = {
+        "real_issuers": [
+            "portfolio/wholesale_real.json",
+            "portfolio/credit_sleeve.json",
+            "portfolio/equity_sleeve.json",
+        ],
+        "synthetic_demo": [
+            "portfolio/demo_book.json",
+            "portfolio/credit_sleeve.json",
+            "portfolio/equity_sleeve.json",
+        ],
+    }
+    default_portfolio_profile: str = "real_issuers"
     portfolio_files: List[str] = [
-        "wholesale_positions.json",
+        "portfolio/wholesale_real.json",
         "portfolio/credit_sleeve.json",
         "portfolio/equity_sleeve.json",
     ]
 
     # Replay sources: name -> (path relative to data_dir, adapter kind, badge).
-    # Badges follow AGENTS.md: replay data is labeled Synthetic Scenario or Historical Replay;
+    # Source badges: replay data is labeled Synthetic Scenario or Historical Replay;
     # LIVE CAPTURE files are written by scripts/live/record_live.py (the app itself stays offline).
     replay_sources: Dict[str, Tuple[str, str, str]] = {
         "news_demo": ("news_demo.csv", "news", "SYNTHETIC SCENARIO"),
@@ -50,6 +63,7 @@ class Settings(BaseSettings):
         "polygon_2023": ("real/polygon_news/polygon_news.csv", "news", "HISTORICAL REPLAY"),
         "stock_tweets": ("real/stock_tweets/sample.csv", "social", "HISTORICAL REPLAY"),
         "gdelt_snapshot": ("real/gdelt/snapshot.csv", "news", "HISTORICAL REPLAY"),
+        "gdelt_svb_2023": ("real/gdelt/svb_weekend.csv", "news", "HISTORICAL REPLAY"),
         "gdelt_live": ("live/gdelt_live.csv", "news", "LIVE CAPTURE"),
         "sec_8k_live": ("live/sec_8k_live.csv", "news", "LIVE CAPTURE"),
     }
@@ -57,6 +71,10 @@ class Settings(BaseSettings):
     # Decision gating thresholds
     action_impact_threshold: int = 7  # signals with score > 7 trigger portfolio action
     action_confidence_threshold: float = 0.50  # minimum model confidence for action eligibility
+
+    # Live capture tailer parameters
+    live_tail_enabled: bool = True
+    live_poll_seconds: float = 30.0
 
 
 settings = Settings()

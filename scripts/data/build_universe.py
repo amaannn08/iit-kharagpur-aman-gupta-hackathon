@@ -162,8 +162,40 @@ def build() -> list:
                 "sector": r.get("sector", "").strip(),
                 "aliases": legacy_aliases,
                 "is_synthetic": True,
+                "is_historical": False,
                 "cik": "",
             }
+
+    HISTORICAL_CONSTITUENTS = {
+        "SIVB": {
+            "canonical_name": "SVB Financial Group",
+            "sector": "Financials",
+            "aliases": ["SVB Financial Group", "Silicon Valley Bank", "SVB"],
+            "cik": "719739",
+        },
+        "FRC": {
+            "canonical_name": "First Republic Bank",
+            "sector": "Financials",
+            "aliases": ["First Republic Bank", "First Republic"],
+            "cik": "1132979",
+        },
+        "SBNY": {
+            "canonical_name": "Signature Bank",
+            "sector": "Financials",
+            "aliases": ["Signature Bank"],
+            "cik": "1288784",
+        },
+    }
+    for t, info in HISTORICAL_CONSTITUENTS.items():
+        rows[t] = {
+            "ticker": t,
+            "canonical_name": info["canonical_name"],
+            "sector": info["sector"],
+            "aliases": set(info["aliases"]),
+            "is_synthetic": False,
+            "is_historical": True,
+            "cik": info["cik"],
+        }
 
     # Each alias gets exactly one owner (share classes such as GOOG/GOOGL both clean to
     # "Alphabet"): prefer the ticker whose curated BRANDS list contains it, else the first.
@@ -189,6 +221,7 @@ def build() -> list:
                 "ambiguous_aliases": "|".join(a for a in aliases if is_ambiguous(a)),
                 "is_synthetic": str(r["is_synthetic"]).lower(),
                 "cik": r["cik"],
+                "is_historical": str(r.get("is_historical", False)).lower(),
             }
         )
     return out

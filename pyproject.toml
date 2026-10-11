@@ -54,6 +54,7 @@ dev = [
     "pillow>=12.3.0",
     "matplotlib>=3.11.2",
     "reportlab>=5.0.1",
+    "pyarrow>=20.0.0",  # scripts/run_evaluation.py reads data/market/*.parquet
 ]
 
 # CPU-only PyTorch for the optional `nlp` extra (the default index pulls the ~5.7 GB CUDA build).

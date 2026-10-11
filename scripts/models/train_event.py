@@ -119,6 +119,15 @@ def abstention_stats(model, x, y, thr):
     }
 
 
+def sec_split(sec: pd.DataFrame) -> tuple:
+    """(train, held-out) 8-K rows, split by accession. The single definition of the split:
+    scripts/run_evaluation.py uses it to keep its routine-filing controls out of training."""
+    train_ids, test_ids = train_test_split(
+        np.asarray(sorted(sec.accession.unique()), dtype=object), test_size=0.2, random_state=SEED
+    )
+    return sec[sec.accession.isin(train_ids)], sec[sec.accession.isin(test_ids)]
+
+
 def main() -> None:
     topic_train = DATA / "train" / "hf_fin_topic" / "topic_train.csv"
     topic_valid = DATA / "train" / "hf_fin_topic" / "topic_valid.csv"
@@ -133,25 +142,36 @@ def main() -> None:
         d["y"] = [ps_aligned_label(lab, t) for lab, t in zip(d.label, d.text)]
 
     sec = pd.read_csv(sec_path)
-    sec_train_ids, sec_test_ids = train_test_split(
-        np.asarray(sorted(sec.accession.unique()), dtype=object), test_size=0.2, random_state=SEED
-    )
-    sec["text"] = sec.text.map(clean_for_classifier)
-    sec_train = sec[sec.accession.isin(sec_train_ids)].rename(columns={"label": "y"})
-    sec_test = sec[sec.accession.isin(sec_test_ids)].rename(columns={"label": "y"})
+    sec_train, sec_test = sec_split(sec)
+    sec_train = sec_train.assign(text=sec_train.text.map(clean_for_classifier)).rename(columns={"label": "y"})
+    sec_test = sec_test.assign(text=sec_test.text.map(clean_for_classifier)).rename(columns={"label": "y"})
 
     weak = weak_labeled_headlines()
     weak["text"] = weak.text.map(clean_for_classifier)
     seeds = pd.read_csv(seeds_path)
     seeds = seeds[seeds.label.isin(["CYBER", "SUPPLY_CHAIN"])].rename(columns={"label": "y"})
+    seeds["text"] = seeds.text.map(clean_for_classifier)
 
-    train_all = pd.concat(
-        [tr[["text", "y"]], sec_train[["text", "y"]], weak, pd.concat([seeds[["text", "y"]]] * 5)],
-        ignore_index=True,
+    base = pd.concat([tr[["text", "y"]], sec_train[["text", "y"]], weak], ignore_index=True)
+    base = base.drop_duplicates("text")  # finding F
+    n_overlap = int(base.text.isin(set(va.text)).sum())
+    base = base[~base.text.isin(set(va.text))]  # no exact overlap with test
+
+    counts = base.y.value_counts()
+    singletons = base[base.y.isin(counts[counts < 2].index)]
+    stratifiable = base[~base.y.isin(counts[counts < 2].index)]
+    fit_base, dev_df = train_test_split(
+        stratifiable, test_size=0.1, random_state=SEED, stratify=stratifiable.y
     )
-    fit_df, dev_df = train_test_split(
-        train_all, test_size=0.1, random_state=SEED, stratify=train_all.y
+    fit_base = pd.concat([fit_base, singletons], ignore_index=True)
+
+    seed_fit, seed_dev = train_test_split(
+        seeds[["text", "y"]], test_size=0.2, random_state=SEED, stratify=seeds.y
     )
+    fit_df = pd.concat([fit_base] + [seed_fit] * 5, ignore_index=True)  # oversample fit only
+    dev_df = pd.concat([dev_df, seed_dev], ignore_index=True)  # each dev seed once
+
+    assert not set(fit_df.text) & set(dev_df.text), "fit/dev text overlap"
 
     model = build_model().fit(fit_df.text, fit_df.y)
     threshold = choose_threshold(model, dev_df.text, dev_df.y)
@@ -201,6 +221,13 @@ def main() -> None:
         "algorithm": "TF-IDF (1-2 gram, 60k) + isotonic-calibrated logistic regression",
         "classes": list(model.classes_),
         "abstain_threshold": threshold,
+        "threshold_previous": 0.55,
+        "leakage_checks": {
+            "fit_dev_overlap": int(len(set(fit_df.text) & set(dev_df.text))),
+            "train_test_exact_overlap_removed": n_overlap,
+            "seed_rows_fit": int(len(seed_fit)),
+            "seed_rows_dev": int(len(seed_dev)),
+        },
         "reproducibility": "metrics reproduce to 4 d.p.; artifact bytes can differ between runs "
         "because multithreaded BLAS changes float rounding in the solver",
         "threshold_selection": f"smallest threshold with precision >= {TARGET_PRECISION} on a 10% dev split of training data",
