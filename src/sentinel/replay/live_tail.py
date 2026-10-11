@@ -16,6 +16,43 @@ from sentinel.replay.controller import ReplayController
 logger = logging.getLogger(__name__)
 
 
+# A quoted field may span lines, but a record still open after this many lines is malformed
+# (e.g. a row truncated when the recorder was killed); it is skipped instead of blocking the file.
+MAX_RECORD_LINES = 20
+
+
+def complete_rows(chunk: bytes) -> Tuple[bytes, int]:
+    """Complete CSV records at the start of chunk, and how many bytes they (and any skipped
+    malformed record) span. Single pass: each line is scanned once.
+
+    The unterminated last line, or a record whose quoted field is still open, is left for the
+    next poll; the recorder may be mid-write.
+    """
+    lines = chunk.splitlines(keepends=True)
+    good: List[bytes] = []
+    consumed = 0  # bytes safely past (emitted or skipped)
+    i = 0
+    while i < len(lines):
+        rec, open_quote, j = [], False, i
+        while j < len(lines) and lines[j].endswith(b"\n"):
+            rec.append(lines[j])
+            open_quote ^= lines[j].count(b'"') % 2 == 1
+            j += 1
+            if not open_quote or len(rec) > MAX_RECORD_LINES:
+                break
+        if not rec or (open_quote and len(rec) <= MAX_RECORD_LINES):
+            break  # unterminated or still-open record: wait for more data
+        if open_quote:  # malformed: skip its first line and resynchronise on the next
+            logger.warning("Skipping malformed live CSV line: %r", rec[0][:120])
+            consumed += len(rec[0])
+            i += 1
+            continue
+        good.extend(rec)
+        consumed += sum(len(x) for x in rec)
+        i = j
+    return b"".join(good), consumed
+
+
 def parse_incremental_csv(
     file_path: Path, offset: int
 ) -> Tuple[List[InputRecord], int, Optional[datetime]]:
@@ -45,13 +82,9 @@ def parse_incremental_csv(
         logger.warning("Error reading %s at offset %d: %s", file_path, offset, exc)
         return [], offset, None
 
-    # Consume complete rows only: the recorder may be mid-write. Cut at the last newline that
-    # is not inside a quoted field (balanced quotes); the remainder is read on the next poll.
-    end = chunk.rfind(b"\n") + 1
-    while end and chunk[:end].count(b'"') % 2:
-        end = chunk.rfind(b"\n", 0, end - 1) + 1
-    new_offset = offset + end
-    new_text = chunk[:end].decode("utf-8", "replace")
+    good, consumed = complete_rows(chunk)
+    new_offset = offset + consumed
+    new_text = good.decode("utf-8", "replace")
     if not new_text.strip():
         return [], new_offset, None
 
@@ -156,18 +189,21 @@ class LiveTailer:
         """Compute live capture status, lag, and recorder process health."""
         mode = self._mode()
         state_file = self.live_dir / ".state.json"
-        last_fetch_dt: Optional[datetime] = None
-        last_fetch_str: Optional[str] = None
+        state_data: Dict[str, Any] = {}
         if state_file.exists():
             try:
                 state_data = json.loads(state_file.read_text(encoding="utf-8"))
-                last_fetch_str = state_data.get("last_fetch_at")
-                if last_fetch_str:
-                    last_fetch_dt = datetime.fromisoformat(last_fetch_str.replace("Z", "+00:00"))
             except Exception:
                 pass
-
-        if not last_fetch_dt and state_file.exists():
+        last_fetch_dt: Optional[datetime] = None
+        last_fetch_str: Optional[str] = state_data.get("last_fetch_at")
+        if last_fetch_str:
+            try:
+                last_fetch_dt = datetime.fromisoformat(last_fetch_str.replace("Z", "+00:00"))
+            except ValueError:
+                last_fetch_str = None
+        elif state_file.exists() and "last_attempt_at" not in state_data:
+            # state written by an older recorder that did not record fetch times
             last_fetch_dt = datetime.fromtimestamp(state_file.stat().st_mtime, tz=timezone.utc)
             last_fetch_str = last_fetch_dt.isoformat(timespec="seconds")
 
@@ -176,8 +212,10 @@ class LiveTailer:
         if last_fetch_dt:
             lag_seconds = max(0.0, (now - last_fetch_dt).total_seconds())
 
-        # the recorder writes every cycle; alive = fetched within two of our polling intervals
-        recorder_alive = bool(lag_seconds is not None and lag_seconds <= max(600.0, 2 * self.poll_interval))
+        # alive = a successful fetch within two of the recorder's own cycles (it records its
+        # interval in .state.json; 15 min default)
+        recorder_interval = float(state_data.get("interval_seconds", 900.0))
+        recorder_alive = bool(lag_seconds is not None and lag_seconds <= 2 * recorder_interval)
 
         rec_str = (
             self.last_record_at.isoformat(timespec="seconds") if self.last_record_at else None
