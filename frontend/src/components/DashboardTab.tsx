@@ -561,12 +561,14 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
               {totalSignalsCount} total
             </span>
           </div>
-          <Gauge
-            eligibleCount={actionableCount}
-            blockedCount={blockedCount}
-            duplicateCount={effectiveDuplicateCount}
-            label="Action Eligible"
-          />
+          <div className="flex-1 flex flex-col items-center justify-center py-1">
+            <Gauge
+              eligibleCount={actionableCount}
+              blockedCount={blockedCount}
+              duplicateCount={effectiveDuplicateCount}
+              label="Action Eligible"
+            />
+          </div>
         </Card>
 
         {/* Time Tracker: Replay Clock (Hero Accent Card) (3 cols) */}
@@ -574,24 +576,22 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
           variant="hero"
           className="lg:col-span-3 flex flex-col justify-between text-theme-hero-text"
         >
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-semibold text-theme-hero-subtle flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-theme-hero-subtle" />
-                Replay Clock
-              </span>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-theme-hero-text/20 text-theme-hero-text">
-                {replayStatus?.state?.toUpperCase() || 'IDLE'}
-              </span>
-            </div>
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs font-semibold text-theme-hero-subtle flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-theme-hero-subtle" />
+              Replay Clock
+            </span>
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-theme-hero-text/20 text-theme-hero-text">
+              {replayStatus?.state?.toUpperCase() || 'IDLE'}
+            </span>
+          </div>
 
-            <div className="my-5 text-center">
-              <div className="text-3xl md:text-4xl font-bold font-mono tracking-tight text-theme-hero-text">
-                {simulatedTimeFormatted}
-              </div>
-              <div className="text-[11px] text-theme-hero-subtle mt-1 font-mono">
-                {replayStatus?.current_simulated_at?.slice(0, 10) || '—'}
-              </div>
+          <div className="flex-1 flex flex-col items-center justify-center my-auto py-2 text-center">
+            <div className="text-3xl md:text-4xl font-bold font-mono tracking-tight text-theme-hero-text">
+              {simulatedTimeFormatted}
+            </div>
+            <div className="text-[11px] text-theme-hero-subtle mt-1 font-mono">
+              {replayStatus?.current_simulated_at?.slice(0, 10) || '—'}
             </div>
           </div>
 
