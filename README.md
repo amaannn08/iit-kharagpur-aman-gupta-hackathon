@@ -4,7 +4,7 @@
 **College Email ID:** amangupta08@kgpian.iitkgp.ac.in
 **College / Campus:** Indian Institute of Technology Kharagpur
 **Demo Video Link:** [https://youtu.be/2oVdwJt_VmY](https://youtu.be/2oVdwJt_VmY) (unlisted, 4:42)
-**Slide Deck Link (if hosted externally):** in repository: [docs/presentation.pdf](docs/presentation.pdf)
+**Slide Deck Link (if hosted externally):** in repository: [docs/presentation.pdf](docs/presentation.pdf); also on [Google Drive](https://drive.google.com/file/d/11TXptV-Sr2AUZlnngIkWSbXMobA9RWfk/view?usp=sharing)
 
 ## 1. Project Overview / Problem Statement & Approach
 
