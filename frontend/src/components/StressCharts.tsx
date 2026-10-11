@@ -25,7 +25,7 @@ const ASSET_ORDER = ['loan', 'bond', 'equity', 'cash'];
 
 /** P&L waterfall: funded baseline, one bar per loss component (or asset class fallback), stressed. */
 export function waterfallData(r: StressRunResult) {
-  const rows: { name: string; base: number; delta: number; kind: 'total' | 'loss' | 'gain' }[] = [];
+  const rows: { name: string; base: number; delta: number; kind: 'total' | 'loss' | 'gain'; pnl?: number }[] = [];
   const baseline = r.funded_baseline_value_usd ?? r.baseline_total_book_value_usd;
   rows.push({ name: 'Funded baseline', base: 0, delta: baseline, kind: 'total' });
   let level = baseline;
@@ -48,6 +48,7 @@ export function waterfallData(r: StressRunResult) {
           base: d < 0 ? level + d : level,
           delta: Math.abs(d),
           kind: d < 0 ? 'loss' : 'gain',
+          pnl: d,
         });
         level += d;
       }
@@ -57,11 +58,23 @@ export function waterfallData(r: StressRunResult) {
     classes.sort((a, b) => ASSET_ORDER.indexOf(a.asset_class) - ASSET_ORDER.indexOf(b.asset_class));
     for (const a of classes) {
       const d = a.total_pnl_usd;
-      rows.push({ name: a.asset_class, base: d < 0 ? level + d : level, delta: Math.abs(d), kind: d < 0 ? 'loss' : 'gain' });
+      rows.push({
+        name: a.asset_class,
+        base: d < 0 ? level + d : level,
+        delta: Math.abs(d),
+        kind: d < 0 ? 'loss' : 'gain',
+        pnl: d,
+      });
       level += d;
     }
     const deriv = r.derivative_mtm_change_usd ?? 0;
-    rows.push({ name: 'swap MTM', base: deriv < 0 ? level + deriv : level, delta: Math.abs(deriv), kind: deriv < 0 ? 'loss' : 'gain' });
+    rows.push({
+      name: 'swap MTM',
+      base: deriv < 0 ? level + deriv : level,
+      delta: Math.abs(deriv),
+      kind: deriv < 0 ? 'loss' : 'gain',
+      pnl: deriv,
+    });
     level += deriv;
   }
   rows.push({ name: 'After stress', base: 0, delta: level, kind: 'total' });
@@ -110,6 +123,50 @@ export function StressCharts({ result, onResult }: Props) {
     After: s.stressed_value_usd,
     pnl: s.total_pnl_usd,
   }));
+
+  const wData = result ? waterfallData(result) : [];
+  let waterfallYDomain: [number, number] = ['auto' as any, 'auto' as any];
+  if (wData.length > 0) {
+    const levels: number[] = [];
+    for (const row of wData) {
+      if (row.kind === 'total') {
+        levels.push(row.delta);
+      } else {
+        levels.push(row.base);
+        levels.push(row.base + row.delta);
+      }
+    }
+    const minVal = Math.min(...levels);
+    const maxVal = Math.max(...levels);
+    const span = Math.max(maxVal - minVal, 2e6);
+    const padding = Math.max(span * 0.15, 1e6);
+    const domainMin = Math.max(0, Math.floor((minVal - padding) / 1e6) * 1e6);
+    const domainMax = Math.ceil((maxVal + padding) / 1e6) * 1e6;
+    waterfallYDomain = [domainMin, domainMax];
+  }
+
+  const renderWaterfallDeltaLabel = (props: any) => {
+    const row = wData[props.index];
+    if (!row || row.kind === 'total') return <g />;
+    const val = row.pnl ?? (row.kind === 'loss' ? -row.delta : row.delta);
+    const text = `${val > 0 ? '+' : val < 0 ? '-' : ''}$${Math.abs(val / 1e6).toFixed(2)}M`;
+    const x = (props.x ?? 0) + (props.width ?? 0) / 2;
+    const y = (props.y ?? 0) - 6;
+
+    return (
+      <text
+        x={x}
+        y={y < 12 ? (props.y ?? 0) + 14 : y}
+        textAnchor="middle"
+        fill="var(--theme-text-primary)"
+        fontSize={10}
+        fontWeight={600}
+        fontFamily="monospace"
+      >
+        {text}
+      </text>
+    );
+  };
 
   return (
     <Card className="space-y-5" data-testid="stress-charts">
@@ -262,17 +319,22 @@ export function StressCharts({ result, onResult }: Props) {
               </span>
             </h3>
             <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={waterfallData(result)}>
+              <BarChart data={wData} margin={{ top: 20, right: 10, left: 10, bottom: 5 }}>
                 <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="var(--theme-border)" />
                 <XAxis dataKey="name" tick={{ fill: 'var(--theme-muted)', fontSize: 10 }} />
-                <YAxis domain={['auto', 'auto']} tickFormatter={(v) => `$${Math.round(v / 1e6)}M`} tick={{ fill: 'var(--theme-muted)', fontSize: 10 }} />
+                <YAxis
+                  domain={waterfallYDomain}
+                  allowDataOverflow={true}
+                  tickFormatter={(v) => `$${Math.round(v / 1e6)}M`}
+                  tick={{ fill: 'var(--theme-muted)', fontSize: 10 }}
+                />
                 <Tooltip
                   formatter={(v: number, k: string) => (k === 'base' ? null : usd(v))}
                   contentStyle={{ background: 'var(--theme-card)', border: '1px solid var(--theme-border)', borderRadius: 12, fontSize: 11, color: 'var(--theme-text)' }}
                 />
                 <Bar dataKey="base" stackId="w" fill="transparent" />
-                <Bar dataKey="delta" stackId="w" radius={[6, 6, 6, 6]}>
-                  {waterfallData(result).map((d, i) => (
+                <Bar dataKey="delta" stackId="w" radius={[6, 6, 6, 6]} label={renderWaterfallDeltaLabel}>
+                  {wData.map((d, i) => (
                     <Cell
                       key={i}
                       fill={d.kind === 'total' ? 'var(--theme-primary-fill)' : d.kind === 'loss' ? 'var(--theme-loss)' : 'var(--theme-primary-light)'}

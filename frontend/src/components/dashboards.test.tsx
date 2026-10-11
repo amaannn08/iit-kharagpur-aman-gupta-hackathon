@@ -170,9 +170,35 @@ describe('WhyThisLossPanel', () => {
     expect(rows[0].name).toBe('Funded baseline');
     expect(rows.some((r) => r.name === 'Rates')).toBe(true);
     expect(rows.some((r) => r.name === 'Spread')).toBe(true);
+    expect(rows.find((r) => r.name === 'Spread')?.pnl).toBe(-7e6);
     expect(rows.some((r) => r.name === 'Loan PD')).toBe(true);
     expect(rows[rows.length - 1].name).toBe('After stress');
     expect(rows[rows.length - 1].delta).toBeCloseTo(485e6, 0);
+  });
+
+  it('renders waterfall chart and decomposes loss components with signed pnl', () => {
+    const mockResult = {
+      funded_baseline_value_usd: 500e6,
+      baseline_total_book_value_usd: 500e6,
+      total_pnl_usd: -15e6,
+      total_pnl_pct: -0.03,
+      reconciliation_passed: true,
+      attribution: {
+        by_component: {
+          rates_usd: -3e6,
+          spread_usd: -7e6,
+          pd_usd: -4e6,
+          lgd_usd: -1e6,
+          equity_usd: 0,
+          operational_usd: 0,
+          clamp_usd: 0,
+        },
+      },
+    } as unknown as StressRunResult;
+
+    render(<StressCharts result={mockResult} onResult={() => {}} />);
+    expect(screen.getByText(/Loss waterfall: total -\$15\.00M/)).toBeInTheDocument();
+    expect(screen.getByText('Reconciled')).toBeInTheDocument();
   });
 });
 
