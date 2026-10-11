@@ -156,6 +156,45 @@ def get_live_status() -> dict:
     return live_tailer.get_live_status()
 
 
+@router.get("/presets")
+def get_replay_presets() -> dict:
+    """Return available replay scenario presets."""
+    return {
+        "presets": [
+            {
+                "id": "demo",
+                "label": "Synthetic demo scenario (news + social)",
+                "sources": ["news_demo", "social_demo"],
+                "badge": "SYNTHETIC SCENARIO",
+            },
+            {
+                "id": "polygon_news",
+                "label": "Real news: Polygon 2023 (5,548 articles)",
+                "sources": ["polygon_2023"],
+                "badge": "HISTORICAL REPLAY",
+            },
+            {
+                "id": "stock_tweets",
+                "label": "Real stock tweets (5,000 held-out)",
+                "sources": ["stock_tweets"],
+                "badge": "HISTORICAL REPLAY",
+            },
+            {
+                "id": "gdelt_svb",
+                "label": "GDELT: SVB failure weekend (March 2023)",
+                "sources": ["gdelt_svb_2023"],
+                "badge": "HISTORICAL REPLAY",
+            },
+            {
+                "id": "live_recorder",
+                "label": "Live capture (GDELT + SEC 8-K)",
+                "sources": ["gdelt_live", "sec_8k_live"],
+                "badge": "LIVE CAPTURE",
+            },
+        ]
+    }
+
+
 def _load_source(name: str) -> List[InputRecord]:
     rel, kind, _ = settings.replay_sources[name]
     path = settings.data_dir / rel
