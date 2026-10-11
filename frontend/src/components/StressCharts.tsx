@@ -1,5 +1,15 @@
-import { useEffect, useState } from 'react';
-import { Bar, BarChart, CartesianGrid, Cell, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { useEffect, useId, useState } from 'react';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Legend,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import {
   fetchMetrics,
   fetchStressScenarios,
@@ -8,6 +18,7 @@ import {
   StressRunResult,
   StressScenario,
 } from '../api/client';
+import { Card } from './ui/Card';
 
 const usd = (v: number) => `${v < 0 ? '-' : ''}$${Math.abs(v / 1e6).toFixed(2)}M`;
 const ASSET_ORDER = ['loan', 'bond', 'equity', 'cash'];
@@ -68,6 +79,9 @@ export function StressCharts({ result, onResult }: Props) {
   const [psBenchmark, setPsBenchmark] = useState<any | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
+  const rawId = useId();
+  const hatchId = `stress-hatch-${rawId.replace(/[^a-zA-Z0-9-_]/g, '')}`;
+
   useEffect(() => {
     fetchStressScenarios()
       .then((s) => setScenarios(s.filter((x) => x.scenario_id.startsWith('HIST-'))))
@@ -98,58 +112,70 @@ export function StressCharts({ result, onResult }: Props) {
   }));
 
   return (
-    <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-4 space-y-4" data-testid="stress-charts">
-      {/* PS Benchmark Reference Card (Item 18) */}
+    <Card className="space-y-5" data-testid="stress-charts">
+      {/* PS Benchmark Reference Card */}
       {psBenchmark && (
         <div
-          className="bg-black border border-zinc-800 rounded-lg p-3.5 text-xs space-y-2"
+          className="bg-[#F9FAF9] border border-[#ECEDEC] rounded-2xl p-4 text-xs space-y-3"
           data-testid="ps-benchmark-card"
         >
-          <div className="flex items-center justify-between">
-            <span className="font-semibold text-white">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <span className="font-bold text-[#111827]">
               Problem Statement Benchmark: &ldquo;Geopolitical event, impact 8 &rarr; equities -10%, rates +200 bp&rdquo;
             </span>
             <button
+              type="button"
               onClick={() => run('ps', () => runCustomStress({ equity_shock_pct: -0.1, benchmark_yield_shift_bps: 200 }))}
               disabled={busy !== null}
-              className="px-2.5 py-1 rounded bg-white text-black font-semibold hover:bg-zinc-200 transition-colors"
+              className="px-3.5 py-1.5 rounded-full bg-[#14532D] hover:bg-[#1F6B45] text-white font-semibold shadow-xs transition-colors cursor-pointer"
             >
               Run live
             </button>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-zinc-300 font-mono">
-            <div>
-              <span className="text-zinc-500 block text-[10px] uppercase">Funded Baseline</span>
-              ${((psBenchmark.funded_baseline_usd ?? 610000000) / 1e6).toFixed(1)}M
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-[#111827] font-mono">
+            <div className="p-2.5 rounded-xl bg-white border border-[#ECEDEC]">
+              <span className="text-[#6B7280] block text-[10px] uppercase font-sans">Funded Baseline</span>
+              <span className="font-bold text-sm">
+                ${((psBenchmark.funded_baseline_usd ?? 610000000) / 1e6).toFixed(1)}M
+              </span>
             </div>
-            <div>
-              <span className="text-zinc-500 block text-[10px] uppercase">Funded Stressed</span>
-              ${((psBenchmark.funded_stressed_usd ?? 588240467.2) / 1e6).toFixed(1)}M
+            <div className="p-2.5 rounded-xl bg-white border border-[#ECEDEC]">
+              <span className="text-[#6B7280] block text-[10px] uppercase font-sans">Funded Stressed</span>
+              <span className="font-bold text-sm">
+                ${((psBenchmark.funded_stressed_usd ?? 588240467.2) / 1e6).toFixed(1)}M
+              </span>
             </div>
-            <div>
-              <span className="text-zinc-500 block text-[10px] uppercase">Total P&L</span>
-              <span className="text-red-400 font-bold">{usd(psBenchmark.total_pnl_usd)}</span>
+            <div className="p-2.5 rounded-xl bg-white border border-[#ECEDEC]">
+              <span className="text-[#6B7280] block text-[10px] uppercase font-sans">Total P&amp;L</span>
+              <span className="text-[#DC2626] font-bold text-sm">
+                {usd(psBenchmark.total_pnl_usd)}
+              </span>
             </div>
-            <div>
-              <span className="text-zinc-500 block text-[10px] uppercase">Derivative MTM</span>
-              <span className="text-emerald-400 font-bold">+${(psBenchmark.derivative_mtm_change_usd / 1e3).toFixed(0)}k</span>
+            <div className="p-2.5 rounded-xl bg-white border border-[#ECEDEC]">
+              <span className="text-[#6B7280] block text-[10px] uppercase font-sans">Derivative MTM</span>
+              <span className="text-[#1F6B45] font-bold text-sm">
+                +${(psBenchmark.derivative_mtm_change_usd / 1e3).toFixed(0)}k
+              </span>
             </div>
           </div>
+
           {psBenchmark.by_sleeve_usd && (
-            <div className="flex flex-wrap gap-3 pt-1 border-t border-zinc-800 text-[11px]">
-              <span className="text-zinc-400">P&L by sleeve:</span>
+            <div className="flex flex-wrap gap-3 pt-1 border-t border-[#ECEDEC] text-[11px]">
+              <span className="text-[#6B7280] font-medium">P&amp;L by sleeve:</span>
               {Object.entries(psBenchmark.by_sleeve_usd).map(([sleeve, pnl]: [string, any]) => (
-                <span key={sleeve} className="text-zinc-300">
-                  <span className="capitalize text-zinc-500">{sleeve}:</span> {usd(Number(pnl))}
+                <span key={sleeve} className="text-[#374151]">
+                  <span className="capitalize text-[#6B7280]">{sleeve}:</span> {usd(Number(pnl))}
                 </span>
               ))}
             </div>
           )}
+
           {psBenchmark.top_drivers && psBenchmark.top_drivers.length > 0 && (
-            <div className="flex flex-wrap gap-2 text-[10px] text-zinc-400 pt-1 border-t border-zinc-800/60">
-              <span className="text-zinc-500">Top loss drivers:</span>
+            <div className="flex flex-wrap gap-2 text-[10px] text-[#6B7280] pt-1 border-t border-[#ECEDEC]">
+              <span className="font-medium">Top loss drivers:</span>
               {psBenchmark.top_drivers.slice(0, 3).map((d: any, idx: number) => (
-                <span key={idx} className="bg-zinc-900 px-1.5 py-0.5 rounded text-zinc-300 border border-zinc-800">
+                <span key={idx} className="bg-white px-2 py-0.5 rounded-full text-[#374151] border border-[#ECEDEC]">
                   {d.counterparty_name || d.position_id} ({d.dominant_component}): {usd(d.pnl_usd)}
                 </span>
               ))}
@@ -158,69 +184,99 @@ export function StressCharts({ result, onResult }: Props) {
         </div>
       )}
 
+      {/* Scenario Presets Strip */}
       <div className="flex flex-wrap items-center gap-2 text-xs">
-        <span className="text-zinc-400 font-medium mr-1">Run scenario:</span>
+        <span className="text-[#6B7280] font-semibold mr-1">One-click scenario:</span>
         <button
+          type="button"
           onClick={() => run('ps', () => runCustomStress({ equity_shock_pct: -0.1, benchmark_yield_shift_bps: 200 }))}
           disabled={busy !== null}
-          className="px-2.5 py-1 rounded border border-zinc-700 bg-zinc-900 text-zinc-200 hover:bg-zinc-800 transition-colors font-medium"
+          className="px-3 py-1 rounded-full border border-[#14532D] bg-[#E8F5EE] text-[#14532D] hover:bg-emerald-100 transition-colors font-semibold cursor-pointer"
         >
           PS example: equities -10%, rates +2%
         </button>
         {scenarios.map((s) => (
           <button
             key={s.scenario_id}
+            type="button"
             onClick={() => run(s.scenario_id, () => runStressScenario(s.scenario_id))}
             disabled={busy !== null}
             title={s.description}
-            className="px-2.5 py-1 rounded border border-zinc-800 bg-black text-zinc-300 hover:bg-zinc-900 transition-colors"
+            className="px-3 py-1 rounded-full border border-[#ECEDEC] bg-white text-[#374151] hover:bg-[#F3F4F3] transition-colors cursor-pointer"
           >
             {s.name.replace('Historical: ', '').replace(/ \(.*\)$/, '')}
           </button>
         ))}
-        {busy && <span className="text-zinc-500 font-mono">running...</span>}
+        {busy && <span className="text-[#6B7280] font-mono">running...</span>}
       </div>
 
       {!result ? (
-        <div className="py-8 text-center text-xs text-zinc-500 font-mono">Run a scenario or wait for an event-triggered stress test.</div>
+        <div className="py-8 text-center text-xs text-[#9CA3AF] font-mono">
+          Run a scenario or wait for an event-triggered stress test.
+        </div>
       ) : result.status === 'NO_EXPOSURE' ? (
-        <div className="py-6 text-center text-xs text-zinc-400 font-mono">
+        <div className="py-6 text-center text-xs text-[#6B7280] font-mono p-4 rounded-xl bg-[#F9FAF9] border border-[#ECEDEC]">
           NO EXPOSURE: the {result.event_class} shock on {result.target_entity ?? 'target'} touches no position in the book.
         </div>
       ) : (
-        <div className="grid grid-cols-12 gap-4">
-          <div className="col-span-12 lg:col-span-6">
-            <h3 className="text-xs font-semibold text-zinc-300 mb-2">Portfolio value before vs after, by sleeve</h3>
-            <ResponsiveContainer width="100%" height={240}>
+        <div className="grid grid-cols-12 gap-5 pt-2">
+          {/* Before vs After Chart */}
+          <div className="col-span-12 lg:col-span-6 p-4 rounded-2xl bg-[#F9FAF9] border border-[#ECEDEC]">
+            <h3 className="text-xs font-bold text-[#111827] mb-3">
+              Portfolio value before vs after, by sleeve
+            </h3>
+            <ResponsiveContainer width="100%" height={250}>
               <BarChart data={sleeves}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
-                <XAxis dataKey="sleeve" tick={{ fill: '#a1a1aa', fontSize: 10 }} />
-                <YAxis tickFormatter={(v) => `$${Math.round(v / 1e6)}M`} tick={{ fill: '#71717a', fontSize: 10 }} />
-                <Tooltip formatter={(v: number) => usd(v)} contentStyle={{ background: '#09090b', border: '1px solid #27272a', fontSize: 11 }} />
+                <defs>
+                  <pattern
+                    id={hatchId}
+                    width="6"
+                    height="6"
+                    patternUnits="userSpaceOnUse"
+                    patternTransform="rotate(45)"
+                  >
+                    <line x1="0" y1="0" x2="0" y2="6" stroke="#9CA3AF" strokeWidth="2" />
+                    <rect width="6" height="6" fill="#F3F4F3" opacity="0.3" />
+                  </pattern>
+                </defs>
+                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#ECEDEC" />
+                <XAxis dataKey="sleeve" tick={{ fill: '#6B7280', fontSize: 11 }} />
+                <YAxis tickFormatter={(v) => `$${Math.round(v / 1e6)}M`} tick={{ fill: '#6B7280', fontSize: 10 }} />
+                <Tooltip
+                  formatter={(v: number) => usd(v)}
+                  contentStyle={{ background: '#FFFFFF', border: '1px solid #ECEDEC', borderRadius: 12, fontSize: 11 }}
+                />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Bar dataKey="Before" fill="#52525b" />
-                <Bar dataKey="After" fill="#ffffff" />
+                <Bar dataKey="Before" fill={`url(#${hatchId})`} stroke="#6B7280" strokeWidth={1} radius={[8, 8, 8, 8]} />
+                <Bar dataKey="After" fill="#1F6B45" radius={[8, 8, 8, 8]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
-          <div className="col-span-12 lg:col-span-6">
-            <h3 className="text-xs font-semibold text-zinc-300 mb-2">
-              Loss waterfall: total {usd(result.total_pnl_usd)} ({(result.total_pnl_pct * 100).toFixed(2)}%)
-              {result.reconciliation_passed ? ' · reconciled' : ' · RECONCILIATION FAILED'}
+
+          {/* Loss Waterfall Chart */}
+          <div className="col-span-12 lg:col-span-6 p-4 rounded-2xl bg-[#F9FAF9] border border-[#ECEDEC]">
+            <h3 className="text-xs font-bold text-[#111827] mb-3 flex items-center justify-between">
+              <span>Loss waterfall: total {usd(result.total_pnl_usd)} ({(result.total_pnl_pct * 100).toFixed(2)}%)</span>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold ${result.reconciliation_passed ? 'bg-[#E8F5EE] text-[#14532D]' : 'bg-[#FEE2E2] text-[#DC2626]'}`}>
+                {result.reconciliation_passed ? 'Reconciled' : 'Reconciliation Failed'}
+              </span>
             </h3>
-            <ResponsiveContainer width="100%" height={240}>
+            <ResponsiveContainer width="100%" height={250}>
               <BarChart data={waterfallData(result)}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
-                <XAxis dataKey="name" tick={{ fill: '#a1a1aa', fontSize: 10 }} />
-                <YAxis domain={['auto', 'auto']} tickFormatter={(v) => `$${Math.round(v / 1e6)}M`} tick={{ fill: '#71717a', fontSize: 10 }} />
+                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#ECEDEC" />
+                <XAxis dataKey="name" tick={{ fill: '#6B7280', fontSize: 10 }} />
+                <YAxis domain={['auto', 'auto']} tickFormatter={(v) => `$${Math.round(v / 1e6)}M`} tick={{ fill: '#6B7280', fontSize: 10 }} />
                 <Tooltip
                   formatter={(v: number, k: string) => (k === 'base' ? null : usd(v))}
-                  contentStyle={{ background: '#09090b', border: '1px solid #27272a', fontSize: 11 }}
+                  contentStyle={{ background: '#FFFFFF', border: '1px solid #ECEDEC', borderRadius: 12, fontSize: 11 }}
                 />
                 <Bar dataKey="base" stackId="w" fill="transparent" />
-                <Bar dataKey="delta" stackId="w">
+                <Bar dataKey="delta" stackId="w" radius={[6, 6, 6, 6]}>
                   {waterfallData(result).map((d, i) => (
-                    <Cell key={i} fill={d.kind === 'total' ? '#ffffff' : d.kind === 'loss' ? '#ef4444' : '#10b981'} />
+                    <Cell
+                      key={i}
+                      fill={d.kind === 'total' ? '#14532D' : d.kind === 'loss' ? '#DC2626' : '#2F9E62'}
+                    />
                   ))}
                 </Bar>
               </BarChart>
@@ -228,6 +284,6 @@ export function StressCharts({ result, onResult }: Props) {
           </div>
         </div>
       )}
-    </div>
+    </Card>
   );
 }
