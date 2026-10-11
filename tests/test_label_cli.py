@@ -65,3 +65,35 @@ def test_compute_agreement_metrics():
     assert ke == 1.0  # perfect event match
     assert ks > 0.8  # close severity match
     assert abs(mae - 0.333) < 0.05
+
+
+def _rows(ids, ts=None, cls="CREDIT"):
+    import pandas as pd
+
+    d = pd.DataFrame({"record_id": ids, "gold_event_class": cls, "gold_severity_score": 5})
+    if ts is not None:
+        d["labeled_at"] = ts
+    return d
+
+
+def test_copied_subset_of_holdout_gives_no_agreement_rows():
+    ref = _rows(["a", "b", "c"])
+    rows, reason = label_cli.validate_relabel(ref, ref.head(2))  # `head -n` copy of the holdout
+    assert rows.empty and "labeled_at" in reason
+
+
+def test_relabel_must_come_later_than_the_first_pass():
+    ref = _rows(["a", "b"], ts=["2026-10-10T10:00:00+00:00"] * 2)
+    same_day = _rows(["a", "b"], ts=["2026-10-10T11:00:00+00:00"] * 2)
+    next_day = _rows(["a", "b"], ts=["2026-10-11T11:00:00+00:00"] * 2)
+    assert label_cli.validate_relabel(ref, same_day)[0].empty
+    assert len(label_cli.validate_relabel(ref, next_day)[0]) == 2
+
+
+def test_session_refuses_to_append_to_foreign_file(tmp_path):
+    import pytest
+
+    f = tmp_path / "x.csv"
+    f.write_text("record_id,gold_event_class\nr1,OTHER\n")
+    with pytest.raises(SystemExit):
+        label_cli.append_annotation({"record_id": "r2"}, f)

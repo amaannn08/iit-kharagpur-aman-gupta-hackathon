@@ -145,3 +145,18 @@ def test_wholesale_real_portfolio_contract():
     for eid, exposure in issuer_exposures.items():
         assert exposure <= 40_000_000.0 + 1e-2, f"Issuer {eid} exceeds 8% cap ($40M): {exposure}"
 
+
+
+def test_wholesale_book_is_strict_json_with_rating_basis():
+    import json
+
+    from sentinel.config import settings
+
+    raw = (settings.data_dir / "portfolio" / "wholesale_real.json").read_text()
+    book = json.loads(raw, parse_constant=lambda c: (_ for _ in ()).throw(ValueError(c)))
+    for issuer in book["issuers"]:
+        assert issuer["rating_basis"]
+        if issuer["sector"] == "Financials":
+            assert issuer["rating_basis"] == "equity_to_assets" and issuer["coverage"] is None
+        if issuer["coverage"] is not None:
+            assert issuer["coverage"] > 0

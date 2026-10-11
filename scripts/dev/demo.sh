@@ -53,14 +53,20 @@ fi
 
 # Wait for API health check
 echo -n "[demo] Waiting for S&P Sentinel API to become ready..."
+READY=false
 for _ in {1..30}; do
   if curl -s "http://127.0.0.1:${PORT}/api/health" | grep -q '"status":"ok"' 2>/dev/null; then
     echo " READY."
+    READY=true
     break
   fi
   echo -n "."
   sleep 1
 done
+if [ "$READY" != true ]; then
+  echo " FAILED: the API did not become healthy within 30 s." >&2
+  exit 1
+fi
 
 echo "======================================================================"
 echo " S&P Sentinel Risk Intelligence Terminal is running!"

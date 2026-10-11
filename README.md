@@ -10,7 +10,7 @@
 
 Market-moving events (defaults, rate decisions, sanctions, cyber incidents, earnings shocks) appear first as unstructured text in news and social media. The problem statement asks for an AI/NLP risk engine that ingests such text from at least two sources in real time and turns it into structured signals (sentiment score, event class, impact score) that downstream applications can consume, plus at least one downstream module.
 
-S&P Sentinel is that engine, with **both** downstream modules. For every company a text mentions, the engine emits a signal with sentiment (-1..1), an event class from the PS taxonomy (credit, macro, geopolitical, M&A, product, plus regulatory, earnings, supply chain and cyber), a 1-10 impact score calibrated against real market reactions, character-level evidence spans, and an action decision with reasons. Signals are served by a REST API, a server-sent event stream and an append-only `data/signals.jsonl` file. **Module A** re-weights a 20-name mock S&P 100 index by sentiment and charts the weights over time. **Module B** runs event-triggered stress tests on a $610M funded book (synthetic wholesale loans/bonds/swaps, a retail/SME credit sleeve built from real card-transaction data, and an equity sleeve with real betas) using shocks measured from five real crisis windows.
+S&P Sentinel is that engine, with **both** downstream modules. For every company a text mentions, the engine emits a signal with sentiment (-1..1), an event class from the PS taxonomy (credit, macro, geopolitical, M&A, product, plus regulatory, earnings, supply chain and cyber), a 1-10 impact score calibrated against real market reactions, character-level evidence spans, and an action decision with reasons. Signals are served by a REST API, a server-sent event stream and an append-only `data/signals.jsonl` file. **Module A** re-weights a 20-name mock S&P 100 index by sentiment and charts the weights over time. **Module B** runs event-triggered stress tests on a $610M funded book (a wholesale book of loans, bonds and swaps on 20 real S&P 100 issuers sized from their SEC filings, a retail/SME credit sleeve built from real card-transaction data, and an equity sleeve with real betas; position sizes are synthetic) using shocks measured from five real crisis windows.
 
 The approach is evidence-first: every model is trained and evaluated on real public data with held-out splits, and every number in this README, the deck and the dashboard is produced by `scripts/run_evaluation.py` into `docs/metrics.json`. Real-time ingestion uses a separate recorder for GDELT and SEC EDGAR; the application itself never calls external services.
 
@@ -47,11 +47,13 @@ All real datasets are public; synthetic data is labeled `is_synthetic: true` in 
 | SEC EDGAR 8-K filings (EDGAR full-text search) | Labeled CYBER/CREDIT text and routine negatives; live feed | `data/train/sec_8k/items.csv` (704 statements) | US public record |
 | GDELT 2.0 GKG | Live news feed; 2-hour snapshot for offline replay | `data/real/gdelt/snapshot.csv` (2,690 headlines) | GDELT open data |
 | yfinance closes (S&P 500, SPY, IEF, LQD, HYG, ^TNX, ^VIX) | Impact labels, shock calibration, equity betas | Derived statistics only (`data/market/`) | Yahoo terms (raw prices not redistributed) |
-| Synthetic demo feeds, wholesale book, contagion graph, scenarios | Deterministic demo scenario | `data/*.csv`, `data/wholesale_positions.json` | MIT, `is_synthetic: true` |
+| SEC EDGAR XBRL company facts (S&P 100) | Wholesale book: issuer debt, interest coverage, equity/assets (latest fiscal year) | `data/portfolio/wholesale_real.json` (derived) | US public record |
+| FRED ICE BofA OAS (HY, IG, rating buckets), DGS5 | Spread-calibration check, baseline bond spreads | Derived values only | FRED terms (ICE data not redistributed) |
+| Synthetic demo feeds, demo book, demo contagion graph, scenarios | Deterministic demo scenario (fictional issuers) | `data/*.csv`, `data/portfolio/demo_book.json`, `data/graph_edges_demo.csv` | MIT, `is_synthetic: true` |
 
 **Not used:** Salad Money open-banking data (GeoDS "Secure": UK trusted research environment only); News API (needs an API key, and the free developer plan delays articles by 24 hours, so GDELT and SEC EDGAR 8-K filings provide the live feeds); Alpha Vantage (listed in the PS as an alternative to yfinance, which already covers every price series used); GDELT DOC API (rate-limited; the raw 15-minute files are used instead).
 
-**Assumptions** (details in [docs/assumptions.md](docs/assumptions.md)): retail EAD = total debt + 30% CCF on card limits, PD by credit-score band, LGD 80%, sleeve scaled to $50M; HY spread change from HYG vs IEF with duration 3.7; PD shock via the credit triangle (spread ~ PD x LGD, LGD 60%); impact label = |abnormal next-day return| / 30-day volatility; wholesale positions and equity sizes are synthetic.
+**Assumptions** (details in [docs/assumptions.md](docs/assumptions.md)): retail EAD = total debt + 30% CCF on card limits, PD by credit-score band, LGD 80%, sleeve scaled to $50M; index spread change from HYG/LQD hedged with IEF at matched duration (checked against FRED OAS); PD shock per loan via the credit triangle (ΔPD = rating multiplier x Δspread / LGD); wholesale ratings from interest coverage and baseline PDs from the S&P 2020 default study; impact label = |abnormal next-day return| / 30-day volatility; wholesale and equity position sizes are synthetic; the 120-row news holdout is labeled by an AI agent, not by a person.
 
 ## 4. Quickstart & Installation
 
@@ -64,6 +66,7 @@ uv sync                                   # or: pip install -r requirements.txt
 (cd frontend && npm ci && npm run build)  # builds the terminal served by the API
 uv run uvicorn sentinel.api.app:app --host 127.0.0.1 --port 8000
 # open http://127.0.0.1:8000 and pick a replay source in the footer
+# or, in one command (builds the frontend if needed, waits for /api/health): make demo
 ```
 
 The app runs from the committed data and models alone. Optional steps:
@@ -78,7 +81,7 @@ uv run python scripts/models/train_event.py                 # retrain (also trai
 uv run python scripts/live/record_live.py --interval-min 15 # live GDELT + SEC 8-K capture (separate process)
 ```
 
-To demo real time: run the recorder, choose "Live capture" in the terminal footer, and press "Pull new live records" as new files arrive.
+To demo real time: `make demo` with `scripts/dev/demo.sh --live` (or run the recorder yourself), then choose "Live capture" in the terminal footer. The API tails `data/live/*.csv` and queues new rows into the live run only; the badge shows LIVE or STALE and the last-fetch lag.
 
 ## 5. Key Results & Domain Impact
 
@@ -88,23 +91,23 @@ Measured on real held-out data (generated by `scripts/run_evaluation.py`; raw va
 | Metric | Measured | Target | Comparison |
 |---|---|---|---|
 | Event macro-F1, 4,117 held-out real financial tweets | 0.795 | >= 0.7 | keyword 0.286 / old seed model 0.058 |
-| Event, runtime path (abstention + evidence gates), same rows | F1 0.508, precision 0.942 when it fires | precision first | fires on 22% of rows (precision/recall trade-off) |
+| Event, runtime path (abstention + evidence gates), same rows | F1 0.507, precision 0.939 when it fires | precision first | fires on 22% of rows (precision/recall trade-off) |
 | Sentiment macro-F1, 2,388 held-out real financial tweets | 0.778 | >= 0.75 | lexicon 0.469 |
 | Entity linking, 2,521 real news articles | P 0.969 / R 0.981 (mentioned) | P >= 0.9, R >= 0.90 | all tags R 0.602 (incl. unmentioned tags) |
 | Impact vs next-day abnormal return, 2,617 real events | Spearman 0.151 [0.113, 0.190] | > 0 | rubric 0.098 |
-| Pipeline temporal holdout (Q4 2023), 1,336 articles | Precision lift 2.97x (26.2% [18.4%, 34.9%] vs base 8.8%) | > 1.5x lift | recall 51.5% [33.3%, 69.7%] (|z|>=3) |
-| Routine false-trigger rate, 3,428 routine texts | 0.03% | <= 5% | 8-K 0.2%, social 0.0%, gdelt 0.0% |
-| Human holdout (120 rows, kappa 1.00), news | Severity MAE 1.517 [1.183, 1.867], false trigger 0.0% | MAE <= 1.5, false trig <= 5% | Event F1 0.332, Sent F1 0.564 |
-| Latency per record (p95), CPU | 0.011 s | <= 2.0 s | 128 records/s |
+| Eligible signals vs next-day market move, Q4 2023 holdout (1,336 articles) | 23.2% [15.2%, 31.3%] had abs(z)>=2 vs base 8.8% (lift 2.64x) | > 1.5x lift | recall of abs(z)>=3 events 42.4% [27.2%, 60.6%]; automatic stress triggers: 0 (recall 0.0%) |
+| Routine false-trigger rate (held-out 8-Ks, GDELT, stock tweets) | max 0.00% across sources | <= 5% per source | 8-K 0.0%, GDELT 0.0%, tweets 0.0% |
+| Real-news holdout (120 rows; AI-agent labels, not human-reviewed) | Severity MAE 1.517 [1.183, 1.875], false trigger 0.0% | MAE <= 1.5, false trig <= 5% | Event F1 0.336, Sent F1 0.564 |
+| Latency per record (p95), CPU | 0.012 s | <= 2.0 s | 120 records/s |
 <!-- METRICS:END -->
 
 **Module B (stress testing).** Historical scenarios replay measured market moves on the $610M funded book; every run reconciles position P&L to the total. Example results: COVID-19 window and SVB failure (see `stress` in `docs/metrics.json`), and the PS example shock (equities -10%, rates +200 bp). Event-triggered runs scale the calibrated shocks by impact/8; a trigger that touches no position is reported as `NO_EXPOSURE`.
 
-**Module A (index rebalancing).** Positive sentiment raises a name's weight and negative lowers it, within 20% name and 40% sector caps; the terminal charts weights over time with a reason for every move. A back-test on real 2017-18 tweets and prices shows a small, statistically insignificant active return (`docs/module_a_backtest.json`): the module demonstrates sentiment-driven reweighting, not alpha.
+**Module A (index rebalancing).** Positive sentiment raises a name's weight and negative lowers it, within 20% name and 40% sector caps; the terminal charts weights over time with a reason for every move. A back-test on real 2017-18 tweets and prices shows a small, statistically insignificant active return (`docs/module_a_backtest.json`): at the default tilt (k = 1.5) the active return is +0.02%/yr (95% CI -0.88% to +0.94%), break-even transaction cost is 1.4 bp, and it turns negative at 5 bp. The module demonstrates sentiment-driven reweighting, not alpha.
 
 **Why it matters.** The engine turns unstructured text into auditable signals whose impact score is validated against real market reactions; the stress engine encodes measured crisis behaviour (in the SVB, COVID and Russia windows Treasury yields fell while spreads widened) instead of assuming every shock lifts rates, and builds retail credit exposure from real transaction data. Evidence spans, model versions, block reasons and reconciliation checks make every decision reviewable.
 
-**Limitations.** Headline NLP metrics are on financial tweets; news-domain agreement with LLM silver labels is lower. Human holdout evaluation on 120 stratified real news rows (`data/eval/holdout_v2_news.csv`) achieved single-annotator test-retest agreement κ = 1.00 and severity MAE 1.517. Valuation is simplified (single-period ECL, duration without convexity, linear DV01). The wholesale book and equity position sizes are synthetic.
+**Limitations.** Headline NLP metrics are on financial tweets; news-domain agreement with LLM silver labels is lower. The 120-row real-news holdout (severity MAE 1.52, just above the 1.5 target) is labeled by an AI agent, not by a person; human labels and an agreement check are still to do (`data/eval/holdout_v2_news.provenance.json`). On the Q4 2023 temporal holdout no article produced an automatic stress trigger; eligible signals do anticipate large moves (lift in the table). Valuation is simplified (single-period ECL, duration without convexity, linear DV01). Position sizes are synthetic; contagion links are return correlations only (no customer/supplier data), and names without price history (SIVB, FRC, SBNY) have no contagion edges.
 
 ## Repository layout
 

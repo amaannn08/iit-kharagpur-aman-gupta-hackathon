@@ -14,19 +14,19 @@
     "REGULATORY"
    ],
    "macro_f1_model": 0.7948,
-   "macro_f1_runtime_with_gates_and_abstention": 0.5083,
-   "precision_when_fired": 0.942,
-   "fired_rate": 0.222,
+   "macro_f1_runtime_with_gates_and_abstention": 0.5075,
+   "precision_when_fired": 0.9389,
+   "fired_rate": 0.2227,
    "baseline_keyword_macro_f1": 0.2863,
    "baseline_seed_classifier_macro_f1": 0.0583,
    "per_class_f1_model": {
-    "CREDIT": 0.6358,
-    "EARNINGS": 0.9516,
-    "GEOPOLITICAL": 0.8933,
-    "MACRO": 0.7871,
-    "M_AND_A": 0.7189,
-    "PRODUCT": 0.8058,
-    "REGULATORY": 0.7712
+    "CREDIT": 0.64,
+    "EARNINGS": 0.9504,
+    "GEOPOLITICAL": 0.8876,
+    "MACRO": 0.788,
+    "M_AND_A": 0.7281,
+    "PRODUCT": 0.8012,
+    "REGULATORY": 0.7679
    },
    "confusion_matrix_model": {
     "labels": [
@@ -63,29 +63,29 @@
      [
       0,
       0,
-      226,
-      10,
+      225,
+      9,
       1,
       1,
       0,
-      11
+      13
      ],
      [
-      6,
+      5,
       2,
       11,
-      490,
-      1,
-      19,
+      487,
+      0,
+      21,
       5,
-      94
+      97
      ],
      [
       0,
       0,
       0,
-      1,
-      78,
+      0,
+      79,
       20,
       1,
       16
@@ -96,9 +96,9 @@
       2,
       18,
       12,
-      668,
+      667,
       10,
-      124
+      125
      ],
      [
       0,
@@ -112,13 +112,13 @@
      ],
      [
       0,
-      8,
-      14,
-      85,
+      9,
+      16,
+      81,
       7,
-      92,
-      12,
-      1435
+      98,
+      13,
+      1429
      ]
     ]
    }
@@ -178,9 +178,9 @@
    "CREDIT": 0.8936,
    "CYBER": 1.0,
    "EARNINGS": 1.0,
-   "OTHER": 0.8125
+   "OTHER": 0.8
   },
-  "routine_filings_false_stress_rate": 0.1163
+  "routine_filings_false_stress_rate": 0.1279
  },
  "stress": {
   "funded_book_usd": 610000000.0,
@@ -191,64 +191,64 @@
   },
   "scenarios": {
    "HIST-COVID_2020": {
-    "total_pnl_usd": -46360485.03,
-    "pnl_pct_of_funded": -0.076,
+    "total_pnl_usd": -42513788.06,
+    "pnl_pct_of_funded": -0.0697,
     "by_sleeve_usd": {
      "equity": -18446863.2,
      "retail_sme": -2253305.02,
-     "wholesale": -25539416.81
+     "wholesale": -21692719.84
     },
     "reconciled": true
    },
    "HIST-FED_JUN_2022": {
-    "total_pnl_usd": -11328023.62,
-    "pnl_pct_of_funded": -0.0186,
+    "total_pnl_usd": -10872040.57,
+    "pnl_pct_of_funded": -0.0178,
     "by_sleeve_usd": {
      "equity": -4743010.2,
      "retail_sme": -293981.49,
-     "wholesale": -6330481.93
+     "wholesale": -5874498.88
     },
     "reconciled": true
    },
    "HIST-FED_PIVOT_2023": {
-    "total_pnl_usd": 16584710.61,
-    "pnl_pct_of_funded": 0.0272,
+    "total_pnl_usd": 16301086.83,
+    "pnl_pct_of_funded": 0.0267,
     "by_sleeve_usd": {
      "equity": 6389660.8,
      "retail_sme": 0.0,
-     "wholesale": 10323899.81
+     "wholesale": 10040276.03
     },
     "reconciled": true
    },
    "HIST-RUSSIA_2022": {
-    "total_pnl_usd": -1882326.18,
-    "pnl_pct_of_funded": -0.0031,
+    "total_pnl_usd": -1652993.87,
+    "pnl_pct_of_funded": -0.0027,
     "by_sleeve_usd": {
      "equity": -738531.0,
      "retail_sme": -130068.56,
-     "wholesale": -997976.62
+     "wholesale": -768644.31
     },
     "reconciled": true
    },
    "HIST-SVB_2023": {
-    "total_pnl_usd": -369941.65,
-    "pnl_pct_of_funded": -0.0006,
+    "total_pnl_usd": 137718.88,
+    "pnl_pct_of_funded": 0.0002,
     "by_sleeve_usd": {
      "equity": -1023002.2,
      "retail_sme": -261796.15,
-     "wholesale": 1002006.7
+     "wholesale": 1509667.23
     },
     "reconciled": true
    }
   },
   "ps_example_equities_-10pct_rates_+200bp": {
-   "total_pnl_usd": -21459532.8,
+   "total_pnl_usd": -21708792.05,
    "funded_baseline_usd": 610000000.0,
-   "funded_stressed_usd": 588240467.2,
+   "funded_stressed_usd": 587991207.95,
    "by_sleeve_usd": {
     "equity": -5470600.0,
     "retail_sme": 0.0,
-    "wholesale": -16288932.8
+    "wholesale": -16538192.05
    },
    "derivative_mtm_change_usd": 300000.0,
    "reconciled": true,
@@ -273,14 +273,14 @@
     },
     {
      "position_id": "B-010",
-     "entity_id": "BAC",
-     "counterparty_name": "Bank of America",
+     "entity_id": "GS",
+     "counterparty_name": "Goldman Sachs",
      "asset_class": "bond",
-     "pnl_usd": -2040000.0,
+     "pnl_usd": -2020800.0,
      "dominant_component": "rates",
      "driver": "systemic",
      "attribution": {
-      "rates": -2040000.0,
+      "rates": -2020800.0,
       "spread": -0.0,
       "pd": 0.0,
       "lgd": 0.0,
@@ -290,26 +290,26 @@
      }
     },
     {
-     "position_id": "B-009",
-     "entity_id": "MS",
-     "counterparty_name": "Morgan Stanley",
+     "position_id": "B-002",
+     "entity_id": "T",
+     "counterparty_name": "AT&T",
      "asset_class": "bond",
-     "pnl_usd": -1347200.0,
+     "pnl_usd": -1382427.43,
      "dominant_component": "rates",
      "driver": "systemic",
      "attribution": {
-      "rates": -1347200.0,
+      "rates": -1382427.43,
       "spread": -0.0,
       "pd": 0.0,
       "lgd": 0.0,
       "equity": 0.0,
       "operational": 0.0,
-      "clamp": 0.0
+      "clamp": -0.0
      }
     }
    ],
    "by_component": {
-    "rates_usd": -15988932.8,
+    "rates_usd": -16238192.05,
     "spread_usd": 0.0,
     "pd_usd": 0.0,
     "lgd_usd": 0.0,
@@ -476,10 +476,10 @@
  },
  "perf": {
   "records": 2000,
-  "records_per_s": 127.6,
-  "latency_p50_s": 0.0073,
-  "latency_p95_s": 0.011,
-  "peak_rss_gb": 0.366,
+  "records_per_s": 120.3,
+  "latency_p50_s": 0.0077,
+  "latency_p95_s": 0.0118,
+  "peak_rss_gb": 0.343,
   "note": "single process, CPU, full pipeline (linking, sentiment, event, impact)"
  },
  "synthetic_regression": {
@@ -487,9 +487,9 @@
   "n": 105,
   "event_macro_f1": 0.4045,
   "sentiment_macro_f1": 0.3477,
-  "severity_mae": 2.99
+  "severity_mae": 2.943
  },
- "generated_at": "2026-10-10T15:57:40+00:00",
+ "generated_at": "2026-10-11T07:16:07+00:00",
  "targets": {
   "event_macro_f1": 0.7,
   "sentiment_macro_f1": 0.75,
@@ -502,54 +502,86 @@
   "trigger_precision_lift": 1.5
  },
  "pipeline": {
-  "dataset": "Polygon 2023 Q4 holdout + SEC 8-K routine + GDELT + Twitter controls",
-  "train_window": "2023-01..2023-09",
+  "dataset": "Polygon 2023 Q4 temporal holdout + held-out routine controls",
+  "train_window": "2023-01..2023-09 (impact model refit inside this suite)",
   "holdout_window": "2023-10..2023-12",
   "holdout_articles": 1336,
-  "total_signals": 1511,
-  "actionable_signals": 109,
-  "actionable_rate": 0.0721,
-  "trigger_rate_per_1k_records": 0.0,
-  "high_impact_recall": 0.5152,
-  "high_impact_recall_ci95": [
-   0.3333,
-   0.697
-  ],
-  "gold_base_rate_z3": 0.0502,
+  "gold": "next-day |abnormal z| >= 3 (high impact); precision uses |z| >= 2",
   "gold_high_impact_events": 33,
-  "trigger_precision_market": 0.2621,
-  "trigger_precision_market_ci95": [
-   0.1845,
-   0.3495
-  ],
-  "trigger_precision_lift": 2.97,
   "gold_base_rate_z2": 0.0881,
-  "false_trigger_rate_routine": 0.0003,
-  "routine_eval_records": 3428,
-  "false_trigger_rates_by_source": {
-   "sec_8k_routine": 0.0023,
-   "gdelt_snapshot": 0.0,
-   "social_tweets": 0.0
+  "gold_base_rate_z3": 0.0502,
+  "total_signals": 1511,
+  "eligible_signals": 104,
+  "eligible_rate": 0.0688,
+  "stress_triggers": 0,
+  "triggers_per_1k_records": 0.0,
+  "eligible_vs_market": {
+   "n_with_market_outcome": 99,
+   "precision_abs_z_ge_2": 0.2323,
+   "precision_ci95": [
+    0.1515,
+    0.3131
+   ],
+   "lift_vs_base_rate": 2.64,
+   "recall_abs_z_ge_3": 0.4242,
+   "recall_ci95": [
+    0.272,
+    0.6061
+   ]
   },
-  "duplicate_records": 18,
-  "duplicate_suppression": 0.0135
+  "triggers_vs_market": {
+   "n_with_market_outcome": 0,
+   "precision_abs_z_ge_2": null,
+   "precision_ci95": null,
+   "lift_vs_base_rate": null,
+   "recall_abs_z_ge_3": 0.0,
+   "recall_ci95": [
+    0.0,
+    0.0
+   ]
+  },
+  "false_trigger_rates_by_source": {
+   "sec_8k_routine_heldout": 0.0,
+   "gdelt_snapshot": 0.0,
+   "stock_tweets": 0.0
+  },
+  "false_trigger_rate_max_source": 0.0,
+  "routine_counts": {
+   "sec_8k_routine_heldout": {
+    "triggers": 0,
+    "records": 86
+   },
+   "gdelt_snapshot": {
+    "triggers": 0,
+    "records": 1000
+   },
+   "stock_tweets": {
+    "triggers": 0,
+    "records": 2000
+   }
+  },
+  "duplicate_record_rate": 0.0022
  },
- "news_human": {
-  "dataset": "Human-labeled news holdout (120 rows, stratified Polygon/GDELT/SEC)",
+ "news_holdout": {
+  "dataset": "Real-news holdout (120 rows, stratified Polygon/GDELT/SEC 8-K)",
   "n_rows": 120,
-  "annotator": "Aman Gupta (author)",
-  "annotator_agreement_kappa": 1.0,
-  "sha256": "e97a7439acd245b0b03ae1149a80101556121efa0f3fe69d82ea4afa1400e909",
-  "frozen_manifest_sha256": "ba7c73386884cfa0b663b9b610f95038dc0b48ee4db4594a70f81494630a5938",
+  "label_source": "ai_agent",
+  "human_reviewed": false,
+  "label_note": "The gold_* and should_trigger columns were written in one pass by an AI coding agent (2026-10-10), not by a person. They are independent of the repository's models (agreement with the pipeline: event 67%, sentiment 60%) but are NOT human ground truth.",
+  "annotator_agreement_kappa": null,
+  "agreement_rows": 0,
+  "agreement_note": "no second labeling pass",
+  "sha256": "c278abb251f0d52a7262591b14b69a57d85c6e96c5ed645a3e5e35b3858f5302",
+  "sha256_matches_frozen": true,
   "severity_mae": 1.5167,
   "severity_mae_ci95": [
-   1.1833,
-   1.8667
+   1.1831,
+   1.875
   ],
-  "event_macro_f1": 0.3316,
+  "event_macro_f1": 0.3361,
   "event_macro_f1_ci95": [
-   0.2053,
-   0.4179
+   0.2103,
+   0.423
   ],
   "sentiment_macro_f1": 0.564,
   "sentiment_macro_f1_ci95": [

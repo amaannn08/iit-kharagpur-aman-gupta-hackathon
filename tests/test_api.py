@@ -2,6 +2,7 @@
 
 import subprocess
 import sys
+from pathlib import Path
 
 from fastapi.testclient import TestClient
 
@@ -76,8 +77,11 @@ def test_runtime_database_isolation_and_no_root_db():
     root_db = settings.base_dir / "sentinel.db"
     assert not root_db.exists(), f"Forbidden database file detected at repository root: {root_db}"
 
-    runtime_db = settings.base_dir / ".runtime" / "sentinel.db"
-    assert runtime_db.exists(), f"Expected runtime database file at {runtime_db}"
+    # The default (used outside tests) lives in .runtime; tests run on a temp DB (conftest.py)
+    from sentinel.config import Settings
+
+    default_url = Settings.model_fields["database_url"].default
+    assert default_url.endswith(str(Path(".runtime") / "sentinel.db"))
 
     # Also verify lifespan context manager initialization
     with TestClient(app):

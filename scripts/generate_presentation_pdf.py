@@ -45,6 +45,11 @@ def usd_m(v: float) -> str:
 
 def build_presentation_pdf() -> None:
     m = json.loads((DOCS / "metrics.json").read_text())
+    book = json.loads((REPO_ROOT / "data" / "portfolio" / "wholesale_real.json").read_text())
+    n_issuers = len(book["issuers"])
+    n_sectors = len({i["sector"] for i in book["issuers"]})
+    fred = json.loads((REPO_ROOT / "data" / "market" / "stress_windows.json").read_text()).get(
+        "validation_vs_fred_oas", {}).get("fed_pivot_2023", {}).get("BAMLH0A0HYM2")
     ev, se = m["public_real"]["event"], m["public_real"]["sentiment"]
     ent, imp, perf, sec = m["entity_polygon"], m["market_impact"], m["perf"], m["sec_8k"]
     stress, mod_a = m["stress"], m["module_a"]
@@ -275,7 +280,8 @@ def build_presentation_pdf() -> None:
                     (
                         f"Module A back-test (443 days, k=1.5): active return "
                         f"{a['active_annual_return']:+.2%}/yr, tracking error {a['tracking_error']:.2%}, "
-                        f"t = {a['active_return_t_stat']:.2f}: sentiment reweighting works, no proven alpha."
+                        f"t = {a['active_return_t_stat']:.2f}, break-even cost {a['break_even_cost_bps']:.1f} bp: "
+                        "sentiment reweighting works, no proven alpha."
                     )
                     if a
                     else "Module A back-test: not run.",
@@ -295,12 +301,14 @@ def build_presentation_pdf() -> None:
                 "<b>Flight to quality, measured:</b> in the SVB, COVID and Russia windows the "
                 "10-year Treasury yield <i>fell</i> while spreads widened; only Fed tightening raised "
                 "it. The shock catalog encodes this instead of assuming every crisis lifts yields.",
-                f"<b>Credit triangle &amp; FRED OAS validation:</b> the SVB window's {svb['bond_spread_shift_bps']:+.0f} bp HY "
-                "index spread move is duration-corrected and validated vs FRED ICE BofA OAS within 11 bp; "
-                "loan ECL maps via credit triangle with provision releases floored at zero.",
-                "<b>Real issuer wholesale book &amp; SVB replay:</b> 22 real debt issuers across 11 GICS "
-                "sectors built from SEC XBRL 10-K data; GDELT real news replay from March 10–13, 2023 "
-                "streams into terminal, driving wholesale balance-sheet stress revaluation.",
+                f"<b>Duration-corrected spreads, checked against FRED:</b> the SVB window's HY index move is "
+                f"{svb['bond_spread_shift_bps']:+.0f} bp after hedging IEF at matched duration"
+                + (f"; where FRED has ICE BofA OAS history (Fed pivot 2023) the implied move is "
+                   f"{fred['implied_bps']:+.0f} bp vs {fred['actual_oas_bps']:+.0f} bp actual" if fred else "")
+                + ". Loan ECL follows the credit triangle by rating; no provision release in rallies.",
+                f"<b>Real issuers:</b> the wholesale book holds {n_issuers} S&amp;P 100 issuers across "
+                f"{n_sectors} GICS sectors, rated from their latest 10-K interest coverage (SEC XBRL); "
+                "position sizes are synthetic.",
                 f"<b>Retail credit from real transactions:</b> {n_borrowers:,} borrowers and "
                 f"{n_tx:,} card transactions pooled into sector x rating tranches; cyber losses use "
                 "observed fraud rates by sector.",
@@ -314,11 +322,11 @@ def build_presentation_pdf() -> None:
     ]
 
     # 7. Limitations & next steps
-    news_h = m.get("news_human", {})
+    news_h = m["news_holdout"]
     human_mae_str = (
-        f"Human-labeled news holdout: MAE {news_h.get('severity_mae', 1.52):.2f} on "
-        f"{news_h.get('n_rows', 120)} rows (κ = {news_h.get('annotator_agreement_kappa', 1.0):.2f}, "
-        f"false-trigger rate {news_h.get('false_auto_trigger_rate', 0.0):.1%})."
+        f"Real-news holdout ({news_h['n_rows']} rows): labels written by an AI agent, not yet "
+        f"human-reviewed; severity MAE vs those labels {news_h['severity_mae']:.2f}, "
+        f"false-trigger rate {news_h['false_auto_trigger_rate']:.1%}."
     )
     el += [
         Paragraph("Limitations &amp; next steps", title),
@@ -335,7 +343,7 @@ def build_presentation_pdf() -> None:
             ),
             bullets(
                 [
-                    "Expand human-labeled news set across multiple annotators to measure inter-rater reliability.",
+                    "Replace the AI-agent holdout labels with human labels and a second-pass agreement check.",
                     "Fine-tune FinBERT on tweets + news as an optional higher-accuracy tier.",
                     "Systemic impact model on index and yield reactions.",
                     "Longer live capture to evaluate real-time precision of actionable signals.",

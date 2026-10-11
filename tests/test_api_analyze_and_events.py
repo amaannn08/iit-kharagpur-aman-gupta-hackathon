@@ -113,7 +113,7 @@ def test_api_direct_route_aliases(client: TestClient):
     # GET /api/portfolio
     port_resp = client.get("/api/portfolio")
     assert port_resp.status_code == 200
-    expected_name = "Synthetic Wholesale Institutional Credit & Rates Portfolio"
+    expected_name = "Wholesale book on real S&P 100 issuers (synthetic positions)"
     assert port_resp.json()["portfolio_name"] == expected_name
 
     # POST /api/stress

@@ -1,6 +1,6 @@
 # Financial Event & Severity Annotation Rubric
 
-This document defines the standardized ground-truth annotation rubric for NLP model evaluation in S&P Sentinel, conforming to PRD Section 8.
+This document defines the standardized ground-truth annotation rubric for NLP model evaluation in S&P Sentinel.
 
 ---
 

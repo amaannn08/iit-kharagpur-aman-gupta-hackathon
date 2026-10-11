@@ -1,227 +1,163 @@
 source_ticker,target_ticker,relationship_type,transmission_factor,sign,is_synthetic,rationale,evidence
-BAC,USB,sector_peer,0.61,1,false,"residual return correlation 0.68 (252d, ex-SPY)",market_residuals_252d
-USB,BAC,sector_peer,0.61,1,false,"residual return correlation 0.68 (252d, ex-SPY)",market_residuals_252d
-MS,USB,sector_peer,0.5,1,false,"residual return correlation 0.56 (252d, ex-SPY)",market_residuals_252d
-USB,MS,sector_peer,0.5,1,false,"residual return correlation 0.56 (252d, ex-SPY)",market_residuals_252d
-SCHW,SIVB,sector_peer,0.35,1,false,"residual return correlation 0.39 (252d, ex-SPY)",market_residuals_252d
-SIVB,SCHW,sector_peer,0.35,1,false,"residual return correlation 0.39 (252d, ex-SPY)",market_residuals_252d
-SIVB,USB,sector_peer,0.33,1,false,"residual return correlation 0.37 (252d, ex-SPY)",market_residuals_252d
-USB,SIVB,sector_peer,0.33,1,false,"residual return correlation 0.37 (252d, ex-SPY)",market_residuals_252d
-GOOG,GOOGL,sector_peer,0.8,1,false,"residual return correlation 1.00 (252d, ex-SPY)",market_residuals_252d
-GOOGL,GOOG,sector_peer,0.8,1,false,"residual return correlation 1.00 (252d, ex-SPY)",market_residuals_252d
-COP,EOG,sector_peer,0.78,1,false,"residual return correlation 0.86 (252d, ex-SPY)",market_residuals_252d
-EOG,COP,sector_peer,0.78,1,false,"residual return correlation 0.86 (252d, ex-SPY)",market_residuals_252d
-DUK,LNT,sector_peer,0.76,1,false,"residual return correlation 0.85 (252d, ex-SPY)",market_residuals_252d
-LNT,DUK,sector_peer,0.76,1,false,"residual return correlation 0.85 (252d, ex-SPY)",market_residuals_252d
-CVX,XOM,sector_peer,0.74,1,false,"residual return correlation 0.83 (252d, ex-SPY)",market_residuals_252d
-XOM,CVX,sector_peer,0.74,1,false,"residual return correlation 0.83 (252d, ex-SPY)",market_residuals_252d
-DUK,ED,sector_peer,0.74,1,false,"residual return correlation 0.82 (252d, ex-SPY)",market_residuals_252d
-ED,DUK,sector_peer,0.74,1,false,"residual return correlation 0.82 (252d, ex-SPY)",market_residuals_252d
-DUK,WEC,sector_peer,0.74,1,false,"residual return correlation 0.82 (252d, ex-SPY)",market_residuals_252d
-WEC,DUK,sector_peer,0.74,1,false,"residual return correlation 0.82 (252d, ex-SPY)",market_residuals_252d
-COP,DVN,sector_peer,0.74,1,false,"residual return correlation 0.82 (252d, ex-SPY)",market_residuals_252d
-DVN,COP,sector_peer,0.74,1,false,"residual return correlation 0.82 (252d, ex-SPY)",market_residuals_252d
-CMS,DUK,sector_peer,0.74,1,false,"residual return correlation 0.82 (252d, ex-SPY)",market_residuals_252d
-DUK,CMS,sector_peer,0.74,1,false,"residual return correlation 0.82 (252d, ex-SPY)",market_residuals_252d
-AMT,SBAC,sector_peer,0.73,1,false,"residual return correlation 0.81 (252d, ex-SPY)",market_residuals_252d
-SBAC,AMT,sector_peer,0.73,1,false,"residual return correlation 0.81 (252d, ex-SPY)",market_residuals_252d
-FITB,USB,sector_peer,0.73,1,false,"residual return correlation 0.81 (252d, ex-SPY)",market_residuals_252d
-USB,FITB,sector_peer,0.73,1,false,"residual return correlation 0.81 (252d, ex-SPY)",market_residuals_252d
-CNP,DUK,sector_peer,0.73,1,false,"residual return correlation 0.81 (252d, ex-SPY)",market_residuals_252d
-DUK,CNP,sector_peer,0.73,1,false,"residual return correlation 0.81 (252d, ex-SPY)",market_residuals_252d
-COP,XOM,sector_peer,0.72,1,false,"residual return correlation 0.80 (252d, ex-SPY)",market_residuals_252d
-XOM,COP,sector_peer,0.72,1,false,"residual return correlation 0.80 (252d, ex-SPY)",market_residuals_252d
-CFG,PNC,sector_peer,0.71,1,false,"residual return correlation 0.79 (252d, ex-SPY)",market_residuals_252d
-PNC,CFG,sector_peer,0.71,1,false,"residual return correlation 0.79 (252d, ex-SPY)",market_residuals_252d
-COP,FANG,sector_peer,0.7,1,false,"residual return correlation 0.78 (252d, ex-SPY)",market_residuals_252d
-FANG,COP,sector_peer,0.7,1,false,"residual return correlation 0.78 (252d, ex-SPY)",market_residuals_252d
-MTB,PNC,sector_peer,0.7,1,false,"residual return correlation 0.78 (252d, ex-SPY)",market_residuals_252d
-PNC,MTB,sector_peer,0.7,1,false,"residual return correlation 0.78 (252d, ex-SPY)",market_residuals_252d
-AMT,CCI,sector_peer,0.7,1,false,"residual return correlation 0.77 (252d, ex-SPY)",market_residuals_252d
-CCI,AMT,sector_peer,0.7,1,false,"residual return correlation 0.77 (252d, ex-SPY)",market_residuals_252d
-COP,HAL,sector_peer,0.69,1,false,"residual return correlation 0.77 (252d, ex-SPY)",market_residuals_252d
-HAL,COP,sector_peer,0.69,1,false,"residual return correlation 0.77 (252d, ex-SPY)",market_residuals_252d
-DVN,XOM,sector_peer,0.68,1,false,"residual return correlation 0.76 (252d, ex-SPY)",market_residuals_252d
-XOM,DVN,sector_peer,0.68,1,false,"residual return correlation 0.76 (252d, ex-SPY)",market_residuals_252d
-EOG,XOM,sector_peer,0.68,1,false,"residual return correlation 0.76 (252d, ex-SPY)",market_residuals_252d
-XOM,EOG,sector_peer,0.68,1,false,"residual return correlation 0.76 (252d, ex-SPY)",market_residuals_252d
-FITB,PNC,sector_peer,0.68,1,false,"residual return correlation 0.76 (252d, ex-SPY)",market_residuals_252d
-PNC,FITB,sector_peer,0.68,1,false,"residual return correlation 0.76 (252d, ex-SPY)",market_residuals_252d
-PNC,RF,sector_peer,0.68,1,false,"residual return correlation 0.75 (252d, ex-SPY)",market_residuals_252d
-RF,PNC,sector_peer,0.68,1,false,"residual return correlation 0.75 (252d, ex-SPY)",market_residuals_252d
-BAC,FITB,sector_peer,0.67,1,false,"residual return correlation 0.75 (252d, ex-SPY)",market_residuals_252d
-FITB,BAC,sector_peer,0.67,1,false,"residual return correlation 0.75 (252d, ex-SPY)",market_residuals_252d
-BAC,WFC,sector_peer,0.67,1,false,"residual return correlation 0.75 (252d, ex-SPY)",market_residuals_252d
-WFC,BAC,sector_peer,0.67,1,false,"residual return correlation 0.75 (252d, ex-SPY)",market_residuals_252d
-ELV,UNH,sector_peer,0.67,1,false,"residual return correlation 0.74 (252d, ex-SPY)",market_residuals_252d
-UNH,ELV,sector_peer,0.67,1,false,"residual return correlation 0.74 (252d, ex-SPY)",market_residuals_252d
-HD,LOW,sector_peer,0.66,1,false,"residual return correlation 0.74 (252d, ex-SPY)",market_residuals_252d
-LOW,HD,sector_peer,0.66,1,false,"residual return correlation 0.74 (252d, ex-SPY)",market_residuals_252d
-BAC,HBAN,sector_peer,0.66,1,false,"residual return correlation 0.73 (252d, ex-SPY)",market_residuals_252d
-HBAN,BAC,sector_peer,0.66,1,false,"residual return correlation 0.73 (252d, ex-SPY)",market_residuals_252d
-T,VZ,sector_peer,0.66,1,false,"residual return correlation 0.73 (252d, ex-SPY)",market_residuals_252d
-VZ,T,sector_peer,0.66,1,false,"residual return correlation 0.73 (252d, ex-SPY)",market_residuals_252d
-BAC,C,sector_peer,0.65,1,false,"residual return correlation 0.73 (252d, ex-SPY)",market_residuals_252d
-C,BAC,sector_peer,0.65,1,false,"residual return correlation 0.73 (252d, ex-SPY)",market_residuals_252d
-KO,PEP,sector_peer,0.65,1,false,"residual return correlation 0.72 (252d, ex-SPY)",market_residuals_252d
-PEP,KO,sector_peer,0.65,1,false,"residual return correlation 0.72 (252d, ex-SPY)",market_residuals_252d
-HBAN,PNC,sector_peer,0.65,1,false,"residual return correlation 0.72 (252d, ex-SPY)",market_residuals_252d
-PNC,HBAN,sector_peer,0.65,1,false,"residual return correlation 0.72 (252d, ex-SPY)",market_residuals_252d
-HAL,XOM,sector_peer,0.64,1,false,"residual return correlation 0.71 (252d, ex-SPY)",market_residuals_252d
-XOM,HAL,sector_peer,0.64,1,false,"residual return correlation 0.71 (252d, ex-SPY)",market_residuals_252d
-MDLZ,PEP,sector_peer,0.64,1,false,"residual return correlation 0.71 (252d, ex-SPY)",market_residuals_252d
-PEP,MDLZ,sector_peer,0.64,1,false,"residual return correlation 0.71 (252d, ex-SPY)",market_residuals_252d
-CVX,EOG,sector_peer,0.64,1,false,"residual return correlation 0.71 (252d, ex-SPY)",market_residuals_252d
-EOG,CVX,sector_peer,0.64,1,false,"residual return correlation 0.71 (252d, ex-SPY)",market_residuals_252d
-CVX,OXY,sector_peer,0.63,1,false,"residual return correlation 0.70 (252d, ex-SPY)",market_residuals_252d
-OXY,CVX,sector_peer,0.63,1,false,"residual return correlation 0.70 (252d, ex-SPY)",market_residuals_252d
-HUM,UNH,sector_peer,0.63,1,false,"residual return correlation 0.70 (252d, ex-SPY)",market_residuals_252d
-UNH,HUM,sector_peer,0.63,1,false,"residual return correlation 0.70 (252d, ex-SPY)",market_residuals_252d
-NEE,NI,sector_peer,0.62,1,false,"residual return correlation 0.69 (252d, ex-SPY)",market_residuals_252d
-NI,NEE,sector_peer,0.62,1,false,"residual return correlation 0.69 (252d, ex-SPY)",market_residuals_252d
-HBAN,WFC,sector_peer,0.62,1,false,"residual return correlation 0.69 (252d, ex-SPY)",market_residuals_252d
-WFC,HBAN,sector_peer,0.62,1,false,"residual return correlation 0.69 (252d, ex-SPY)",market_residuals_252d
-KEY,WFC,sector_peer,0.61,1,false,"residual return correlation 0.68 (252d, ex-SPY)",market_residuals_252d
-WFC,KEY,sector_peer,0.61,1,false,"residual return correlation 0.68 (252d, ex-SPY)",market_residuals_252d
-CVX,DVN,sector_peer,0.61,1,false,"residual return correlation 0.68 (252d, ex-SPY)",market_residuals_252d
-DVN,CVX,sector_peer,0.61,1,false,"residual return correlation 0.68 (252d, ex-SPY)",market_residuals_252d
-FITB,WFC,sector_peer,0.61,1,false,"residual return correlation 0.68 (252d, ex-SPY)",market_residuals_252d
-WFC,FITB,sector_peer,0.61,1,false,"residual return correlation 0.68 (252d, ex-SPY)",market_residuals_252d
-GS,MS,sector_peer,0.61,1,false,"residual return correlation 0.68 (252d, ex-SPY)",market_residuals_252d
-MS,GS,sector_peer,0.61,1,false,"residual return correlation 0.68 (252d, ex-SPY)",market_residuals_252d
-NEE,PPL,sector_peer,0.61,1,false,"residual return correlation 0.68 (252d, ex-SPY)",market_residuals_252d
-PPL,NEE,sector_peer,0.61,1,false,"residual return correlation 0.68 (252d, ex-SPY)",market_residuals_252d
-LNT,NEE,sector_peer,0.6,1,false,"residual return correlation 0.67 (252d, ex-SPY)",market_residuals_252d
-NEE,LNT,sector_peer,0.6,1,false,"residual return correlation 0.67 (252d, ex-SPY)",market_residuals_252d
-CVX,HAL,sector_peer,0.59,1,false,"residual return correlation 0.66 (252d, ex-SPY)",market_residuals_252d
-HAL,CVX,sector_peer,0.59,1,false,"residual return correlation 0.66 (252d, ex-SPY)",market_residuals_252d
-CMS,NEE,sector_peer,0.59,1,false,"residual return correlation 0.66 (252d, ex-SPY)",market_residuals_252d
-NEE,CMS,sector_peer,0.59,1,false,"residual return correlation 0.66 (252d, ex-SPY)",market_residuals_252d
-RF,WFC,sector_peer,0.59,1,false,"residual return correlation 0.66 (252d, ex-SPY)",market_residuals_252d
-WFC,RF,sector_peer,0.59,1,false,"residual return correlation 0.66 (252d, ex-SPY)",market_residuals_252d
-EVRG,NEE,sector_peer,0.58,1,false,"residual return correlation 0.65 (252d, ex-SPY)",market_residuals_252d
-NEE,EVRG,sector_peer,0.58,1,false,"residual return correlation 0.65 (252d, ex-SPY)",market_residuals_252d
-SIVB,FRC,sector_peer,0.57,1,false,"residual return correlation 0.63 (252d, ex-SPY)",market_residuals_252d
-FRC,SIVB,sector_peer,0.57,1,false,"residual return correlation 0.63 (252d, ex-SPY)",market_residuals_252d
-C,KEY,sector_peer,0.57,1,false,"residual return correlation 0.63 (252d, ex-SPY)",market_residuals_252d
-KEY,C,sector_peer,0.57,1,false,"residual return correlation 0.63 (252d, ex-SPY)",market_residuals_252d
-CAT,URI,sector_peer,0.56,1,false,"residual return correlation 0.63 (252d, ex-SPY)",market_residuals_252d
-URI,CAT,sector_peer,0.56,1,false,"residual return correlation 0.63 (252d, ex-SPY)",market_residuals_252d
-CNC,UNH,sector_peer,0.56,1,false,"residual return correlation 0.62 (252d, ex-SPY)",market_residuals_252d
-UNH,CNC,sector_peer,0.56,1,false,"residual return correlation 0.62 (252d, ex-SPY)",market_residuals_252d
-C,FITB,sector_peer,0.55,1,false,"residual return correlation 0.61 (252d, ex-SPY)",market_residuals_252d
-FITB,C,sector_peer,0.55,1,false,"residual return correlation 0.61 (252d, ex-SPY)",market_residuals_252d
-KO,MDLZ,sector_peer,0.55,1,false,"residual return correlation 0.61 (252d, ex-SPY)",market_residuals_252d
-MDLZ,KO,sector_peer,0.55,1,false,"residual return correlation 0.61 (252d, ex-SPY)",market_residuals_252d
-C,JPM,sector_peer,0.55,1,false,"residual return correlation 0.61 (252d, ex-SPY)",market_residuals_252d
-JPM,C,sector_peer,0.55,1,false,"residual return correlation 0.61 (252d, ex-SPY)",market_residuals_252d
-HSY,PEP,sector_peer,0.55,1,false,"residual return correlation 0.61 (252d, ex-SPY)",market_residuals_252d
-PEP,HSY,sector_peer,0.55,1,false,"residual return correlation 0.61 (252d, ex-SPY)",market_residuals_252d
-BNY,C,sector_peer,0.54,1,false,"residual return correlation 0.60 (252d, ex-SPY)",market_residuals_252d
-C,BNY,sector_peer,0.54,1,false,"residual return correlation 0.60 (252d, ex-SPY)",market_residuals_252d
-KEY,SCHW,sector_peer,0.54,1,false,"residual return correlation 0.60 (252d, ex-SPY)",market_residuals_252d
-SCHW,KEY,sector_peer,0.54,1,false,"residual return correlation 0.60 (252d, ex-SPY)",market_residuals_252d
-PEP,PG,sector_peer,0.53,1,false,"residual return correlation 0.59 (252d, ex-SPY)",market_residuals_252d
-PG,PEP,sector_peer,0.53,1,false,"residual return correlation 0.59 (252d, ex-SPY)",market_residuals_252d
-FRC,SBNY,sector_peer,0.52,1,false,"residual return correlation 0.58 (252d, ex-SPY)",market_residuals_252d
-SBNY,FRC,sector_peer,0.52,1,false,"residual return correlation 0.58 (252d, ex-SPY)",market_residuals_252d
-GIS,PEP,sector_peer,0.52,1,false,"residual return correlation 0.58 (252d, ex-SPY)",market_residuals_252d
-PEP,GIS,sector_peer,0.52,1,false,"residual return correlation 0.58 (252d, ex-SPY)",market_residuals_252d
-AMP,SCHW,sector_peer,0.51,1,false,"residual return correlation 0.57 (252d, ex-SPY)",market_residuals_252d
-SCHW,AMP,sector_peer,0.51,1,false,"residual return correlation 0.57 (252d, ex-SPY)",market_residuals_252d
-AMP,MS,sector_peer,0.51,1,false,"residual return correlation 0.57 (252d, ex-SPY)",market_residuals_252d
-MS,AMP,sector_peer,0.51,1,false,"residual return correlation 0.57 (252d, ex-SPY)",market_residuals_252d
-RJF,SCHW,sector_peer,0.51,1,false,"residual return correlation 0.56 (252d, ex-SPY)",market_residuals_252d
-SCHW,RJF,sector_peer,0.51,1,false,"residual return correlation 0.56 (252d, ex-SPY)",market_residuals_252d
-CL,KO,sector_peer,0.51,1,false,"residual return correlation 0.56 (252d, ex-SPY)",market_residuals_252d
-KO,CL,sector_peer,0.51,1,false,"residual return correlation 0.56 (252d, ex-SPY)",market_residuals_252d
-CFG,MS,sector_peer,0.49,1,false,"residual return correlation 0.55 (252d, ex-SPY)",market_residuals_252d
-MS,CFG,sector_peer,0.49,1,false,"residual return correlation 0.55 (252d, ex-SPY)",market_residuals_252d
-AMT,EQIX,sector_peer,0.49,1,false,"residual return correlation 0.54 (252d, ex-SPY)",market_residuals_252d
-EQIX,AMT,sector_peer,0.49,1,false,"residual return correlation 0.54 (252d, ex-SPY)",market_residuals_252d
-CAT,DE,sector_peer,0.49,1,false,"residual return correlation 0.54 (252d, ex-SPY)",market_residuals_252d
-DE,CAT,sector_peer,0.49,1,false,"residual return correlation 0.54 (252d, ex-SPY)",market_residuals_252d
-KDP,KO,sector_peer,0.48,1,false,"residual return correlation 0.54 (252d, ex-SPY)",market_residuals_252d
-KO,KDP,sector_peer,0.48,1,false,"residual return correlation 0.54 (252d, ex-SPY)",market_residuals_252d
-CAT,CMI,sector_peer,0.48,1,false,"residual return correlation 0.53 (252d, ex-SPY)",market_residuals_252d
-CMI,CAT,sector_peer,0.48,1,false,"residual return correlation 0.53 (252d, ex-SPY)",market_residuals_252d
-KO,PG,sector_peer,0.48,1,false,"residual return correlation 0.53 (252d, ex-SPY)",market_residuals_252d
-PG,KO,sector_peer,0.48,1,false,"residual return correlation 0.53 (252d, ex-SPY)",market_residuals_252d
-HBAN,MS,sector_peer,0.48,1,false,"residual return correlation 0.53 (252d, ex-SPY)",market_residuals_252d
-MS,HBAN,sector_peer,0.48,1,false,"residual return correlation 0.53 (252d, ex-SPY)",market_residuals_252d
-NVDA,SNPS,sector_peer,0.48,1,false,"residual return correlation 0.53 (252d, ex-SPY)",market_residuals_252d
-SNPS,NVDA,sector_peer,0.48,1,false,"residual return correlation 0.53 (252d, ex-SPY)",market_residuals_252d
-JPM,PRU,sector_peer,0.46,1,false,"residual return correlation 0.51 (252d, ex-SPY)",market_residuals_252d
-PRU,JPM,sector_peer,0.46,1,false,"residual return correlation 0.51 (252d, ex-SPY)",market_residuals_252d
-CVS,ELV,sector_peer,0.46,1,false,"residual return correlation 0.51 (252d, ex-SPY)",market_residuals_252d
-ELV,CVS,sector_peer,0.46,1,false,"residual return correlation 0.51 (252d, ex-SPY)",market_residuals_252d
-JPM,PFG,sector_peer,0.45,1,false,"residual return correlation 0.51 (252d, ex-SPY)",market_residuals_252d
-PFG,JPM,sector_peer,0.45,1,false,"residual return correlation 0.51 (252d, ex-SPY)",market_residuals_252d
-CAT,PH,sector_peer,0.45,1,false,"residual return correlation 0.50 (252d, ex-SPY)",market_residuals_252d
-PH,CAT,sector_peer,0.45,1,false,"residual return correlation 0.50 (252d, ex-SPY)",market_residuals_252d
-CDNS,NVDA,sector_peer,0.45,1,false,"residual return correlation 0.50 (252d, ex-SPY)",market_residuals_252d
-NVDA,CDNS,sector_peer,0.45,1,false,"residual return correlation 0.50 (252d, ex-SPY)",market_residuals_252d
-CAT,DOV,sector_peer,0.45,1,false,"residual return correlation 0.50 (252d, ex-SPY)",market_residuals_252d
-DOV,CAT,sector_peer,0.45,1,false,"residual return correlation 0.50 (252d, ex-SPY)",market_residuals_252d
-CNC,CVS,sector_peer,0.44,1,false,"residual return correlation 0.49 (252d, ex-SPY)",market_residuals_252d
-CVS,CNC,sector_peer,0.44,1,false,"residual return correlation 0.49 (252d, ex-SPY)",market_residuals_252d
-CVS,HUM,sector_peer,0.44,1,false,"residual return correlation 0.49 (252d, ex-SPY)",market_residuals_252d
-HUM,CVS,sector_peer,0.44,1,false,"residual return correlation 0.49 (252d, ex-SPY)",market_residuals_252d
-AMT,O,sector_peer,0.44,1,false,"residual return correlation 0.48 (252d, ex-SPY)",market_residuals_252d
-O,AMT,sector_peer,0.44,1,false,"residual return correlation 0.48 (252d, ex-SPY)",market_residuals_252d
-AMT,KIM,sector_peer,0.44,1,false,"residual return correlation 0.48 (252d, ex-SPY)",market_residuals_252d
-KIM,AMT,sector_peer,0.44,1,false,"residual return correlation 0.48 (252d, ex-SPY)",market_residuals_252d
-CVS,UNH,sector_peer,0.43,1,false,"residual return correlation 0.48 (252d, ex-SPY)",market_residuals_252d
-UNH,CVS,sector_peer,0.43,1,false,"residual return correlation 0.48 (252d, ex-SPY)",market_residuals_252d
-JPM,MET,sector_peer,0.43,1,false,"residual return correlation 0.48 (252d, ex-SPY)",market_residuals_252d
-MET,JPM,sector_peer,0.43,1,false,"residual return correlation 0.48 (252d, ex-SPY)",market_residuals_252d
-DE,URI,sector_peer,0.42,1,false,"residual return correlation 0.46 (252d, ex-SPY)",market_residuals_252d
-URI,DE,sector_peer,0.42,1,false,"residual return correlation 0.46 (252d, ex-SPY)",market_residuals_252d
-AMP,JPM,sector_peer,0.41,1,false,"residual return correlation 0.45 (252d, ex-SPY)",market_residuals_252d
-JPM,AMP,sector_peer,0.41,1,false,"residual return correlation 0.45 (252d, ex-SPY)",market_residuals_252d
-NVDA,SMCI,sector_peer,0.4,1,false,"residual return correlation 0.45 (252d, ex-SPY)",market_residuals_252d
-SMCI,NVDA,sector_peer,0.4,1,false,"residual return correlation 0.45 (252d, ex-SPY)",market_residuals_252d
-CMI,DE,sector_peer,0.39,1,false,"residual return correlation 0.44 (252d, ex-SPY)",market_residuals_252d
-DE,CMI,sector_peer,0.39,1,false,"residual return correlation 0.44 (252d, ex-SPY)",market_residuals_252d
-JNJ,MRK,sector_peer,0.38,1,false,"residual return correlation 0.42 (252d, ex-SPY)",market_residuals_252d
-MRK,JNJ,sector_peer,0.38,1,false,"residual return correlation 0.42 (252d, ex-SPY)",market_residuals_252d
-HD,TSCO,sector_peer,0.38,1,false,"residual return correlation 0.42 (252d, ex-SPY)",market_residuals_252d
-TSCO,HD,sector_peer,0.38,1,false,"residual return correlation 0.42 (252d, ex-SPY)",market_residuals_252d
-COST,WMT,sector_peer,0.38,1,false,"residual return correlation 0.42 (252d, ex-SPY)",market_residuals_252d
-WMT,COST,sector_peer,0.38,1,false,"residual return correlation 0.42 (252d, ex-SPY)",market_residuals_252d
-MPWR,NVDA,sector_peer,0.37,1,false,"residual return correlation 0.41 (252d, ex-SPY)",market_residuals_252d
-NVDA,MPWR,sector_peer,0.37,1,false,"residual return correlation 0.41 (252d, ex-SPY)",market_residuals_252d
-DE,DOV,sector_peer,0.36,1,false,"residual return correlation 0.40 (252d, ex-SPY)",market_residuals_252d
-DOV,DE,sector_peer,0.36,1,false,"residual return correlation 0.40 (252d, ex-SPY)",market_residuals_252d
-CI,UNH,sector_peer,0.36,1,false,"residual return correlation 0.40 (252d, ex-SPY)",market_residuals_252d
-UNH,CI,sector_peer,0.36,1,false,"residual return correlation 0.40 (252d, ex-SPY)",market_residuals_252d
-DE,WAB,sector_peer,0.36,1,false,"residual return correlation 0.40 (252d, ex-SPY)",market_residuals_252d
-WAB,DE,sector_peer,0.36,1,false,"residual return correlation 0.40 (252d, ex-SPY)",market_residuals_252d
-ABT,JNJ,sector_peer,0.36,1,false,"residual return correlation 0.40 (252d, ex-SPY)",market_residuals_252d
-JNJ,ABT,sector_peer,0.36,1,false,"residual return correlation 0.40 (252d, ex-SPY)",market_residuals_252d
-CI,CVS,sector_peer,0.35,1,false,"residual return correlation 0.39 (252d, ex-SPY)",market_residuals_252d
-CVS,CI,sector_peer,0.35,1,false,"residual return correlation 0.39 (252d, ex-SPY)",market_residuals_252d
-AMAT,NVDA,sector_peer,0.35,1,false,"residual return correlation 0.39 (252d, ex-SPY)",market_residuals_252d
-NVDA,AMAT,sector_peer,0.35,1,false,"residual return correlation 0.39 (252d, ex-SPY)",market_residuals_252d
-BDX,JNJ,sector_peer,0.35,1,false,"residual return correlation 0.38 (252d, ex-SPY)",market_residuals_252d
-JNJ,BDX,sector_peer,0.35,1,false,"residual return correlation 0.38 (252d, ex-SPY)",market_residuals_252d
-DHI,HD,sector_peer,0.34,1,false,"residual return correlation 0.38 (252d, ex-SPY)",market_residuals_252d
-HD,DHI,sector_peer,0.34,1,false,"residual return correlation 0.38 (252d, ex-SPY)",market_residuals_252d
-ABBV,JNJ,sector_peer,0.34,1,false,"residual return correlation 0.38 (252d, ex-SPY)",market_residuals_252d
-JNJ,ABBV,sector_peer,0.34,1,false,"residual return correlation 0.38 (252d, ex-SPY)",market_residuals_252d
-APD,LIN,sector_peer,0.33,1,false,"residual return correlation 0.36 (252d, ex-SPY)",market_residuals_252d
-LIN,APD,sector_peer,0.33,1,false,"residual return correlation 0.36 (252d, ex-SPY)",market_residuals_252d
-BMY,JNJ,sector_peer,0.32,1,false,"residual return correlation 0.35 (252d, ex-SPY)",market_residuals_252d
-JNJ,BMY,sector_peer,0.32,1,false,"residual return correlation 0.35 (252d, ex-SPY)",market_residuals_252d
-UPS,AMZN,customer_concentration,0.5,1,false,Amazon.com accounted for approximately 11.8% of consolidated revenue in 2023,SEC EDGAR Form 10-K (0001090425-24-000011) Item 1
-AMZN,UPS,customer_concentration,0.5,1,false,UPS provides essential parcel logistics and ground delivery fulfillment for Amazon retail,SEC EDGAR Form 10-K (0001090425-24-000011) Item 1
-PG,WMT,customer_concentration,0.5,1,false,Walmart Inc. and its affiliates accounted for approximately 15% of total sales in 2023,SEC EDGAR Form 10-K (0000080424-23-000049) Item 1
-WMT,PG,customer_concentration,0.5,1,false,Procter & Gamble is a major consumer staples supplier across personal care and cleaning categories,SEC EDGAR Form 10-K (0000080424-23-000049) Item 1
-AVGO,AAPL,customer_concentration,0.5,1,false,Sales to Apple Inc. accounted for approximately 20% of net revenue in fiscal 2023,SEC EDGAR Form 10-K (0001730168-23-000091) Item 1
-AAPL,AVGO,customer_concentration,0.5,1,false,Broadcom manufactures critical RF filters and wireless connectivity components for iPhone,SEC EDGAR Form 10-K (0001730168-23-000091) Item 1
-QCOM,AAPL,customer_concentration,0.5,1,false,Apple Inc. accounted for approximately 21% of consolidated revenues in fiscal 2023,SEC EDGAR Form 10-K (0000804328-23-000071) Item 1
-AAPL,QCOM,customer_concentration,0.5,1,false,Qualcomm supplies 5G Snapdragon modem-RF systems for Apple mobile hardware,SEC EDGAR Form 10-K (0000804328-23-000071) Item 1
-GE,BA,customer_concentration,0.5,1,false,Commercial aviation propulsion deliveries concentrated with The Boeing Company,SEC EDGAR Form 10-K (0000040545-24-000016) Item 1
-BA,GE,customer_concentration,0.5,1,false,GE Aerospace / CFM International provides sole-source LEAP-1B engines for 737 MAX,SEC EDGAR Form 10-K (0000040545-24-000016) Item 1
-CAT,UNP,customer_concentration,0.5,1,false,Key equipment and locomotive supply/freight concentration with Union Pacific Railroad,SEC EDGAR Form 10-K (0000018230-24-000048) Item 1
-UNP,CAT,customer_concentration,0.5,1,false,Caterpillar Progress Rail division maintains locomotive fleet and heavy transport equipment,SEC EDGAR Form 10-K (0000018230-24-000048) Item 1
+COP,EOG,sector_peer,0.78,1,false,"residual return correlation 0.86 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+EOG,COP,sector_peer,0.78,1,false,"residual return correlation 0.86 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+DUK,LNT,sector_peer,0.77,1,false,"residual return correlation 0.85 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+LNT,DUK,sector_peer,0.77,1,false,"residual return correlation 0.85 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+CVX,XOM,sector_peer,0.74,1,false,"residual return correlation 0.83 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+XOM,CVX,sector_peer,0.74,1,false,"residual return correlation 0.83 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+DUK,ED,sector_peer,0.74,1,false,"residual return correlation 0.82 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+ED,DUK,sector_peer,0.74,1,false,"residual return correlation 0.82 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+DUK,WEC,sector_peer,0.74,1,false,"residual return correlation 0.82 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+WEC,DUK,sector_peer,0.74,1,false,"residual return correlation 0.82 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+CMS,DUK,sector_peer,0.74,1,false,"residual return correlation 0.82 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+DUK,CMS,sector_peer,0.74,1,false,"residual return correlation 0.82 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+COP,DVN,sector_peer,0.74,1,false,"residual return correlation 0.82 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+DVN,COP,sector_peer,0.74,1,false,"residual return correlation 0.82 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+AMT,SBAC,sector_peer,0.73,1,false,"residual return correlation 0.81 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+SBAC,AMT,sector_peer,0.73,1,false,"residual return correlation 0.81 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+CNP,DUK,sector_peer,0.73,1,false,"residual return correlation 0.81 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+DUK,CNP,sector_peer,0.73,1,false,"residual return correlation 0.81 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+COP,XOM,sector_peer,0.72,1,false,"residual return correlation 0.80 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+XOM,COP,sector_peer,0.72,1,false,"residual return correlation 0.80 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+COP,FANG,sector_peer,0.71,1,false,"residual return correlation 0.79 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+FANG,COP,sector_peer,0.71,1,false,"residual return correlation 0.79 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+AMT,CCI,sector_peer,0.7,1,false,"residual return correlation 0.77 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+CCI,AMT,sector_peer,0.7,1,false,"residual return correlation 0.77 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+COP,HAL,sector_peer,0.69,1,false,"residual return correlation 0.77 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+HAL,COP,sector_peer,0.69,1,false,"residual return correlation 0.77 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+DVN,XOM,sector_peer,0.68,1,false,"residual return correlation 0.76 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+XOM,DVN,sector_peer,0.68,1,false,"residual return correlation 0.76 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+EOG,XOM,sector_peer,0.68,1,false,"residual return correlation 0.75 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+XOM,EOG,sector_peer,0.68,1,false,"residual return correlation 0.75 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+BAC,WFC,sector_peer,0.68,1,false,"residual return correlation 0.75 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+WFC,BAC,sector_peer,0.68,1,false,"residual return correlation 0.75 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+BAC,FITB,sector_peer,0.67,1,false,"residual return correlation 0.75 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+FITB,BAC,sector_peer,0.67,1,false,"residual return correlation 0.75 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+ELV,UNH,sector_peer,0.67,1,false,"residual return correlation 0.74 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+UNH,ELV,sector_peer,0.67,1,false,"residual return correlation 0.74 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+T,VZ,sector_peer,0.66,1,false,"residual return correlation 0.73 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+VZ,T,sector_peer,0.66,1,false,"residual return correlation 0.73 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+HD,LOW,sector_peer,0.66,1,false,"residual return correlation 0.73 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+LOW,HD,sector_peer,0.66,1,false,"residual return correlation 0.73 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+BAC,C,sector_peer,0.65,1,false,"residual return correlation 0.73 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+C,BAC,sector_peer,0.65,1,false,"residual return correlation 0.73 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+BAC,HBAN,sector_peer,0.65,1,false,"residual return correlation 0.73 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+HBAN,BAC,sector_peer,0.65,1,false,"residual return correlation 0.73 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+KO,PEP,sector_peer,0.65,1,false,"residual return correlation 0.73 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+PEP,KO,sector_peer,0.65,1,false,"residual return correlation 0.73 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+MDLZ,PEP,sector_peer,0.64,1,false,"residual return correlation 0.72 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+PEP,MDLZ,sector_peer,0.64,1,false,"residual return correlation 0.72 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+HAL,XOM,sector_peer,0.64,1,false,"residual return correlation 0.71 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+XOM,HAL,sector_peer,0.64,1,false,"residual return correlation 0.71 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+BAC,MTB,sector_peer,0.63,1,false,"residual return correlation 0.71 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+MTB,BAC,sector_peer,0.63,1,false,"residual return correlation 0.71 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+CVX,EOG,sector_peer,0.63,1,false,"residual return correlation 0.70 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+EOG,CVX,sector_peer,0.63,1,false,"residual return correlation 0.70 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+CVX,OXY,sector_peer,0.63,1,false,"residual return correlation 0.70 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+OXY,CVX,sector_peer,0.63,1,false,"residual return correlation 0.70 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+HUM,UNH,sector_peer,0.63,1,false,"residual return correlation 0.70 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+UNH,HUM,sector_peer,0.63,1,false,"residual return correlation 0.70 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+NEE,NI,sector_peer,0.62,1,false,"residual return correlation 0.69 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+NI,NEE,sector_peer,0.62,1,false,"residual return correlation 0.69 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+CVX,DVN,sector_peer,0.61,1,false,"residual return correlation 0.68 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+DVN,CVX,sector_peer,0.61,1,false,"residual return correlation 0.68 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+NEE,PPL,sector_peer,0.61,1,false,"residual return correlation 0.68 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+PPL,NEE,sector_peer,0.61,1,false,"residual return correlation 0.68 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+GS,MS,sector_peer,0.61,1,false,"residual return correlation 0.68 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+MS,GS,sector_peer,0.61,1,false,"residual return correlation 0.68 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+LNT,NEE,sector_peer,0.6,1,false,"residual return correlation 0.67 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+NEE,LNT,sector_peer,0.6,1,false,"residual return correlation 0.67 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+CVX,HAL,sector_peer,0.59,1,false,"residual return correlation 0.66 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+HAL,CVX,sector_peer,0.59,1,false,"residual return correlation 0.66 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+CMS,NEE,sector_peer,0.59,1,false,"residual return correlation 0.66 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+NEE,CMS,sector_peer,0.59,1,false,"residual return correlation 0.66 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+EVRG,NEE,sector_peer,0.58,1,false,"residual return correlation 0.65 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+NEE,EVRG,sector_peer,0.58,1,false,"residual return correlation 0.65 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+CNC,UNH,sector_peer,0.56,1,false,"residual return correlation 0.62 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+UNH,CNC,sector_peer,0.56,1,false,"residual return correlation 0.62 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+CAT,URI,sector_peer,0.56,1,false,"residual return correlation 0.62 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+URI,CAT,sector_peer,0.56,1,false,"residual return correlation 0.62 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+JPM,WFC,sector_peer,0.56,1,false,"residual return correlation 0.62 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+WFC,JPM,sector_peer,0.56,1,false,"residual return correlation 0.62 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+KO,MDLZ,sector_peer,0.55,1,false,"residual return correlation 0.61 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+MDLZ,KO,sector_peer,0.55,1,false,"residual return correlation 0.61 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+HSY,PEP,sector_peer,0.55,1,false,"residual return correlation 0.61 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+PEP,HSY,sector_peer,0.55,1,false,"residual return correlation 0.61 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+C,JPM,sector_peer,0.54,1,false,"residual return correlation 0.60 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+JPM,C,sector_peer,0.54,1,false,"residual return correlation 0.60 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+PEP,PG,sector_peer,0.53,1,false,"residual return correlation 0.59 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+PG,PEP,sector_peer,0.53,1,false,"residual return correlation 0.59 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+GIS,PEP,sector_peer,0.52,1,false,"residual return correlation 0.58 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+PEP,GIS,sector_peer,0.52,1,false,"residual return correlation 0.58 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+CL,KO,sector_peer,0.51,1,false,"residual return correlation 0.56 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+KO,CL,sector_peer,0.51,1,false,"residual return correlation 0.56 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+FITB,GS,sector_peer,0.49,1,false,"residual return correlation 0.54 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+GS,FITB,sector_peer,0.49,1,false,"residual return correlation 0.54 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+GS,WFC,sector_peer,0.49,1,false,"residual return correlation 0.54 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+WFC,GS,sector_peer,0.49,1,false,"residual return correlation 0.54 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+AMT,EQIX,sector_peer,0.49,1,false,"residual return correlation 0.54 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+EQIX,AMT,sector_peer,0.49,1,false,"residual return correlation 0.54 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+KDP,KO,sector_peer,0.49,1,false,"residual return correlation 0.54 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+KO,KDP,sector_peer,0.49,1,false,"residual return correlation 0.54 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+CAT,CMI,sector_peer,0.49,1,false,"residual return correlation 0.54 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+CMI,CAT,sector_peer,0.49,1,false,"residual return correlation 0.54 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+C,GS,sector_peer,0.48,1,false,"residual return correlation 0.54 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+GS,C,sector_peer,0.48,1,false,"residual return correlation 0.54 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+GS,HBAN,sector_peer,0.48,1,false,"residual return correlation 0.54 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+HBAN,GS,sector_peer,0.48,1,false,"residual return correlation 0.54 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+CAT,DE,sector_peer,0.48,1,false,"residual return correlation 0.53 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+DE,CAT,sector_peer,0.48,1,false,"residual return correlation 0.53 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+KO,PG,sector_peer,0.48,1,false,"residual return correlation 0.53 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+PG,KO,sector_peer,0.48,1,false,"residual return correlation 0.53 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+JPM,PRU,sector_peer,0.47,1,false,"residual return correlation 0.52 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+PRU,JPM,sector_peer,0.47,1,false,"residual return correlation 0.52 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+NVDA,SNPS,sector_peer,0.46,1,false,"residual return correlation 0.51 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+SNPS,NVDA,sector_peer,0.46,1,false,"residual return correlation 0.51 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+JPM,PFG,sector_peer,0.45,1,false,"residual return correlation 0.50 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+PFG,JPM,sector_peer,0.45,1,false,"residual return correlation 0.50 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+CAT,PH,sector_peer,0.45,1,false,"residual return correlation 0.50 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+PH,CAT,sector_peer,0.45,1,false,"residual return correlation 0.50 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+CAT,DOV,sector_peer,0.45,1,false,"residual return correlation 0.50 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+DOV,CAT,sector_peer,0.45,1,false,"residual return correlation 0.50 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+CVS,UNH,sector_peer,0.44,1,false,"residual return correlation 0.49 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+UNH,CVS,sector_peer,0.44,1,false,"residual return correlation 0.49 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+MO,PM,sector_peer,0.43,1,false,"residual return correlation 0.48 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+PM,MO,sector_peer,0.43,1,false,"residual return correlation 0.48 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+CDNS,NVDA,sector_peer,0.43,1,false,"residual return correlation 0.48 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+NVDA,CDNS,sector_peer,0.43,1,false,"residual return correlation 0.48 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+AMT,O,sector_peer,0.43,1,false,"residual return correlation 0.48 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+O,AMT,sector_peer,0.43,1,false,"residual return correlation 0.48 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+JPM,MET,sector_peer,0.43,1,false,"residual return correlation 0.48 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+MET,JPM,sector_peer,0.43,1,false,"residual return correlation 0.48 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+AMT,KIM,sector_peer,0.43,1,false,"residual return correlation 0.48 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+KIM,AMT,sector_peer,0.43,1,false,"residual return correlation 0.48 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+NVDA,SMCI,sector_peer,0.39,1,false,"residual return correlation 0.43 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+SMCI,NVDA,sector_peer,0.39,1,false,"residual return correlation 0.43 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+HD,TSCO,sector_peer,0.38,1,false,"residual return correlation 0.43 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+TSCO,HD,sector_peer,0.38,1,false,"residual return correlation 0.43 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+COST,WMT,sector_peer,0.38,1,false,"residual return correlation 0.43 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+WMT,COST,sector_peer,0.38,1,false,"residual return correlation 0.43 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+JNJ,MRK,sector_peer,0.38,1,false,"residual return correlation 0.42 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+MRK,JNJ,sector_peer,0.38,1,false,"residual return correlation 0.42 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+CI,UNH,sector_peer,0.37,1,false,"residual return correlation 0.41 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+UNH,CI,sector_peer,0.37,1,false,"residual return correlation 0.41 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+ABT,JNJ,sector_peer,0.36,1,false,"residual return correlation 0.40 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+JNJ,ABT,sector_peer,0.36,1,false,"residual return correlation 0.40 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+MPWR,NVDA,sector_peer,0.35,1,false,"residual return correlation 0.39 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+NVDA,MPWR,sector_peer,0.35,1,false,"residual return correlation 0.39 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+AMAT,NVDA,sector_peer,0.35,1,false,"residual return correlation 0.39 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+NVDA,AMAT,sector_peer,0.35,1,false,"residual return correlation 0.39 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+DHI,HD,sector_peer,0.35,1,false,"residual return correlation 0.38 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+HD,DHI,sector_peer,0.35,1,false,"residual return correlation 0.38 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+BDX,JNJ,sector_peer,0.34,1,false,"residual return correlation 0.38 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+JNJ,BDX,sector_peer,0.34,1,false,"residual return correlation 0.38 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+ABBV,JNJ,sector_peer,0.34,1,false,"residual return correlation 0.37 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+JNJ,ABBV,sector_peer,0.34,1,false,"residual return correlation 0.37 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+GD,RTX,sector_peer,0.33,1,false,"residual return correlation 0.37 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+RTX,GD,sector_peer,0.33,1,false,"residual return correlation 0.37 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+ABBV,REGN,sector_peer,0.33,1,false,"residual return correlation 0.37 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+REGN,ABBV,sector_peer,0.33,1,false,"residual return correlation 0.37 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+APD,LIN,sector_peer,0.32,1,false,"residual return correlation 0.35 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+LIN,APD,sector_peer,0.32,1,false,"residual return correlation 0.35 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+LIN,PPG,sector_peer,0.32,1,false,"residual return correlation 0.35 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)
+PPG,LIN,sector_peer,0.32,1,false,"residual return correlation 0.35 (252d ex-SPY, 2023-03-01 to 2024-02-29)",data/raw/real/market/close_sp500.parquet (yfinance)

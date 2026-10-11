@@ -2,6 +2,7 @@ import React from 'react';
 import { CheckCircle, Layers, XCircle } from 'lucide-react';
 import { RiskSignal, StressRunResult } from '../api/client';
 import { WhyThisLossPanel } from './WhyThisLossPanel';
+import { fmt, pct, useMetrics } from '../hooks/useMetrics';
 
 export interface InspectorProps {
   selectedSignal: RiskSignal | null;
@@ -16,6 +17,7 @@ export const Inspector: React.FC<InspectorProps> = ({
   onViewStressPnL,
   onSelectTopSignal,
 }) => {
+  const m = useMetrics();
   return (
     <div className="col-span-12 lg:col-span-5 flex flex-col bg-zinc-950 border border-zinc-800 rounded-lg overflow-hidden">
       <div className="px-4 py-3 border-b border-zinc-800 bg-black/60 flex items-center justify-between">
@@ -190,7 +192,7 @@ export const Inspector: React.FC<InspectorProps> = ({
             <div className="p-3 rounded bg-black border border-zinc-800 space-y-1">
               <div className="font-bold text-white flex items-center justify-between">
                 <span>1. Entity Linking &amp; Role Guards</span>
-                <span className="text-emerald-400 text-[10px]">P 0.969 / R 0.981</span>
+                <span className="text-emerald-400 text-[10px]">P {fmt(m?.entity_polygon?.precision)} / R {fmt(m?.entity_polygon?.recall_mentioned)}</span>
               </div>
               <p className="text-zinc-400 font-sans text-[11px]">
                 S&amp;P 500 universe linker with SEC CIK cross-referencing and role guards preventing false broker/rating agency attribution.
@@ -200,7 +202,7 @@ export const Inspector: React.FC<InspectorProps> = ({
             <div className="p-3 rounded bg-black border border-zinc-800 space-y-1">
               <div className="font-bold text-white flex items-center justify-between">
                 <span>2. Continuous Sentiment Engine</span>
-                <span className="text-emerald-400 text-[10px]">Macro-F1 0.778</span>
+                <span className="text-emerald-400 text-[10px]">Macro-F1 {fmt(m?.public_real?.sentiment?.macro_f1)}</span>
               </div>
               <p className="text-zinc-400 font-sans text-[11px]">
                 Local FinBERT + character/word n-gram logistic classifier producing directional sentiment calibrated in [-1.00, +1.00].
@@ -210,30 +212,30 @@ export const Inspector: React.FC<InspectorProps> = ({
             <div className="p-3 rounded bg-black border border-zinc-800 space-y-1">
               <div className="font-bold text-white flex items-center justify-between">
                 <span>3. Calibrated Event Classification</span>
-                <span className="text-emerald-400 text-[10px]">Macro-F1 0.795</span>
+                <span className="text-emerald-400 text-[10px]">Macro-F1 {fmt(m?.public_real?.event?.macro_f1_model)}</span>
               </div>
               <p className="text-zinc-400 font-sans text-[11px]">
-                Isotonic-calibrated 8-class taxonomy with strict abstention thresholds choosing precision (0.942) over recall on ambiguous inputs.
+                Isotonic-calibrated 8-class taxonomy with strict abstention thresholds choosing precision ({fmt(m?.public_real?.event?.precision_when_fired)}) over recall on ambiguous inputs.
               </p>
             </div>
 
             <div className="p-3 rounded bg-black border border-zinc-800 space-y-1">
               <div className="font-bold text-white flex items-center justify-between">
                 <span>4. Market Abnormal Return Impact</span>
-                <span className="text-emerald-400 text-[10px]">Spearman ρ 0.151</span>
+                <span className="text-emerald-400 text-[10px]">Spearman ρ {fmt(m?.market_impact?.learned_oof_spearman)}</span>
               </div>
               <p className="text-zinc-400 font-sans text-[11px]">
-                Gradient-boosted severity predictor validated against 2,617 real market reactions, mapped to an explainable 1-10 severity rubric.
+                Gradient-boosted severity predictor validated against {m?.market_impact?.events?.toLocaleString('en-US') ?? '—'} real market reactions, mapped to an explainable 1-10 severity rubric.
               </p>
             </div>
 
             <div className="p-3 rounded bg-black border border-zinc-800 space-y-1">
               <div className="font-bold text-white flex items-center justify-between">
                 <span>5. Automated Stress Trigger Gates</span>
-                <span className="text-emerald-400 text-[10px]">False Trigger 0.03%</span>
+                <span className="text-emerald-400 text-[10px]">False trigger {pct(m?.pipeline?.false_trigger_rate_max_source)} (max per source)</span>
               </div>
               <p className="text-zinc-400 font-sans text-[11px]">
-                Action gates evaluate severity (≥7), confidence, and novelty before shocking the $610M wholesale portfolio and re-weighting the index.
+                Action gates require impact above 7, a supported event class, confidence and novelty before stressing the funded book and re-weighting the index.
               </p>
             </div>
           </div>

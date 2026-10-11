@@ -23,7 +23,7 @@ def client():
 
 def test_api_get_portfolio(client: TestClient):
     """Verify /api/stress/portfolio returns wholesale portfolio with funded segregation."""
-    resp = client.get("/api/stress/portfolio")
+    resp = client.get("/api/stress/portfolio?profile=synthetic_demo")
 
     assert resp.status_code == 200
     data = resp.json()
@@ -67,7 +67,7 @@ def test_api_simulate_manual_stress(client: TestClient):
     assert result["reconciliation_passed"] is True
     deltas = result["position_deltas"]
     assert len([d for d in deltas if d["sleeve"] == "wholesale"]) == 13
-    portfolio = client.get("/api/stress/portfolio").json()
+    portfolio = client.get("/api/stress/portfolio?profile=synthetic_demo").json()
     n_positions = sum(len(portfolio[k]) for k in ("loans", "bonds", "swaps", "cash", "equities"))
     assert len(deltas) == n_positions  # every position is revalued
     assert {s["sleeve"] for s in result["sleeve_breakdown"]} == {
@@ -145,3 +145,50 @@ def test_manual_cyber_books_operational_loss(client: TestClient):
     body = r.json()
     assert body["shock_parameters"]["target_sector"] == "Financials"
     assert sum(p["operational_loss_usd"] for p in body["position_deltas"]) > 0
+
+
+def test_portfolio_default_is_the_book_stress_runs_use(client: TestClient):
+    from sentinel.config import settings
+
+    data = client.get("/api/stress/portfolio").json()
+    assert settings.default_portfolio_profile == "real_issuers"
+    assert data["portfolio_name"].startswith("Wholesale book on real S&P 100 issuers")
+    assert client.get("/api/stress/portfolio?profile=nope").status_code == 404
+
+
+def test_unknown_sector_is_a_client_error(client: TestClient):
+    r = client.post("/api/stress/simulate", json={"event_class": "CREDIT", "impact_score": 8,
+                                                  "target_entity": "Martian mining", "target_scope": "sector"})
+    assert r.status_code == 400
+
+
+def test_custom_stress_applies_explicit_shocks_untiered(client: TestClient):
+    body = client.post("/api/stress/custom", json={"bond_spread_shift_bps": 100}).json()
+    assert body["shock_parameters"]["rating_tiered"] is False
+    bonds = [p for p in body["position_deltas"] if p["asset_class"] == "bond" and p["sleeve"] == "wholesale"]
+    # every bond moves by -duration x 100 bp regardless of rating
+    assert all("x1.00" in p["applied_shock_summary"] or "x" not in p["applied_shock_summary"] for p in bonds)
+
+
+def test_unknown_profile_is_404_everywhere(client: TestClient):
+    assert client.post("/api/stress/scenario/HIST-SVB_2023?profile=nope").status_code == 404
+    assert client.post("/api/stress/custom", json={"profile": "nope"}).status_code == 404
+    r = client.post("/api/stress/simulate", json={"event_class": "CREDIT", "target_entity": "JPM",
+                                                  "profile": "nope"})
+    assert r.status_code == 404
+
+
+def test_scenario_default_profile_follows_settings(client: TestClient):
+    from sentinel.config import settings
+
+    body = client.post("/api/stress/scenario/HIST-SVB_2023").json()
+    assert body["portfolio_profile"] == settings.default_portfolio_profile
+
+
+def test_engine_rejects_unknown_profile():
+    import pytest
+
+    from sentinel.stress.engine import StressEngine
+
+    with pytest.raises(KeyError):
+        StressEngine().get_valuation_engine("nope")

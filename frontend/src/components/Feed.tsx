@@ -11,6 +11,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { RiskSignal } from '../api/client';
+import { musd, useMetrics } from '../hooks/useMetrics';
 
 export interface FeedProps {
   signals: RiskSignal[];
@@ -41,6 +42,8 @@ export const Feed: React.FC<FeedProps> = ({
   onPlay,
   totalLossUsd,
 }) => {
+  const metrics = useMetrics();
+  const sleeves = metrics?.stress?.funded_by_sleeve_usd;
   const [filterMode, setFilterMode] = useState<'all' | 'high_impact' | 'actionable'>('all');
 
   // Quantitative Aggregates for Institutional KPI Ribbon
@@ -79,8 +82,10 @@ export const Feed: React.FC<FeedProps> = ({
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-zinc-800/80 border-b border-zinc-800">
         <div className="bg-black p-3 space-y-1">
           <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">Portfolio Monitored</div>
-          <div className="text-sm font-bold text-white font-mono">$610.0M</div>
-          <div className="text-[10px] text-zinc-400 truncate">$450M Wholes. • $50M SME • $110M Eq</div>
+          <div className="text-sm font-bold text-white font-mono">{musd(metrics?.stress?.funded_book_usd)}</div>
+          <div className="text-[10px] text-zinc-400 truncate">
+            {musd(sleeves?.wholesale)} Wholes. • {musd(sleeves?.retail_sme)} SME • {musd(sleeves?.equity)} Eq
+          </div>
         </div>
 
         <div className="bg-black p-3 space-y-1">

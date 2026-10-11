@@ -15,13 +15,13 @@ def get_health():
     manifest_path = settings.data_dir / "manifest.json"
     news_path = settings.data_dir / "news_demo.csv"
     social_path = settings.data_dir / "social_demo.csv"
-    portfolio_path = settings.data_dir / "wholesale_positions.json"
+    portfolio_files = settings.portfolio_profiles[settings.default_portfolio_profile]
 
     datasets_present = (
         manifest_path.exists()
         and news_path.exists()
         and social_path.exists()
-        and portfolio_path.exists()
+        and all((settings.data_dir / f).exists() for f in portfolio_files)
     )
 
     return {

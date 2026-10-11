@@ -705,6 +705,8 @@ class ValuationEngine:
             "operational_loss_multiplier": shock.operational_loss_multiplier,
             "target_sector": shock.target_sector,
             "catalog_entry": shock.catalog_entry,
+            "pd_from_spread": shock.pd_from_spread,
+            "rating_tiered": shock.rating_tiered,
         }
 
         return StressRunResult(
