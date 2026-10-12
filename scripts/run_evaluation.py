@@ -366,7 +366,8 @@ def suite_pipeline() -> Dict[str, Any]:
         decision = dedup.process(r.record_id, text, timestamp=r.pub.to_pydatetime())
         dup_records += int(decision.is_duplicate)
         rec = InputRecord(record_id=r.record_id, source_id="polygon",
-                          source_type=SourceType.NEWS, text=text)  # fmt: skip
+                          source_type=SourceType.NEWS, text=text,
+                          published_at=r.pub.to_pydatetime())  # fmt: skip
         for s in nlp_engine.process_record_multi(rec, "polygon", decision):
             total_signals += 1
             key = (r.record_id, s.entity.ticker)
@@ -377,7 +378,7 @@ def suite_pipeline() -> Dict[str, Any]:
                     eligible_z.append(z)
                     if z >= 3.0:
                         eligible_high.add(key)
-            if stress_engine.should_trigger(s):
+            if stress_engine.should_trigger(s, timestamp=r.pub.to_pydatetime()):
                 triggers += 1
                 stress_engine.acted_signal_ids.add(s.signal_id)
                 if z is not None:
@@ -433,6 +434,12 @@ def suite_pipeline() -> Dict[str, Any]:
         count_triggers(zip(tw.record_id, tw.text.astype(str)), SourceType.SOCIAL), len(tw)
     )
     rates = {k: round(t / n, 4) for k, (t, n) in routine_counts.items()}
+    routine_rates_ci95 = {
+        k: bootstrap_ratio_ci(t, n) for k, (t, n) in routine_counts.items()
+    }
+
+    el_block = precision_block(eligible_z, eligible_high)
+    tr_block = precision_block(triggered_z, triggered_high)
 
     return {
         "dataset": "Polygon 2023 Q4 temporal holdout + held-out routine controls",
@@ -448,9 +455,14 @@ def suite_pipeline() -> Dict[str, Any]:
         "eligible_rate": round(eligible_signals / total_signals, 4) if total_signals else 0.0,
         "stress_triggers": triggers,
         "triggers_per_1k_records": round(triggers / (len(q4_news) / 1000), 2),
-        "eligible_vs_market": precision_block(eligible_z, eligible_high),
-        "triggers_vs_market": precision_block(triggered_z, triggered_high),
+        "eligible_signals_recall_z3": el_block["recall_abs_z_ge_3"],
+        "eligible_signals_recall_z3_ci95": el_block["recall_ci95"],
+        "automatic_trigger_recall_z3": tr_block["recall_abs_z_ge_3"],
+        "automatic_trigger_recall_z3_ci95": tr_block["recall_ci95"],
+        "eligible_vs_market": el_block,
+        "triggers_vs_market": tr_block,
         "false_trigger_rates_by_source": rates,
+        "false_trigger_rates_ci95": routine_rates_ci95,
         "false_trigger_rate_max_source": max(rates.values()),
         "routine_counts": {k: {"triggers": t, "records": n} for k, (t, n) in routine_counts.items()},
         "duplicate_record_rate": round(dup_records / len(q4_news), 4),
@@ -595,6 +607,142 @@ def suite_news_holdout() -> Dict[str, Any]:
     }
 
 
+def suite_crisis_time_machine() -> Dict[str, Any]:
+    """Replay historical crises through NLPEngine + StressEngine under frozen thresholds.
+
+    Measures lead time: market_event_time - trigger_time.
+    Thresholds are strictly frozen from the dev split without tuning on crisis windows.
+    """
+    from sentinel.contracts.records import InputRecord, SourceType
+    from sentinel.nlp.engine import NLPEngine
+    from sentinel.stress.engine import StressEngine
+
+    nlp_engine = NLPEngine()
+    crises_results: Dict[str, Any] = {}
+
+    CRISIS_CONFIGS = [
+        {
+            "crisis_id": "svb",
+            "name": "Silicon Valley Bank Collapse",
+            "event_class": "CREDIT",
+            "primary_entity": "SIVB",
+            "naive_keyword": "svb",
+            "naive_rule": "Keyword match 'SVB' in headline or body",
+        },
+        {
+            "crisis_id": "crowdstrike",
+            "name": "CrowdStrike Global Outage",
+            "event_class": "CYBER",
+            "primary_entity": "CRWD",
+            "naive_keyword": "outage",
+            "naive_rule": "Keyword match 'outage' in headline or body",
+        },
+        {
+            "crisis_id": "ukraine",
+            "name": "Russia-Ukraine Invasion",
+            "event_class": "GEOPOLITICAL",
+            "primary_entity": "MACRO",
+            "naive_keyword": "ukraine",
+            "naive_rule": "Keyword match 'Ukraine' in headline or body",
+        },
+    ]
+
+    for cfg in CRISIS_CONFIGS:
+        cid = cfg["crisis_id"]
+        csv_path = DATA / "real" / "crisis" / f"{cid}.csv"
+        prices_path = DATA / "real" / "crisis" / f"{cid}_prices.json"
+        if not csv_path.exists() or not prices_path.exists():
+            continue
+
+        meta = json.loads(prices_path.read_text(encoding="utf-8"))
+        mkt_milestone = next((m for m in meta.get("milestones", []) if m["id"] == "market_event"), None)
+        market_event_str = mkt_milestone["timestamp"] if mkt_milestone else None
+        mkt_dt = datetime.fromisoformat(market_event_str.replace("Z", "+00:00")) if market_event_str else None
+
+        df = pd.read_csv(csv_path)
+        df["pub"] = pd.to_datetime(df["published_at"], utc=True)
+        df = df.sort_values("pub")
+
+        stress_engine = StressEngine()
+        first_signal_time = None
+        trigger_time = None
+        trigger_signal_id = None
+        peak_intensity = 0.0
+
+        naive_triggers = 0
+        naive_first_time = None
+        naive_kw = cfg["naive_keyword"]
+
+        total_records = len(df)
+        total_signals = 0
+
+        for r in df.itertuples():
+            headline = str(r.headline) if pd.notna(r.headline) else ""
+            body = str(r.body) if pd.notna(r.body) else ""
+            text = f"{headline}. {body}" if (headline and body) else (headline or body)
+
+            if naive_kw in text.lower():
+                naive_triggers += 1
+                if naive_first_time is None:
+                    naive_first_time = r.pub.isoformat()
+
+            rec = InputRecord(
+                record_id=r.record_id,
+                source_id=r.source_id,
+                source_type=SourceType.NEWS,
+                text=text,
+                published_at=r.pub.to_pydatetime(),
+            )
+            for s in nlp_engine.process_record_multi(rec, r.source_id):
+                total_signals += 1
+                if first_signal_time is None:
+                    first_signal_time = r.pub.isoformat()
+
+                did_trigger = stress_engine.should_trigger(s, timestamp=r.pub.to_pydatetime())
+                for cl in stress_engine.story_tracker.active_clusters.values():
+                    int_val = cl.compute_intensity()
+                    if int_val > peak_intensity:
+                        peak_intensity = int_val
+
+                if did_trigger and trigger_time is None:
+                    trigger_time = r.pub.isoformat()
+                    trigger_signal_id = s.signal_id
+
+        lead_time_hours = None
+        lead_time_display = "No trigger fired under frozen threshold"
+        if trigger_time and mkt_dt:
+            trig_dt = datetime.fromisoformat(trigger_time.replace("Z", "+00:00"))
+            lead_time_hours = round((mkt_dt - trig_dt).total_seconds() / 3600.0, 2)
+            if lead_time_hours > 0:
+                lead_time_display = f"{lead_time_hours:.1f} hours advance warning before market event"
+            else:
+                lead_time_display = f"Triggered post-event ({abs(lead_time_hours):.1f} hours after market event)"
+
+        crises_results[cid] = {
+            "crisis_id": cid,
+            "name": cfg["name"],
+            "event_class": cfg["event_class"],
+            "primary_entity": cfg["primary_entity"],
+            "total_records": total_records,
+            "total_signals": total_signals,
+            "first_signal_time": first_signal_time,
+            "market_event_time": market_event_str,
+            "trigger_time": trigger_time,
+            "trigger_signal_id": trigger_signal_id,
+            "lead_time_hours": lead_time_hours,
+            "lead_time_display": lead_time_display,
+            "peak_story_intensity": round(peak_intensity, 2),
+            "story_threshold": stress_engine.story_tracker.trigger_threshold,
+            "triggered": trigger_time is not None,
+            "naive_keyword": naive_kw,
+            "naive_rule": cfg["naive_rule"],
+            "naive_triggers": naive_triggers,
+            "naive_first_time": naive_first_time,
+        }
+
+    return crises_results
+
+
 SUITES = {
     "public_real": suite_public_real,
     "entity_polygon": suite_entity_polygon,
@@ -602,6 +750,7 @@ SUITES = {
     "sec_8k": suite_sec_8k,
     "pipeline": suite_pipeline,
     "news_holdout": suite_news_holdout,
+    "crisis_time_machine": suite_crisis_time_machine,
     "stress": suite_stress,
     "module_a": suite_module_a,
     "perf": suite_perf,
@@ -678,6 +827,25 @@ def headline_rows(m: Dict[str, Any]) -> List[List[str]]:
     if p := m.get("perf"):
         rows.append(["Latency per record (p95), CPU", f"{p['latency_p95_s']:.3f} s",
                      f"<= {TARGETS['p95_latency_s']} s", f"{p['records_per_s']:.0f} records/s"])  # fmt: skip
+    if ctm := m.get("crisis_time_machine"):
+        svb = ctm.get("svb", {})
+        crwd = ctm.get("crowdstrike", {})
+        ukr = ctm.get("ukraine", {})
+
+        def fmt_lead(c):
+            lt = c.get("lead_time_hours")
+            if lt is None:
+                return "0 triggers"
+            if lt < 0:
+                return f"post-event ({lt:.1f}h)"
+            return f"{lt:.1f}h advance"
+
+        rows.append([
+            "Crisis Time Machine replay (SVB, CrowdStrike, Russia-Ukraine; frozen dev thresholds)",
+            f"SVB: {fmt_lead(svb)} | CRWD: {fmt_lead(crwd)} | Ukraine: {fmt_lead(ukr)}",
+            "empirical replay without threshold tuning",
+            f"naive alerts: SVB {svb.get('naive_triggers', 0)} trigs (incl. Feb PRs), CRWD {crwd.get('naive_triggers', 0)} power trigs",
+        ])
     return rows
 
 

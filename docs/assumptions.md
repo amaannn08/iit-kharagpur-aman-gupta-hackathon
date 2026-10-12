@@ -51,6 +51,10 @@ Every assumption below is implemented in code; the file that owns it is named so
 | **Equity sleeve** | 15 S&P 100 constituents ($4M each, $60M total); beta and vol estimated from 252 days of real historical returns. | `scripts/data/build_equity_sleeve.py` |
 | **CYBER operational loss** | 10x observed card-fraud rate of the victim's GICS sector, applied to retail tranches within that sector. | `sentinel.stress.valuation` |
 | **Interest rate swaps & cash** | Swaps valued via signed $DV01 \times \Delta y$; cash balance unchanged under stress. | `sentinel.stress.valuation` |
+| **Synthetic CET1 capital base** | Synthetic Tier 1 capital base is set to $85.0M for the $610M wholesale book (Standardized RWA $408.8M), yielding a baseline CET1 ratio of 13.82% (comfortably above the 8.0% Basel III minimum capital floor + capital conservation buffer). Stated on screen and in reports. | `sentinel.stress.staging`, `docs/assumptions.md` |
+| **IFRS 9 loan staging & EAD vs ECL** | Exposure at Default (EAD) and Expected Credit Loss (ECL) are tracked and displayed separately. Baseline wholesale loan portfolio has $264.4M EAD ($262.8M Stage 1 performing, $1.6M Stage 3 defaulted) and $2.66M ECL ($1.38M Stage 1 12-month ECL, $1.28M Stage 3 lifetime ECL). Invariant $ECL < EAD$ is verified across all staging migrations. | `sentinel.stress.staging`, `sentinel.api.routes.stress` |
+| **Reverse stress testing** | Solves via bisection for the minimum scenario shock multiplier $\lambda$ that breaches the regulatory 8.0% CET1 floor using the real multi-asset stress valuation engine. Verified by test that $\lambda$ breaches and $\lambda - \text{tolerance}$ does not. | `sentinel.stress.staging`, `sentinel.stress.engine` |
+| **Early-Warning Watchlist** | Internal multi-factor early-warning monitoring watchlist (composite score combining financial metrics, debt structure, and external risk signals into GREEN/AMBER/RED status). Does not imply Crisil affiliation. | `sentinel.stress.ews`, `sentinel.stress.engine` |
 
 ## Module A (Index Rebalancer)
 

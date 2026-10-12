@@ -476,10 +476,10 @@
  },
  "perf": {
   "records": 2000,
-  "records_per_s": 120.3,
-  "latency_p50_s": 0.0077,
-  "latency_p95_s": 0.0118,
-  "peak_rss_gb": 0.343,
+  "records_per_s": 104.1,
+  "latency_p50_s": 0.009,
+  "latency_p95_s": 0.0135,
+  "peak_rss_gb": 0.321,
   "note": "single process, CPU, full pipeline (linking, sentiment, event, impact)"
  },
  "synthetic_regression": {
@@ -489,7 +489,7 @@
   "sentiment_macro_f1": 0.3477,
   "severity_mae": 2.943
  },
- "generated_at": "2026-10-11T07:16:07+00:00",
+ "generated_at": "2026-10-12T19:47:05+00:00",
  "targets": {
   "event_macro_f1": 0.7,
   "sentiment_macro_f1": 0.75,
@@ -513,8 +513,18 @@
   "total_signals": 1511,
   "eligible_signals": 104,
   "eligible_rate": 0.0688,
-  "stress_triggers": 0,
-  "triggers_per_1k_records": 0.0,
+  "stress_triggers": 99,
+  "triggers_per_1k_records": 74.1,
+  "eligible_signals_recall_z3": 0.4242,
+  "eligible_signals_recall_z3_ci95": [
+   0.272,
+   0.6061
+  ],
+  "automatic_trigger_recall_z3": 0.4242,
+  "automatic_trigger_recall_z3_ci95": [
+   0.272,
+   0.6061
+  ],
   "eligible_vs_market": {
    "n_with_market_outcome": 99,
    "precision_abs_z_ge_2": 0.2323,
@@ -530,20 +540,37 @@
    ]
   },
   "triggers_vs_market": {
-   "n_with_market_outcome": 0,
-   "precision_abs_z_ge_2": null,
-   "precision_ci95": null,
-   "lift_vs_base_rate": null,
-   "recall_abs_z_ge_3": 0.0,
+   "n_with_market_outcome": 95,
+   "precision_abs_z_ge_2": 0.2421,
+   "precision_ci95": [
+    0.1579,
+    0.3368
+   ],
+   "lift_vs_base_rate": 2.75,
+   "recall_abs_z_ge_3": 0.4242,
    "recall_ci95": [
-    0.0,
-    0.0
+    0.272,
+    0.6061
    ]
   },
   "false_trigger_rates_by_source": {
    "sec_8k_routine_heldout": 0.0,
    "gdelt_snapshot": 0.0,
    "stock_tweets": 0.0
+  },
+  "false_trigger_rates_ci95": {
+   "sec_8k_routine_heldout": [
+    0.0,
+    0.0
+   ],
+   "gdelt_snapshot": [
+    0.0,
+    0.0
+   ],
+   "stock_tweets": [
+    0.0,
+    0.0
+   ]
   },
   "false_trigger_rate_max_source": 0.0,
   "routine_counts": {
@@ -588,8 +615,73 @@
    0.4608,
    0.6589
   ],
-  "false_auto_trigger_rate": 0.0,
-  "false_auto_triggers": 0,
+  "false_auto_trigger_rate": 0.027,
+  "false_auto_triggers": 3,
   "routine_rows": 111
+ },
+ "crisis_time_machine": {
+  "svb": {
+   "crisis_id": "svb",
+   "name": "Silicon Valley Bank Collapse",
+   "event_class": "CREDIT",
+   "primary_entity": "SIVB",
+   "total_records": 2648,
+   "total_signals": 2687,
+   "first_signal_time": "2023-02-02T13:00:00+00:00",
+   "market_event_time": "2023-03-10T16:45:00Z",
+   "trigger_time": "2023-03-14T14:00:00+00:00",
+   "trigger_signal_id": "sig-6c5c7e9a4ce7",
+   "lead_time_hours": -93.25,
+   "lead_time_display": "Triggered post-event (93.2 hours after market event)",
+   "peak_story_intensity": 9.87,
+   "story_threshold": 7.5,
+   "triggered": true,
+   "naive_keyword": "svb",
+   "naive_rule": "Keyword match 'SVB' in headline or body",
+   "naive_triggers": 162,
+   "naive_first_time": "2023-02-02T13:00:00+00:00"
+  },
+  "crowdstrike": {
+   "crisis_id": "crowdstrike",
+   "name": "CrowdStrike Global Outage",
+   "event_class": "CYBER",
+   "primary_entity": "CRWD",
+   "total_records": 657,
+   "total_signals": 695,
+   "first_signal_time": "2024-07-18T18:00:00+00:00",
+   "market_event_time": "2024-07-19T13:30:00Z",
+   "trigger_time": null,
+   "trigger_signal_id": null,
+   "lead_time_hours": null,
+   "lead_time_display": "No trigger fired under frozen threshold",
+   "peak_story_intensity": 0.0,
+   "story_threshold": 7.5,
+   "triggered": false,
+   "naive_keyword": "outage",
+   "naive_rule": "Keyword match 'outage' in headline or body",
+   "naive_triggers": 590,
+   "naive_first_time": "2024-07-18T18:00:00+00:00"
+  },
+  "ukraine": {
+   "crisis_id": "ukraine",
+   "name": "Russia-Ukraine Invasion",
+   "event_class": "GEOPOLITICAL",
+   "primary_entity": "MACRO",
+   "total_records": 1614,
+   "total_signals": 1614,
+   "first_signal_time": "2022-02-21T16:00:00+00:00",
+   "market_event_time": "2022-02-24T03:00:00Z",
+   "trigger_time": "2022-02-24T18:00:00+00:00",
+   "trigger_signal_id": "sig-223ed59e3476",
+   "lead_time_hours": -15.0,
+   "lead_time_display": "Triggered post-event (15.0 hours after market event)",
+   "peak_story_intensity": 9.12,
+   "story_threshold": 7.5,
+   "triggered": true,
+   "naive_keyword": "ukraine",
+   "naive_rule": "Keyword match 'Ukraine' in headline or body",
+   "naive_triggers": 1101,
+   "naive_first_time": "2022-02-21T16:00:00+00:00"
+  }
  }
 }
