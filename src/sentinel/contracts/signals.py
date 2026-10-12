@@ -95,6 +95,8 @@ class RiskSignal(BaseModel):
     impact: ImpactOutput
     evidence: List[EvidenceSpan] = Field(default_factory=list)
     duplicate_group_id: Optional[str] = None
+    story_id: Optional[str] = None
+    story_intensity: Optional[float] = None
     eligible_for_action: bool = Field(default=True)
     action_block_reasons: List[str] = Field(default_factory=list)
     model_versions: Dict[str, Any] = Field(default_factory=dict)
