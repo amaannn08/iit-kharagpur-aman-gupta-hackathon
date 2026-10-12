@@ -6,6 +6,7 @@ import { KpiCard } from './ui/KpiCard';
 import { PillButton } from './ui/PillButton';
 import { StressCharts } from './StressCharts';
 import { WhyThisLossPanel } from './WhyThisLossPanel';
+import { CreditDomainPanel } from './CreditDomainPanel';
 
 export interface StressTabProps {
   portfolio: WholesalePortfolio | null;
@@ -109,6 +110,9 @@ export const StressTab: React.FC<StressTabProps> = ({
           evidenceSpan={signals.find((s) => s.signal_id === activeStressResult?.trigger_signal_id)?.evidence?.[0]?.text}
         />
       )}
+
+      {/* Credit Domain Understanding: Early-Warning Watchlist, IFRS 9 Staging Cliff & Capital */}
+      <CreditDomainPanel activeScenarioId={activeStressResult?.run_id} />
 
       {/* 3. Live Stress Delta Breakdown & Sandbox Controls */}
       <div className="grid grid-cols-12 gap-5">

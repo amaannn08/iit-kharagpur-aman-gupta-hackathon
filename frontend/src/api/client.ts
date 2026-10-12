@@ -529,3 +529,197 @@ export interface LiveStatusResponse {
 }
 
 export const fetchLiveStatus = () => getJson<LiveStatusResponse>('/replay/live_status');
+
+// --- Crisis Time Machine Types & API ---
+export interface CrisisSummary {
+  crisis_id: string;
+  name: string;
+  event_class: string;
+  primary_entity: string;
+  entity_name: string;
+  benchmark_ticker: string;
+  benchmark_name: string;
+  lead_time_hours: number;
+  lead_time_display: string;
+  window_start: string;
+  window_end: string;
+  description: string;
+}
+
+export interface CrisisMilestone {
+  id: string;
+  label: string;
+  timestamp: string;
+  description: string;
+  source: string;
+  icon?: string;
+}
+
+export interface CrisisTimelinePoint {
+  timestamp: string;
+  article_volume: number;
+  story_intensity: number;
+  benchmark_return: number;
+  sample_headlines: string[];
+}
+
+export interface CrisisDetail {
+  crisis_id: string;
+  name: string;
+  event_class: string;
+  primary_entity: string;
+  entity_name: string;
+  benchmark_ticker: string;
+  benchmark_name: string;
+  lead_time_hours: number | null;
+  lead_time_display: string;
+  window_start: string;
+  window_end: string;
+  triggered?: boolean;
+  trigger_time?: string | null;
+  first_signal_time?: string | null;
+  peak_story_intensity?: number;
+  naive_alert_performance: {
+    naive_rule: string;
+    naive_triggers: number;
+    naive_first_trigger: string;
+    naive_false_positives: number;
+    verdict: string;
+  };
+  sentinel_performance: {
+    sentinel_rule: string;
+    sentinel_triggers: number;
+    sentinel_trigger_time: string;
+    sentinel_false_positives: number;
+    verdict: string;
+  };
+  portfolio_impact: {
+    portfolio_loss_usd: number;
+    cet1_impact_bps: number;
+    loans_migrated_stage2: number;
+    staging_cliff_provision_jump_usd: number;
+  };
+  milestones: CrisisMilestone[];
+  price_trajectory: Record<string, any>[];
+  timeline_series: CrisisTimelinePoint[];
+  total_articles: number;
+}
+
+export const fetchCrises = () => getJson<CrisisSummary[]>('/time-machine/crises');
+export const fetchCrisisDetail = (crisisId: string) => getJson<CrisisDetail>(`/time-machine/crisis/${crisisId}`);
+export const replayCrisis = (crisisId: string) => postJson<any>(`/time-machine/crisis/${crisisId}/replay`);
+
+// --- Credit Domain Depth: EWS, IFRS 9 Staging & Reverse Stress ---
+export interface EWSWatchlistItem {
+  obligor_id: string;
+  name: string;
+  sector: string;
+  rating: string;
+  baseline_pd: number;
+  active_story_count: number;
+  peak_story_intensity: number;
+  composite_score: number;
+  status: 'GREEN' | 'AMBER' | 'RED';
+  trigger_reasons: string[];
+  recommended_action: string;
+}
+
+export interface IFRS9StageBreakdown {
+  exposure_usd: number;
+  ecl_usd: number;
+  count: number;
+}
+
+export interface IFRS9StagingReport {
+  summary: {
+    total_loans: number;
+    stage1_count: number;
+    stage2_count: number;
+    stage3_count: number;
+    stage1_exposure_usd?: number;
+    stage1_ecl_usd?: number;
+    stage2_exposure_usd?: number;
+    stage2_ecl_usd?: number;
+    stage3_exposure_usd?: number;
+    stage3_ecl_usd?: number;
+    total_exposure_usd?: number;
+    total_baseline_ecl_usd: number;
+    total_stressed_ecl_usd: number;
+    total_incremental_ecl_usd: number;
+  };
+  stage_1?: IFRS9StageBreakdown;
+  stage_2?: IFRS9StageBreakdown;
+  stage_3?: IFRS9StageBreakdown;
+  stage_migrations?: {
+    stage1_to_stage2_count: number;
+    stage1_to_stage3_count: number;
+    stage2_to_stage3_count: number;
+  };
+  staging_cliff_jump_usd: number;
+  staging_cliff_total_jump_usd?: number;
+  positions?: Array<{
+    position_id: string;
+    counterparty: string;
+    sector: string;
+    ead_usd: number;
+    baseline_pd: number;
+    stressed_pd: number;
+    stage_baseline: number;
+    stage_stressed: number;
+    lifetime_ecl_active: boolean;
+    ecl_delta_usd: number;
+    sicr_triggered: boolean;
+  }>;
+}
+
+export interface CapitalImpactReport {
+  capital_base_tier1_usd: number;
+  standardized_rwa_usd: number;
+  baseline_cet1_ratio_pct: number;
+  stressed_cet1_ratio_pct: number;
+  cet1_ratio_impact_bps: number;
+  regulatory_minimum_pct: number;
+  internal_target_floor_pct: number;
+  capital_breach: boolean;
+}
+
+export interface ReverseStressResponse {
+  scenario_id: string;
+  target_cet1_floor_pct: number;
+  critical_shock_multiplier: number;
+  required_loss_usd: number;
+  total_loss_at_break_usd: number;
+  final_cet1_ratio_pct: number;
+  iterations: number;
+  converged: boolean;
+}
+
+export const fetchEWSWatchlist = () => getJson<EWSWatchlistItem[]>('/stress/ews');
+export const fetchIFRS9Staging = (scenarioId?: string) =>
+  getJson<IFRS9StagingReport>(scenarioId ? `/stress/staging?scenario_id=${scenarioId}` : '/stress/staging');
+export const fetchCapitalImpact = (totalPnlUsd = 0.0) =>
+  getJson<CapitalImpactReport>(`/stress/capital?total_pnl_usd=${totalPnlUsd}`);
+export const runReverseStress = (req: { scenario_id: string; target_cet1_floor?: number; max_loss_usd?: number }) =>
+  postJson<ReverseStressResponse>('/stress/reverse-stress', req);
+export const fetchStressMemo = (runId: string) =>
+  getJson<{ run_id: string; executed_at: string; event_class: string; target_entity: string; total_pnl_usd: number; markdown: string }>(`/stress/memo/${runId}`);
+
+// --- NLP Cascade Tiering ---
+export interface CascadeResponse {
+  text: string;
+  label: string;
+  confidence: number;
+  tier_used: 'fast_tier_1' | 'deep_tier_2';
+  routing_reason: string;
+  latency_ms: number;
+  stats: {
+    total_calls: number;
+    tier1_resolved: number;
+    tier2_routed: number;
+    routing_rate_pct: number;
+    avg_latency_ms: number;
+  };
+}
+
+export const analyzeCascade = (text: string) => postJson<CascadeResponse>('/analyze/cascade', { text });
+export const fetchCascadeStats = () => getJson<any>('/analyze/cascade/stats');

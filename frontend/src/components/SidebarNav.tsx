@@ -2,6 +2,7 @@ import {
   Activity,
   Database,
   FileCheck,
+  History,
   LineChart,
   Radio,
   Shield,
@@ -34,6 +35,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
 }) => {
   const navItems: { id: TabType; name: string; icon: React.ElementType; badge?: number }[] = [
     { id: 'feed', name: 'Live Signals Feed', icon: Activity, badge: signalsCount },
+    { id: 'timemachine', name: 'Crisis Time Machine', icon: History },
     { id: 'stress', name: 'Wholesale Stress', icon: TrendingDown },
     { id: 'index', name: 'Index Rebalancer', icon: LineChart },
     { id: 'playground', name: 'NLP Sandbox', icon: Sparkles },

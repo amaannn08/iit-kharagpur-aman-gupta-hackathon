@@ -26,6 +26,7 @@ import { IndexPanel } from './components/IndexPanel';
 import { Sandbox } from './components/Sandbox';
 import { SidebarNav } from './components/SidebarNav';
 import { StressTab } from './components/StressTab';
+import { TimeMachineTab } from './components/TimeMachineTab';
 import { TopBar } from './components/TopBar';
 import { useLiveStatus } from './hooks/useLiveStatus';
 import { useReplay } from './hooks/useReplay';
@@ -270,6 +271,8 @@ export function App() {
                 setActiveTab={setActiveTab}
               />
             )}
+
+            {activeTab === 'timemachine' && <TimeMachineTab />}
 
             {activeTab === 'stress' && (
               <StressTab

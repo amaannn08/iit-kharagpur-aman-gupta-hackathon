@@ -64,8 +64,12 @@ class Settings(BaseSettings):
         "stock_tweets": ("real/stock_tweets/sample.csv", "social", "HISTORICAL REPLAY"),
         "gdelt_snapshot": ("real/gdelt/snapshot.csv", "news", "HISTORICAL REPLAY"),
         "gdelt_svb_2023": ("real/gdelt/svb_weekend.csv", "news", "HISTORICAL REPLAY"),
+        "crisis_svb": ("real/crisis/svb.csv", "news", "CRISIS TIME MACHINE: SVB COLLAPSE"),
+        "crisis_crowdstrike": ("real/crisis/crowdstrike.csv", "news", "CRISIS TIME MACHINE: CROWDSTRIKE"),
+        "crisis_ukraine": ("real/crisis/ukraine.csv", "news", "CRISIS TIME MACHINE: RUSSIA-UKRAINE"),
         "gdelt_live": ("live/gdelt_live.csv", "news", "LIVE CAPTURE"),
         "sec_8k_live": ("live/sec_8k_live.csv", "news", "LIVE CAPTURE"),
+        "bluesky_live": ("live/bluesky_live.csv", "social", "LIVE CAPTURE"),
     }
 
     # Decision gating thresholds

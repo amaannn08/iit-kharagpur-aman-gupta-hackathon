@@ -2,7 +2,7 @@
 
 import json
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 from sentinel.config import settings
 from sentinel.contracts.signals import RiskSignal
@@ -18,6 +18,10 @@ from sentinel.stress.shocks import (
     build_scaled_shock,
     shock_from_scenario,
 )
+from sentinel.stress.story_trigger import (
+    STORY_TRIGGER_INTENSITY_THRESHOLD,
+    StoryTracker,
+)
 from sentinel.stress.valuation import ValuationEngine
 
 
@@ -31,6 +35,7 @@ class StressEngine:
         portfolio_path: Optional[Union[str, Path]] = None,
         confidence_threshold: Optional[float] = None,
         impact_threshold: Optional[int] = None,
+        story_tracker: Optional[StoryTracker] = None,
     ) -> None:
         self.profiles: Dict[str, WholesalePortfolio] = {}
         self.valuation_engines: Dict[str, ValuationEngine] = {}
@@ -77,6 +82,9 @@ class StressEngine:
         self.impact_threshold = (
             impact_threshold if impact_threshold is not None else settings.action_impact_threshold
         )
+        self.story_tracker = story_tracker or StoryTracker(
+            trigger_threshold=STORY_TRIGGER_INTENSITY_THRESHOLD
+        )
         self.acted_signal_ids: Set[str] = set()
 
     def get_valuation_engine(self, profile: Optional[str] = None) -> Tuple[ValuationEngine, str]:
@@ -100,16 +108,15 @@ class StressEngine:
             return pol[0] > 0
         return None
 
-    def should_trigger(self, signal: RiskSignal) -> bool:
+    def should_trigger(
+        self, signal: RiskSignal, timestamp: Optional[Any] = None
+    ) -> bool:
         """Evaluate if an incoming RiskSignal meets criteria for automated stress testing."""
 
         if not signal.eligible_for_action:
             return False
 
         if signal.event.label.upper() not in self.SUPPORTED_EVENT_CLASSES:
-            return False
-
-        if signal.impact.score <= self.impact_threshold:
             return False
 
         if signal.event.confidence < self.confidence_threshold:
@@ -124,7 +131,21 @@ class StressEngine:
         if signal.event.label.upper() == "M_AND_A" and signal.entity.role != "acquirer":
             return False  # only acquirer is stressed; target/undetermined skipped
 
-        return True
+        # Evaluate story clustering & escalation
+        cluster, is_story_trigger, _ = self.story_tracker.process_signal(
+            signal, timestamp=timestamp
+        )
+        signal.story_id = cluster.story_id
+        signal.story_intensity = cluster.compute_intensity()
+
+        if is_story_trigger:
+            return True
+
+        # Fallback to single-article impact threshold
+        if signal.impact.score > self.impact_threshold:
+            return True
+
+        return False
 
     def trigger_from_signal(
         self, signal: RiskSignal, profile: Optional[str] = None
@@ -249,6 +270,7 @@ class StressEngine:
         scenario_id: str,
         run_id: str = "scenario-run",
         profile: Optional[str] = None,
+        scale_factor: float = 1.0,
     ) -> StressRunResult:
         """Run a named scenario file (e.g. HIST-SVB_2023: the measured SVB-window market move)."""
         scenario = next((s for s in self.list_scenarios() if s["scenario_id"] == scenario_id), None)
@@ -257,7 +279,7 @@ class StressEngine:
         contagion = scenario.get("contagion", {})
         val_engine, prof_name = self.get_valuation_engine(profile)
         result = val_engine.run_stress_test(
-            shock=shock_from_scenario(scenario),
+            shock=shock_from_scenario(scenario, scale_factor=scale_factor),
             run_id=run_id,
             trigger_type="SCENARIO",
             event_class=scenario.get("event_class", "MACRO"),
@@ -268,6 +290,46 @@ class StressEngine:
         )
         result.portfolio_profile = prof_name
         return self._mark_exposure(result)
+
+    def get_ews_watchlist(self) -> List[Dict[str, Any]]:
+        """Return early warning watchlist for all portfolio obligors."""
+        from sentinel.stress.ews import EarlyWarningSystem
+        ews = EarlyWarningSystem(self.portfolio)
+        return [item.to_dict() for item in ews.generate_watchlist(self.story_tracker)]
+
+    def get_ifrs9_staging(self, scenario_id: Optional[str] = None) -> Dict[str, Any]:
+        """Compute IFRS 9 staging cliff report with lifetime ECL jumps."""
+        from sentinel.stress.staging import StagingAndCapitalEngine
+        engine = StagingAndCapitalEngine(self.portfolio)
+        stressed_pds = {}
+        if scenario_id:
+            res = self.run_scenario(scenario_id)
+            loan_lookup = {loan.position_id: loan for loan in self.portfolio.loans}
+            for p in res.position_deltas:
+                if p.position_id in loan_lookup and p.ecl_stressed_usd > 0:
+                    loan = loan_lookup[p.position_id]
+                    if loan.ead > 0 and loan.lgd > 0:
+                        stressed_pds[p.position_id] = p.ecl_stressed_usd / (loan.ead * loan.lgd)
+        return engine.evaluate_staging(stressed_pds).to_dict()
+
+    def get_capital_impact(self, total_pnl_usd: float) -> Dict[str, Any]:
+        """Translate total stress loss into CET1 ratio and basis point impact."""
+        from sentinel.stress.staging import StagingAndCapitalEngine
+        engine = StagingAndCapitalEngine(self.portfolio)
+        return engine.compute_capital_impact(total_pnl_usd).to_dict()
+
+    def run_reverse_stress(
+        self,
+        scenario_id: str,
+        target_cet1_floor: float = 0.08,
+        max_loss_usd: Optional[float] = None,
+    ) -> Dict[str, Any]:
+        """Solve for the smallest scenario shock multiplier that breaches capital limit."""
+        from sentinel.stress.staging import StagingAndCapitalEngine
+        engine = StagingAndCapitalEngine(self.portfolio)
+        return engine.reverse_stress_test(
+            self, scenario_id, target_cet1_floor=target_cet1_floor, max_loss_usd=max_loss_usd
+        )
 
     def run_custom_stress(
         self,

@@ -1,1 +1,1 @@
-export type TabType = 'feed' | 'stress' | 'index' | 'playground' | 'overview' | 'eval';
+export type TabType = 'feed' | 'timemachine' | 'stress' | 'index' | 'playground' | 'overview' | 'eval';

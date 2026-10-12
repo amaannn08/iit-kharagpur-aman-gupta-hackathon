@@ -23,6 +23,7 @@ from sentinel.api.routes.stress import (
 from sentinel.api.routes.stress import (
     router as stress_router,
 )
+from sentinel.api.routes.time_machine import router as time_machine_router
 from sentinel.config import settings
 from sentinel.storage.db import init_db
 
@@ -129,6 +130,7 @@ def create_app() -> FastAPI:
     app.include_router(events_router, prefix="/api")
     app.include_router(exports_router, prefix="/api")
     app.include_router(index_router, prefix="/api")
+    app.include_router(time_machine_router, prefix="/api")
 
     # Direct aliases for API route compatibility
     app.add_api_route("/api/portfolio", get_portfolio, methods=["GET"], tags=["Portfolio"])

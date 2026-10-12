@@ -226,6 +226,88 @@ def list_stress_runs(
     ]
 
 
+
+
+@router.get("/stories/active")
+def get_active_stories() -> List[Dict[str, Any]]:
+    """Return currently active developing story clusters with intensity scores."""
+    return stress_engine.story_tracker.get_active_stories()
+
+
+@router.get("/stories/{story_id}")
+def get_story_detail(story_id: str) -> Dict[str, Any]:
+    """Retrieve detailed story cluster metadata, signal counts, and sparklines."""
+    story = stress_engine.story_tracker.get_story_by_id(story_id)
+    if not story:
+        raise HTTPException(status_code=404, detail=f"Story cluster '{story_id}' not found.")
+    return story
+
+
+@router.get("/ews")
+def get_ews_watchlist() -> List[Dict[str, Any]]:
+    """Return Early Warning System (EWS) Watchlist for wholesale obligors."""
+    return stress_engine.get_ews_watchlist()
+
+
+@router.get("/staging")
+def get_ifrs9_staging(scenario_id: Optional[str] = None) -> Dict[str, Any]:
+    """Return IFRS 9 loan staging breakdown, SICR migrations, and staging cliff provisions."""
+    return stress_engine.get_ifrs9_staging(scenario_id=scenario_id)
+
+
+@router.get("/capital")
+def get_capital_impact(total_pnl_usd: float = 0.0) -> Dict[str, Any]:
+    """Calculate CET1 capital ratio and basis points impact from portfolio stress loss."""
+    return stress_engine.get_capital_impact(total_pnl_usd=total_pnl_usd)
+
+
+class ReverseStressRequest(BaseModel):
+    scenario_id: str = Field("HIST-COVID_2020", description="Scenario ID to scale")
+    target_cet1_floor: float = Field(0.08, ge=0.01, le=0.20, description="Minimum CET1 ratio floor (e.g. 0.08)")
+    max_loss_usd: Optional[float] = Field(None, description="Optional maximum loss limit in USD")
+
+
+@router.post("/reverse-stress")
+def run_reverse_stress(req: ReverseStressRequest) -> Dict[str, Any]:
+    """Solve for the minimum scenario shock multiplier that breaches regulatory capital limits."""
+    return stress_engine.run_reverse_stress(
+        scenario_id=req.scenario_id,
+        target_cet1_floor=req.target_cet1_floor,
+        max_loss_usd=req.max_loss_usd,
+    )
+
+
+@router.get("/memo/{run_id}")
+def get_stress_memo(
+    run_id: str,
+    db: Session = Depends(get_db),
+) -> Dict[str, Any]:
+    """Generate a formal 1-page Credit Committee Risk Memo for a stress run."""
+    from sentinel.stress.memo import RiskMemoGenerator
+
+    repo = ReplayRepository(db)
+    result = repo.get_stress_run(run_id)
+    if not result:
+        # Check if run_id is a known scenario ID
+        try:
+            result = stress_engine.run_scenario(run_id)
+        except Exception:
+            raise HTTPException(status_code=404, detail=f"Stress run '{run_id}' not found.")
+
+    staging = stress_engine.get_ifrs9_staging()
+    capital = stress_engine.get_capital_impact(result.total_pnl_usd)
+    markdown_content = RiskMemoGenerator.generate_markdown_memo(result, staging, capital)
+
+    return {
+        "run_id": result.run_id,
+        "executed_at": str(result.executed_at),
+        "event_class": result.event_class,
+        "target_entity": result.target_entity,
+        "total_pnl_usd": result.total_pnl_usd,
+        "markdown": markdown_content,
+    }
+
+
 @router.get("/{stress_id}", response_model=StressRunResult)
 def get_stress_run_detail(
     stress_id: str,
@@ -242,3 +324,5 @@ def get_stress_run_detail(
 
     data = json.loads(model.raw_json)
     return StressRunResult.model_validate(data)
+
+

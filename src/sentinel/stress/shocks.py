@@ -98,6 +98,22 @@ DEFAULT_SHOCK_CATALOG: Dict[str, ShockParameters] = {
         description="Acquirer: leverage-driven spread +40 bp, PD +0.4 pp, equity -3% (announcement)",
         anchor="assumption",
     ),
+    "EARNINGS": ShockParameters(
+        bond_spread_shift_bps=50.0,
+        loan_pd_increment=0.008,
+        lgd_increment=0.02,
+        equity_shock_pct=-0.10,
+        description="Severe issuer earnings miss/guidance cut: spread +50 bps, PD +0.8 pp, equity -10%",
+        anchor="assumption",
+    ),
+    "REGULATORY": ShockParameters(
+        bond_spread_shift_bps=45.0,
+        loan_pd_increment=0.005,
+        lgd_increment=0.01,
+        equity_shock_pct=-0.06,
+        description="Regulatory penalty / antitrust injunction: spread +45 bps, PD +0.5 pp, equity -6%",
+        anchor="assumption",
+    ),
 }
 
 
@@ -170,8 +186,8 @@ def build_scaled_shock(
     )
 
 
-def shock_from_scenario(scenario: dict) -> ScaledShock:
-    """Unscaled shock for a named scenario file (data/scenarios/*.json)."""
+def shock_from_scenario(scenario: dict, scale_factor: float = 1.0) -> ScaledShock:
+    """Shock for a named scenario file (data/scenarios/*.json), scaled by scale_factor."""
     direct = scenario.get("direct_shocks", {})
     macro = scenario.get("macro_shocks", {})
     equity = scenario.get("equity_shocks", {})
@@ -180,14 +196,14 @@ def shock_from_scenario(scenario: dict) -> ScaledShock:
         target = None  # legacy files mark systemic scenarios with target_entity "MACRO"
     scope = scenario.get("target_scope") or ("entity" if target else "systemic")
     return ScaledShock(
-        bond_spread_shift_bps=float(direct.get("bond_spread_shift_bps", 0.0)),
-        loan_pd_increment=float(direct.get("loan_pd_increment", 0.0)),
-        lgd_increment=float(direct.get("lgd_increment", 0.0)),
-        benchmark_yield_shift_bps=float(macro.get("benchmark_yield_shift_bps", 0.0)),
-        scale_multiplier=1.0,
+        bond_spread_shift_bps=float(direct.get("bond_spread_shift_bps", 0.0)) * scale_factor,
+        loan_pd_increment=float(direct.get("loan_pd_increment", 0.0)) * scale_factor,
+        lgd_increment=float(direct.get("lgd_increment", 0.0)) * scale_factor,
+        benchmark_yield_shift_bps=float(macro.get("benchmark_yield_shift_bps", 0.0)) * scale_factor,
+        scale_multiplier=scale_factor,
         target_entity=None if scope == "systemic" else target,
         target_scope=scope,
-        equity_shock_pct=float(equity.get("equity_shock_pct", 0.0)),
+        equity_shock_pct=float(equity.get("equity_shock_pct", 0.0)) * scale_factor,
         catalog_entry=f"scenario:{scenario.get('scenario_id')}",
         pd_from_spread=bool(direct.get("pd_from_spread", False)),
         rating_tiered=bool(scenario.get("rating_tiered", True)),

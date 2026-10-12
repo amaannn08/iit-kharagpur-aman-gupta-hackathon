@@ -12,6 +12,7 @@ from sentinel.api.routes.replay import emit_signal, nlp_engine, replay_controlle
 from sentinel.contracts.records import InputRecord
 from sentinel.contracts.signals import RiskSignal
 from sentinel.contracts.stress import StressRunResult
+from sentinel.nlp.cascade import CascadeEventClassifier
 from sentinel.replay.dedup import ExactTextDeduplicator
 from sentinel.storage.db import get_db
 from sentinel.storage.repository import ReplayRepository
@@ -19,6 +20,7 @@ from sentinel.storage.repository import ReplayRepository
 router = APIRouter(tags=["Analysis Engine"])
 
 deduplicator = ExactTextDeduplicator()
+cascade_classifier = CascadeEventClassifier()
 
 
 class AnalyzeRequest(BaseModel):
@@ -80,3 +82,25 @@ async def analyze_manual_text(
         is_duplicate=dedup.is_duplicate,
         duplicate_group_id=dedup.duplicate_group_id if dedup.is_duplicate else None,
     )
+
+
+@router.post("/analyze/cascade")
+def analyze_cascade(req: AnalyzeRequest) -> dict:
+    """Classify text through the cost-aware NLP cascade (Fast Tier 1 vs Deep Tier 2)."""
+    res = cascade_classifier.classify(req.text)
+    return {
+        "text": req.text,
+        "label": res.label,
+        "confidence": res.confidence,
+        "tier_used": res.tier_used,
+        "routing_reason": res.routing_reason,
+        "latency_ms": res.latency_ms,
+        "stats": cascade_classifier.stats.to_dict(),
+    }
+
+
+@router.get("/analyze/cascade/stats")
+def get_cascade_stats() -> dict:
+    """Return cumulative cascade routing and verification statistics."""
+    return cascade_classifier.stats.to_dict()
+
