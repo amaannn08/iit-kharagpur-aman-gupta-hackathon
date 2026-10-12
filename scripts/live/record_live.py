@@ -14,6 +14,7 @@ Usage:
 """
 
 import argparse
+import asyncio
 import csv
 import importlib.util
 import io
@@ -43,6 +44,7 @@ def _load(name: str, rel: str):
 fetch_real = _load("fetch_real", "scripts/data/fetch_real.py")
 convert_real = _load("convert_real", "scripts/data/convert_real.py")
 NEWS_COLS = convert_real.NEWS_COLS
+SOCIAL_COLS = convert_real.SOCIAL_COLS
 
 ITEM_NAMES = {
     "1.01": "Material Definitive Agreement", "1.02": "Termination of Agreement",
@@ -86,6 +88,74 @@ def append_rows(path: Path, rows: list) -> int:
             path, mode="a", header=not path.exists(), index=False
         )
     return len(fresh)
+
+
+def append_social_rows(path: Path, rows: list) -> int:
+    if not rows:
+        return 0
+    repair_truncated_tail(path)
+    existing = set(pd.read_csv(path).record_id) if path.exists() else set()
+    fresh = [r for r in rows if r["record_id"] not in existing]
+    if fresh:
+        pd.DataFrame(fresh, columns=SOCIAL_COLS).to_csv(
+            path, mode="a", header=not path.exists(), index=False
+        )
+    return len(fresh)
+
+
+async def _fetch_bluesky_batch(timeout_secs: float = 5.0) -> list:
+    import websockets
+
+    uri = "wss://jetstream2.us-east.bsky.network/subscribe?wantedCollections=app.bsky.feed.post"
+    cashtag_re = re.compile(r"\$[A-Za-z]{1,6}\b")
+    rows = []
+    t_end = time.time() + timeout_secs
+    try:
+        async with websockets.connect(uri, ping_interval=20, ping_timeout=10) as ws:
+            while time.time() < t_end and len(rows) < 20:
+                try:
+                    remaining = max(0.5, t_end - time.time())
+                    msg = await asyncio.wait_for(ws.recv(), timeout=remaining)
+                    data = json.loads(msg)
+                    commit = data.get("commit", {})
+                    record = commit.get("record", {})
+                    text = record.get("text", "")
+                    cashtags = cashtag_re.findall(text)
+                    if not cashtags:
+                        continue
+                    created_at = record.get("createdAt") or datetime.now(timezone.utc).isoformat()
+                    author = data.get("did", "")
+                    rec_id = convert_real.rid("bsky", author, created_at, text[:40])
+                    rows.append({
+                        "record_id": rec_id,
+                        "source_id": "bluesky_live",
+                        "source_type": "social",
+                        "text": convert_real.clean_text(text),
+                        "author_handle": author[:20],
+                        "published_at": created_at,
+                        "timestamp_quality": "original",
+                        "simulated_at": "",
+                        "is_synthetic": "false",
+                        "cashtags": ",".join(sorted(set(cashtags))),
+                        "primary_entity_id": cashtags[0].lstrip("$"),
+                    })
+                except asyncio.TimeoutError:
+                    break
+                except Exception:
+                    break
+    except Exception as exc:
+        print(f"  bluesky stream notice: {exc}")
+    return rows
+
+
+def bluesky_cycle(state: dict) -> int:
+    try:
+        rows = asyncio.run(_fetch_bluesky_batch(timeout_secs=4.0))
+        return append_social_rows(LIVE / "bluesky_live.csv", rows)
+    except Exception as exc:
+        print(f"  bluesky cycle error: {exc}")
+        return 0
+
 
 
 def gdelt_cycle(state: dict) -> int:
@@ -195,7 +265,7 @@ def main() -> None:
     while True:
         state = load_state()
         stamp = datetime.now(timezone.utc).isoformat(timespec="seconds")
-        g = s = 0
+        g = s = b = 0
         ok = False  # at least one source fetched successfully this cycle
         try:  # a failing source must not stop the other one or the recorder
             g = gdelt_cycle(state) if "gdelt" not in skip else 0
@@ -207,12 +277,17 @@ def main() -> None:
             ok = ok or "sec" not in skip
         except Exception as exc:
             print(f"  sec cycle failed: {exc}")
+        try:
+            b = bluesky_cycle(state) if "bluesky" not in skip else 0
+            ok = ok or "bluesky" not in skip
+        except Exception as exc:
+            print(f"  bluesky cycle failed: {exc}")
         state["last_attempt_at"] = stamp
         state["interval_seconds"] = args.interval_min * 60
         if ok:  # the live badge measures lag from the last *successful* fetch
             state["last_fetch_at"] = stamp
         save_state(state)
-        print(f"[{stamp}] appended gdelt={g} sec_8k={s}", flush=True)
+        print(f"[{stamp}] appended gdelt={g} sec_8k={s} bluesky={b}", flush=True)
         if args.once:
             break
         time.sleep(args.interval_min * 60)
