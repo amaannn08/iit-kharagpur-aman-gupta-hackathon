@@ -1,0 +1,103 @@
+{
+  "crisis_id": "ukraine",
+  "name": "Russia-Ukraine Invasion",
+  "event_class": "GEOPOLITICAL",
+  "primary_entity": "MACRO",
+  "entity_name": "Global Macro & Energy",
+  "benchmark_ticker": "SPY",
+  "benchmark_name": "SPDR S&P 500 ETF Trust",
+  "window_start": "2022-02-21T00:00:00Z",
+  "window_end": "2022-02-26T23:59:59Z",
+  "description": "Russia announced military operations in Ukraine on February 24, 2022 following troop mobilization, triggering European energy supply shocks, grain market dislocations, and broad equity sell-offs.",
+  "portfolio_impact": {
+    "portfolio_loss_usd": -14600000.0,
+    "cet1_impact_bps": -29.2,
+    "loans_migrated_stage2": 3,
+    "staging_cliff_provision_jump_usd": 8500000.0
+  },
+  "milestones": [
+    {
+      "id": "first_signal",
+      "label": "Mobilization / Recognition",
+      "timestamp": "2022-02-21T18:00:00Z",
+      "description": "Recognition of breakaway Ukrainian regions Donetsk & Luhansk; emergency UN Security Council session",
+      "source": "UN Security Council Official Record",
+      "source_url": "https://press.un.org/en/2022/sc14803.doc.htm",
+      "icon": "flag"
+    },
+    {
+      "id": "market_event",
+      "label": "Market Event (Military Incursion)",
+      "timestamp": "2022-02-24T03:00:00Z",
+      "description": "Russian military operation begins; Brent oil breaches $105/bbl; European natural gas spikes",
+      "source": "UN Security Council 8974th Meeting Record",
+      "source_url": "https://press.un.org/en/2022/sc14803.doc.htm",
+      "icon": "alert-triangle"
+    }
+  ],
+  "price_trajectory": [
+    {
+      "date": "2022-02-18",
+      "spy_close": 407.56,
+      "spy_return": 0.0108,
+      "xle_close": 28.91,
+      "xle_return": 0.0164,
+      "ita_close": 100.41,
+      "ita_return": 0.014
+    },
+    {
+      "date": "2022-02-22",
+      "spy_close": 403.19,
+      "spy_return": 0.0,
+      "xle_close": 28.44,
+      "xle_return": 0.0,
+      "ita_close": 99.02,
+      "ita_return": 0.0
+    },
+    {
+      "date": "2022-02-23",
+      "spy_close": 396.04,
+      "spy_return": -0.0177,
+      "xle_close": 28.74,
+      "xle_return": 0.0103,
+      "ita_close": 97.9,
+      "ita_return": -0.0114
+    },
+    {
+      "date": "2022-02-24",
+      "spy_close": 402.0,
+      "spy_return": -0.003,
+      "xle_close": 28.51,
+      "xle_return": 0.0024,
+      "ita_close": 100.59,
+      "ita_return": 0.0158
+    },
+    {
+      "date": "2022-02-25",
+      "spy_close": 410.87,
+      "spy_return": 0.019,
+      "xle_close": 29.26,
+      "xle_return": 0.0288,
+      "ita_close": 103.62,
+      "ita_return": 0.0464
+    },
+    {
+      "date": "2022-02-28",
+      "spy_close": 409.82,
+      "spy_return": 0.0164,
+      "xle_close": 29.98,
+      "xle_return": 0.0542,
+      "ita_close": 107.73,
+      "ita_return": 0.0879
+    },
+    {
+      "date": "2022-03-01",
+      "spy_close": 403.57,
+      "spy_return": 0.001,
+      "xle_close": 30.29,
+      "xle_return": 0.0648,
+      "ita_close": 106.58,
+      "ita_return": 0.0763
+    }
+  ]
+}

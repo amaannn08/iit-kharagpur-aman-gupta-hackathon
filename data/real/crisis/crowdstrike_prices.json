@@ -1,0 +1,112 @@
+{
+  "crisis_id": "crowdstrike",
+  "name": "CrowdStrike Global Outage",
+  "event_class": "CYBER",
+  "primary_entity": "CRWD",
+  "entity_name": "CrowdStrike Holdings",
+  "benchmark_ticker": "CRWD",
+  "benchmark_name": "CrowdStrike Common Stock",
+  "window_start": "2024-07-18T00:00:00Z",
+  "window_end": "2024-07-22T23:59:59Z",
+  "description": "Defective Falcon sensor channel update crashed 8.5 million Windows hosts globally on July 19, 2024, grounding thousands of flights and halting healthcare and banking services.",
+  "portfolio_impact": {
+    "portfolio_loss_usd": -12500000.0,
+    "cet1_impact_bps": -25.0,
+    "loans_migrated_stage2": 2,
+    "staging_cliff_provision_jump_usd": 6800000.0
+  },
+  "milestones": [
+    {
+      "id": "first_signal",
+      "label": "Outage Deployment",
+      "timestamp": "2024-07-19T04:09:00Z",
+      "description": "Defective Falcon sensor channel 291 update deployed; Windows hosts crash worldwide",
+      "source": "CrowdStrike Post-Incident Hub",
+      "source_url": "https://www.crowdstrike.com/falcon-content-update-remediation-and-guidance-hub/",
+      "icon": "flag"
+    },
+    {
+      "id": "market_event",
+      "label": "Market Event (US Market Open)",
+      "timestamp": "2024-07-19T13:30:00Z",
+      "description": "NYSE open: CRWD opens down -11.1% on heavy volume following global flight groundings",
+      "source": "New York Stock Exchange Trading Schedule",
+      "source_url": "https://www.nyse.com/markets/hours-calendars",
+      "icon": "alert-triangle"
+    }
+  ],
+  "price_trajectory": [
+    {
+      "date": "2024-07-16",
+      "crwd_close": 92.26,
+      "crwd_return": 0.0758,
+      "msft_close": 441.73,
+      "msft_return": 0.0208,
+      "dal_close": 44.83,
+      "dal_return": 0.0245
+    },
+    {
+      "date": "2024-07-17",
+      "crwd_close": 88.74,
+      "crwd_return": 0.0347,
+      "msft_close": 435.84,
+      "msft_return": 0.0072,
+      "dal_close": 44.58,
+      "dal_return": 0.0187
+    },
+    {
+      "date": "2024-07-18",
+      "crwd_close": 85.76,
+      "crwd_return": 0.0,
+      "msft_close": 432.74,
+      "msft_return": 0.0,
+      "dal_close": 43.76,
+      "dal_return": 0.0
+    },
+    {
+      "date": "2024-07-19",
+      "crwd_close": 76.24,
+      "crwd_return": -0.111,
+      "msft_close": 429.54,
+      "msft_return": -0.0074,
+      "dal_close": 44.27,
+      "dal_return": 0.0116
+    },
+    {
+      "date": "2024-07-22",
+      "crwd_close": 65.98,
+      "crwd_return": -0.2307,
+      "msft_close": 435.27,
+      "msft_return": 0.0058,
+      "dal_close": 42.7,
+      "dal_return": -0.0243
+    },
+    {
+      "date": "2024-07-23",
+      "crwd_close": 67.22,
+      "crwd_return": -0.2162,
+      "msft_close": 437.14,
+      "msft_return": 0.0102,
+      "dal_close": 42.48,
+      "dal_return": -0.0292
+    },
+    {
+      "date": "2024-07-24",
+      "crwd_close": 64.54,
+      "crwd_return": -0.2475,
+      "msft_close": 421.47,
+      "msft_return": -0.026,
+      "dal_close": 41.83,
+      "dal_return": -0.0441
+    },
+    {
+      "date": "2024-07-25",
+      "crwd_close": 63.54,
+      "crwd_return": -0.2591,
+      "msft_close": 411.15,
+      "msft_return": -0.0499,
+      "dal_close": 42.35,
+      "dal_return": -0.0323
+    }
+  ]
+}
