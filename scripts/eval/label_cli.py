@@ -350,14 +350,54 @@ def run_labeling_session(annotator_name: str, out_path: Path = HOLDOUT_CSV,
         print(f"Saved: {event} | {sentiment} | severity={severity} | trigger={should_trig}\n")
 
 
+HUMAN_CSV = EVAL_DIR / "holdout_v2_news.human.csv"
+
+
+def load_candidates_from_holdout(path: Path = HOLDOUT_CSV) -> List[Dict[str, Any]]:
+    """Load text fields blind from holdout_v2_news.csv (stripping existing labels)."""
+    if not path.exists():
+        return load_stratified_candidates()
+    df = pd.read_csv(path)
+    required = ["record_id", "source_type", "source_id", "headline", "body"]
+    for col in required:
+        if col not in df.columns:
+            return load_stratified_candidates()
+    return df[required].fillna("").to_dict("records")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--freeze", action="store_true", help="Lock SHA-256 to FROZEN.txt")
-    ap.add_argument("--agreement", action="store_true",
-                    help=f"Agreement between the holdout and {RELABEL_CSV.name}")
-    ap.add_argument("--relabel", type=int, default=0, metavar="N",
-                    help=f"Second-pass session on N random holdout rows, into {RELABEL_CSV.name}")
-    ap.add_argument("--out", type=Path, default=HOLDOUT_CSV, help="File a labeling session writes")
+    ap.add_argument(
+        "--agreement",
+        action="store_true",
+        help=f"Agreement between {HOLDOUT_CSV.name} and {HUMAN_CSV.name} (or {RELABEL_CSV.name})",
+    )
+    ap.add_argument(
+        "--compare-file",
+        type=Path,
+        default=None,
+        help="Specific second file to compare against holdout_v2_news.csv",
+    )
+    ap.add_argument(
+        "--relabel",
+        type=int,
+        default=0,
+        metavar="N",
+        help=f"Second-pass session on N random holdout rows, into {RELABEL_CSV.name}",
+    )
+    ap.add_argument(
+        "--source",
+        type=Path,
+        default=HOLDOUT_CSV,
+        help="Source CSV containing text items to label (defaults to holdout_v2_news.csv)",
+    )
+    ap.add_argument(
+        "--out",
+        type=Path,
+        default=HUMAN_CSV,
+        help="Output CSV for human annotations (defaults to holdout_v2_news.human.csv)",
+    )
     ap.add_argument("--annotator", default=None, help="Annotator name (required to label)")
     args = ap.parse_args()
 
@@ -366,15 +406,25 @@ def main() -> None:
         return
 
     if args.agreement:
-        if not HOLDOUT_CSV.exists() or not RELABEL_CSV.exists():
-            raise SystemExit("Both the holdout and the re-label file must exist.")
-        rows, reason = validate_relabel(pd.read_csv(HOLDOUT_CSV), pd.read_csv(RELABEL_CSV))
-        if reason:
-            print(f"Excluded: {reason}")
-        if rows.empty:
-            raise SystemExit("No valid second-pass rows; agreement not computed.")
-        ke, ks, mae = agreement_from_merged(rows)
-        print(f"Rows compared: {len(rows)}")
+        test_file = args.compare_file
+        if test_file is None:
+            if HUMAN_CSV.exists():
+                test_file = HUMAN_CSV
+            elif RELABEL_CSV.exists():
+                test_file = RELABEL_CSV
+            else:
+                raise SystemExit(
+                    f"Neither {HUMAN_CSV.name} nor {RELABEL_CSV.name} exists. "
+                    "Label rows first using --annotator '<name>' --out data/eval/holdout_v2_news.human.csv"
+                )
+        if not HOLDOUT_CSV.exists() or not test_file.exists():
+            raise SystemExit(f"Both {HOLDOUT_CSV.name} and {test_file.name} must exist.")
+        ref_df = pd.read_csv(HOLDOUT_CSV)
+        test_df = pd.read_csv(test_file)
+        ke, ks, mae = compute_agreement(ref_df, test_df)
+        merged = ref_df.merge(test_df, on="record_id")
+        print(f"Comparison: {HOLDOUT_CSV.name} vs {test_file.name}")
+        print(f"Rows compared: {len(merged)}")
         print(f"Cohen's kappa (event): {ke:.3f}")
         print(f"Cohen's kappa (severity quadratic): {ks:.3f}")
         print(f"Severity MAE: {mae:.3f}")
@@ -387,8 +437,12 @@ def main() -> None:
         cands = first[["record_id", "source_type", "source_id", "headline", "body"]].fillna("")
         run_labeling_session(args.annotator, RELABEL_CSV, cands.to_dict("records"))
         return
-    run_labeling_session(args.annotator, args.out)
+
+    # Blind labeling session: candidate texts loaded from source CSV without labels
+    candidates = load_candidates_from_holdout(args.source)
+    run_labeling_session(args.annotator, args.out, candidates)
 
 
 if __name__ == "__main__":
     main()
+
