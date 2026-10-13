@@ -1,0 +1,121 @@
+{
+  "crisis_id": "first_republic",
+  "name": "First Republic Bank Failure",
+  "event_class": "CREDIT",
+  "primary_entity": "FRC",
+  "entity_name": "First Republic Bank",
+  "benchmark_ticker": "KRE",
+  "benchmark_name": "SPDR S&P Regional Banking ETF",
+  "window_start": "2023-04-24T00:00:00Z",
+  "window_end": "2023-05-02T23:59:59Z",
+  "description": "On April 24, 2023, First Republic disclosed over $100B in deposit outflows in Q1. Contagion and liquidity drain accelerated until California regulators closed the bank on May 1, 2023, and appointed the FDIC receiver, with JPMorgan acquiring substantially all assets.",
+  "portfolio_impact": {
+    "portfolio_loss_usd": -12500000.0,
+    "cet1_impact_bps": -25.0,
+    "loans_migrated_stage2": 2,
+    "staging_cliff_provision_jump_usd": 6800000.0
+  },
+  "milestones": [
+    {
+      "id": "first_signal",
+      "label": "First Signal (Q1 Earnings Deposit Flight)",
+      "timestamp": "2023-04-24T20:15:00Z",
+      "description": "First Republic reports Q1 earnings disclosing $102B in deposit flight and pursues strategic options",
+      "source": "First Republic Q1 2023 Earnings Release",
+      "source_url": "https://www.prnewswire.com/news-releases/first-republic-reports-first-quarter-2023-financial-results-301805984.html",
+      "icon": "flag"
+    },
+    {
+      "id": "stock_collapse",
+      "label": "Stock Collapse & Rescue Stalls",
+      "timestamp": "2023-04-26T14:30:00Z",
+      "description": "Shares plunge 50% to record lows as private rescue talks stall and government intervention is sought",
+      "source": "NYSE Trading Hours & Records",
+      "source_url": "https://www.nyse.com/markets/hours-calendars",
+      "icon": "trending-down"
+    },
+    {
+      "id": "market_event",
+      "label": "Market Event (FDIC Receivership & JPM Acquisition)",
+      "timestamp": "2023-05-01T07:30:00Z",
+      "description": "California DFPI closes First Republic; FDIC appointed receiver and enters purchase agreement with JPMorgan Chase",
+      "source": "FDIC Press Release PR-34-2023",
+      "source_url": "https://www.fdic.gov/news/press-releases/2023/pr23034.html",
+      "icon": "alert-triangle"
+    }
+  ],
+  "price_trajectory": [
+    {
+      "date": "2023-04-24",
+      "entity_price": 16.0,
+      "entity_return_pct": 0.0,
+      "benchmark_price": 38.68,
+      "benchmark_return_pct": 0.0,
+      "jpm_price": 130.19,
+      "jpm_return_pct": 0.0
+    },
+    {
+      "date": "2023-04-25",
+      "entity_price": 8.1,
+      "entity_return_pct": -49.37,
+      "benchmark_price": 37.05,
+      "benchmark_return_pct": -4.21,
+      "jpm_price": 127.36,
+      "jpm_return_pct": -2.17
+    },
+    {
+      "date": "2023-04-26",
+      "entity_price": 5.69,
+      "entity_return_pct": -64.44,
+      "benchmark_price": 37.28,
+      "benchmark_return_pct": -3.63,
+      "jpm_price": 125.11,
+      "jpm_return_pct": -3.91
+    },
+    {
+      "date": "2023-04-27",
+      "entity_price": 6.19,
+      "entity_return_pct": -61.31,
+      "benchmark_price": 37.98,
+      "benchmark_return_pct": -1.83,
+      "jpm_price": 126.79,
+      "jpm_return_pct": -2.61
+    },
+    {
+      "date": "2023-04-28",
+      "entity_price": 3.51,
+      "entity_return_pct": -78.06,
+      "benchmark_price": 38.64,
+      "benchmark_return_pct": -0.12,
+      "jpm_price": 127.89,
+      "jpm_return_pct": -1.77
+    },
+    {
+      "date": "2023-05-01",
+      "entity_price": 3.51,
+      "entity_return_pct": -78.06,
+      "benchmark_price": 37.55,
+      "benchmark_return_pct": -2.93,
+      "jpm_price": 130.63,
+      "jpm_return_pct": 0.33
+    },
+    {
+      "date": "2023-05-02",
+      "entity_price": 3.51,
+      "entity_return_pct": -78.06,
+      "benchmark_price": 35.2,
+      "benchmark_return_pct": -9.01,
+      "jpm_price": 128.52,
+      "jpm_return_pct": -1.29
+    },
+    {
+      "date": "2023-05-03",
+      "entity_price": 0.33,
+      "entity_return_pct": -97.91,
+      "benchmark_price": 34.56,
+      "benchmark_return_pct": -10.65,
+      "jpm_price": 125.8,
+      "jpm_return_pct": -3.38
+    }
+  ]
+}

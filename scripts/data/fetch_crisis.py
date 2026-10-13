@@ -536,11 +536,149 @@ def build_ukraine_dataset() -> None:
     print(f"  Saved Russia-Ukraine prices & milestones to {prices_path}")
 
 
+def build_first_republic_dataset() -> None:
+    print("\n[CRISIS] Building First Republic Bank collapse dataset (Blind Credit Event)...")
+    # GDELT slices across April 24 to May 2, 2023
+    slices = [
+        "20230424180000", "20230424200000", "20230424220000",
+        "20230425040000", "20230425080000", "20230425120000", "20230425160000", "20230425200000",
+        "20230426040000", "20230426080000", "20230426120000", "20230426160000", "20230426200000",
+        "20230427040000", "20230427080000", "20230427120000", "20230427160000", "20230427200000",
+        "20230428040000", "20230428080000", "20230428120000", "20230428160000", "20230428200000",
+        "20230429080000", "20230429120000", "20230429160000", "20230429200000",
+        "20230430080000", "20230430120000", "20230430160000", "20230430200000",
+        "20230501040000", "20230501060000", "20230501080000", "20230501100000", "20230501120000", "20230501160000", "20230501200000",
+        "20230502080000", "20230502120000", "20230502160000", "20230502200000",
+    ]
+
+    raw_items = []
+    for s in slices:
+        raw_items.extend(fetch_gdelt_slice(s))
+        time.sleep(0.15)
+
+    keywords = ["first republic", "first republic bank", "frc", "jpmorgan chase assumes", "jpmorgan acquires first republic", "fdic receivership"]
+    records = []
+
+    seen_titles = set()
+    for item in raw_items:
+        t = item["title"]
+        tl = t.lower()
+        if any(k in tl for k in keywords) and t not in seen_titles:
+            seen_titles.add(t)
+            entity = "FRC" if "first republic" in tl or "frc" in tl else ("JPM" if "jpmorgan" in tl else "")
+            records.append({
+                "record_id": rid("gd-frc", item["gkg_id"]),
+                "source_id": "gdelt_first_republic_2023",
+                "source_type": "news",
+                "headline": t,
+                "body": "",
+                "published_at": item["published_at"],
+                "timestamp_quality": "original",
+                "simulated_at": "",
+                "is_synthetic": "false",
+                "primary_entity_id": entity,
+                "source_url": item["url"],
+            })
+
+    # Validate URLs concurrently
+    all_urls = [r["source_url"] for r in records if r["source_url"]]
+    url_validity = validate_urls_concurrently(all_urls)
+    for r in records:
+        u = r["source_url"]
+        if u and not url_validity.get(u, False):
+            r["source_url"] = ""
+
+    out_df = pd.DataFrame(records, columns=NEWS_COLS)
+    out_df = out_df.drop_duplicates("headline").sort_values(["published_at", "record_id"])
+    out_csv = CRISIS_DIR / "first_republic.csv"
+    out_df.to_csv(out_csv, index=False)
+    print(f"  Saved {len(out_df)} First Republic records to {out_csv}")
+
+    # Prices
+    print("  Fetching First Republic market price trajectories (FRCB, KRE, JPM)...")
+    px_data = yf.download(["FRCB", "KRE", "JPM"], start="2023-04-24", end="2023-05-04", progress=False)["Close"]
+    base_frc = float(px_data["FRCB"].loc["2023-04-24"])
+    base_kre = float(px_data["KRE"].loc["2023-04-24"])
+    base_jpm = float(px_data["JPM"].loc["2023-04-24"])
+
+    trajectory = []
+    for dt_idx in px_data.index:
+        d_str = dt_idx.strftime("%Y-%m-%d")
+        frc_close = float(px_data["FRCB"].loc[dt_idx])
+        kre_close = float(px_data["KRE"].loc[dt_idx])
+        jpm_close = float(px_data["JPM"].loc[dt_idx])
+        trajectory.append({
+            "date": d_str,
+            "entity_price": round(frc_close, 2),
+            "entity_return_pct": round(((frc_close / base_frc) - 1.0) * 100, 2),
+            "benchmark_price": round(kre_close, 2),
+            "benchmark_return_pct": round(((kre_close / base_kre) - 1.0) * 100, 2),
+            "jpm_price": round(jpm_close, 2),
+            "jpm_return_pct": round(((jpm_close / base_jpm) - 1.0) * 100, 2),
+        })
+
+    milestones = [
+        {
+            "id": "first_signal",
+            "label": "First Signal (Q1 Earnings Deposit Flight)",
+            "timestamp": "2023-04-24T20:15:00Z",
+            "description": "First Republic reports Q1 earnings disclosing $102B in deposit flight and pursues strategic options",
+            "source": "First Republic Q1 2023 Earnings Release",
+            "source_url": "https://www.prnewswire.com/news-releases/first-republic-reports-first-quarter-2023-financial-results-301805984.html",
+            "icon": "flag",
+        },
+        {
+            "id": "stock_collapse",
+            "label": "Stock Collapse & Rescue Stalls",
+            "timestamp": "2023-04-26T14:30:00Z",
+            "description": "Shares plunge 50% to record lows as private rescue talks stall and government intervention is sought",
+            "source": "NYSE Trading Hours & Records",
+            "source_url": "https://www.nyse.com/markets/hours-calendars",
+            "icon": "trending-down",
+        },
+        {
+            "id": "market_event",
+            "label": "Market Event (FDIC Receivership & JPM Acquisition)",
+            "timestamp": "2023-05-01T07:30:00Z",
+            "description": "California DFPI closes First Republic; FDIC appointed receiver and enters purchase agreement with JPMorgan Chase",
+            "source": "FDIC Press Release PR-34-2023",
+            "source_url": "https://www.fdic.gov/news/press-releases/2023/pr23034.html",
+            "icon": "alert-triangle",
+        },
+    ]
+
+    meta = {
+        "crisis_id": "first_republic",
+        "name": "First Republic Bank Failure",
+        "event_class": "CREDIT",
+        "primary_entity": "FRC",
+        "entity_name": "First Republic Bank",
+        "benchmark_ticker": "KRE",
+        "benchmark_name": "SPDR S&P Regional Banking ETF",
+        "window_start": "2023-04-24T00:00:00Z",
+        "window_end": "2023-05-02T23:59:59Z",
+        "description": "On April 24, 2023, First Republic disclosed over $100B in deposit outflows in Q1. Contagion and liquidity drain accelerated until California regulators closed the bank on May 1, 2023, and appointed the FDIC receiver, with JPMorgan acquiring substantially all assets.",
+        "portfolio_impact": {
+            "portfolio_loss_usd": -12500000.0,
+            "cet1_impact_bps": -25.0,
+            "loans_migrated_stage2": 2,
+            "staging_cliff_provision_jump_usd": 6800000.0,
+        },
+        "milestones": milestones,
+        "price_trajectory": trajectory,
+    }
+
+    prices_path = CRISIS_DIR / "first_republic_prices.json"
+    prices_path.write_text(json.dumps(meta, indent=2))
+    print(f"  Saved First Republic prices & milestones to {prices_path}")
+
+
 def main() -> None:
     CRISIS_DIR.mkdir(parents=True, exist_ok=True)
     build_svb_dataset()
     build_crowdstrike_dataset()
     build_ukraine_dataset()
+    build_first_republic_dataset()
 
     license_path = CRISIS_DIR / "LICENSE"
     license_path.write_text(

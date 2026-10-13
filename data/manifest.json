@@ -829,6 +829,45 @@
       "byte_size": 2995,
       "sha256": "cfe00bf9d2e0afed115ee4519f18256fb953e11eac1a6537eef027a93b71371e",
       "record_count": 1
+    },
+    {
+      "file_path": "data/real/crisis/first_republic.csv",
+      "format": "csv",
+      "description": "First Republic Bank failure news timeline (Blind Credit Event)",
+      "is_synthetic": false,
+      "license": "GDELT Project (Public Domain / Research)",
+      "primary_keys": [
+        "record_id"
+      ],
+      "source": "http://data.gdeltproject.org/gdeltv2/",
+      "byte_size": 45025,
+      "sha256": "5891bf8eccbc36a4e57b906bc1734ef7456bdd1588404c31769dfe0c422e6290",
+      "record_count": 209,
+      "columns": [
+        "record_id",
+        "source_id",
+        "source_type",
+        "headline",
+        "body",
+        "published_at",
+        "timestamp_quality",
+        "simulated_at",
+        "is_synthetic",
+        "primary_entity_id",
+        "source_url"
+      ]
+    },
+    {
+      "file_path": "data/real/crisis/first_republic_prices.json",
+      "format": "json",
+      "description": "First Republic crisis market price trajectories (FRCB, KRE, JPM) and milestone timestamps",
+      "is_synthetic": false,
+      "license": "Yahoo Finance (Historical market prices)",
+      "primary_keys": [],
+      "source": "yfinance historical daily closes",
+      "byte_size": 4026,
+      "sha256": "652a793f87a3def2d585999ad4e6bb38ce6228b43a1f0f359d8ab86ccd4d0ff0",
+      "record_count": 1
     }
   ],
   "updated_at": "2026-10-13T00:51:00.000000+00:00"
