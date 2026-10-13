@@ -14,11 +14,11 @@
     "REGULATORY"
    ],
    "macro_f1_model": 0.7948,
-   "macro_f1_runtime_with_gates_and_abstention": 0.5075,
-   "precision_when_fired": 0.9389,
-   "fired_rate": 0.2227,
+   "macro_f1_runtime_with_gates_and_abstention": 0.5196,
+   "precision_when_fired": 0.9384,
+   "fired_rate": 0.2249,
    "baseline_keyword_macro_f1": 0.2863,
-   "baseline_seed_classifier_macro_f1": 0.0583,
+   "baseline_seed_classifier_macro_f1": 0.0896,
    "per_class_f1_model": {
     "CREDIT": 0.64,
     "EARNINGS": 0.9504,
@@ -476,20 +476,20 @@
  },
  "perf": {
   "records": 2000,
-  "records_per_s": 104.8,
-  "latency_p50_s": 0.0089,
-  "latency_p95_s": 0.0133,
-  "peak_rss_gb": 0.333,
+  "records_per_s": 92.6,
+  "latency_p50_s": 0.0099,
+  "latency_p95_s": 0.0155,
+  "peak_rss_gb": 0.306,
   "note": "single process, CPU, full pipeline (linking, sentiment, event, impact)"
  },
  "synthetic_regression": {
   "warning": "author-written synthetic set (same fictional universe as the demo); regression check only, never a quality claim",
   "n": 105,
-  "event_macro_f1": 0.4045,
+  "event_macro_f1": 0.4433,
   "sentiment_macro_f1": 0.3477,
-  "severity_mae": 2.943
+  "severity_mae": 2.79
  },
- "generated_at": "2026-10-12T19:54:24+00:00",
+ "generated_at": "2026-10-13T04:02:33+00:00",
  "targets": {
   "event_macro_f1": 0.7,
   "sentiment_macro_f1": 0.75,
@@ -511,10 +511,10 @@
   "gold_base_rate_z2": 0.0881,
   "gold_base_rate_z3": 0.0502,
   "total_signals": 1511,
-  "eligible_signals": 104,
-  "eligible_rate": 0.0688,
-  "stress_triggers": 99,
-  "triggers_per_1k_records": 74.1,
+  "eligible_signals": 116,
+  "eligible_rate": 0.0768,
+  "stress_triggers": 101,
+  "triggers_per_1k_records": 75.6,
   "eligible_signals_recall_z3": 0.4242,
   "eligible_signals_recall_z3_ci95": [
    0.272,
@@ -526,13 +526,13 @@
    0.6061
   ],
   "eligible_vs_market": {
-   "n_with_market_outcome": 99,
-   "precision_abs_z_ge_2": 0.2323,
+   "n_with_market_outcome": 109,
+   "precision_abs_z_ge_2": 0.211,
    "precision_ci95": [
-    0.1515,
-    0.3131
+    0.1376,
+    0.2936
    ],
-   "lift_vs_base_rate": 2.64,
+   "lift_vs_base_rate": 2.39,
    "recall_abs_z_ge_3": 0.4242,
    "recall_ci95": [
     0.272,
@@ -540,13 +540,13 @@
    ]
   },
   "triggers_vs_market": {
-   "n_with_market_outcome": 95,
-   "precision_abs_z_ge_2": 0.2421,
+   "n_with_market_outcome": 97,
+   "precision_abs_z_ge_2": 0.2371,
    "precision_ci95": [
-    0.1579,
-    0.3368
+    0.1546,
+    0.3299
    ],
-   "lift_vs_base_rate": 2.75,
+   "lift_vs_base_rate": 2.69,
    "recall_abs_z_ge_3": 0.4242,
    "recall_ci95": [
     0.272,
@@ -554,14 +554,14 @@
    ]
   },
   "false_trigger_rates_by_source": {
-   "sec_8k_routine_heldout": 0.0,
+   "sec_8k_routine_heldout": 0.0116,
    "gdelt_snapshot": 0.0,
    "stock_tweets": 0.0
   },
   "false_trigger_rates_ci95": {
    "sec_8k_routine_heldout": [
     0.0,
-    0.0
+    0.0465
    ],
    "gdelt_snapshot": [
     0.0,
@@ -572,10 +572,10 @@
     0.0
    ]
   },
-  "false_trigger_rate_max_source": 0.0,
+  "false_trigger_rate_max_source": 0.0116,
   "routine_counts": {
    "sec_8k_routine_heldout": {
-    "triggers": 0,
+    "triggers": 1,
     "records": 86
    },
    "gdelt_snapshot": {
@@ -600,15 +600,15 @@
   "agreement_note": "no second labeling pass",
   "sha256": "c278abb251f0d52a7262591b14b69a57d85c6e96c5ed645a3e5e35b3858f5302",
   "sha256_matches_frozen": true,
-  "severity_mae": 1.5167,
+  "severity_mae": 1.4083,
   "severity_mae_ci95": [
-   1.1831,
-   1.875
+   1.125,
+   1.7502
   ],
-  "event_macro_f1": 0.3361,
+  "event_macro_f1": 0.3499,
   "event_macro_f1_ci95": [
-   0.2103,
-   0.423
+   0.2274,
+   0.4378
   ],
   "sentiment_macro_f1": 0.564,
   "sentiment_macro_f1_ci95": [
@@ -625,15 +625,17 @@
    "name": "Silicon Valley Bank Collapse",
    "event_class": "CREDIT",
    "primary_entity": "SIVB",
+   "test_type": "re_run_after_diagnosis",
+   "diagnosis_note": "v1 missed pre-event trigger because NLP lacked domain credit event rules (labeled bank failure as OTHER with impact 1). v2 adds ISDA 2014 Section 4 rules.",
    "total_records": 2648,
    "total_signals": 2687,
    "first_signal_time": "2023-02-02T13:00:00+00:00",
    "market_event_time": "2023-03-10T16:45:00Z",
-   "trigger_time": "2023-03-14T14:00:00+00:00",
-   "trigger_signal_id": "sig-60ff65b3bba0",
-   "lead_time_hours": -93.25,
-   "lead_time_display": "Triggered post-event (93.2 hours after market event)",
-   "peak_story_intensity": 9.87,
+   "trigger_time": "2023-03-10T16:00:00+00:00",
+   "trigger_signal_id": "sig-a51a61b89a84",
+   "lead_time_hours": 0.75,
+   "lead_time_display": "0.8 hours advance warning before market event",
+   "peak_story_intensity": 15.0,
    "story_threshold": 7.5,
    "triggered": true,
    "naive_keyword": "svb",
@@ -646,17 +648,19 @@
    "name": "CrowdStrike Global Outage",
    "event_class": "CYBER",
    "primary_entity": "CRWD",
+   "test_type": "re_run_after_diagnosis",
+   "diagnosis_note": "v1 missed trigger because outage was labeled OTHER with impact 3-4. v2 adds SEC 8-K Item 1.05 material outage rules.",
    "total_records": 657,
    "total_signals": 695,
    "first_signal_time": "2024-07-18T18:00:00+00:00",
    "market_event_time": "2024-07-19T13:30:00Z",
-   "trigger_time": null,
-   "trigger_signal_id": null,
-   "lead_time_hours": null,
-   "lead_time_display": "No trigger fired under frozen threshold",
-   "peak_story_intensity": 0.0,
+   "trigger_time": "2024-07-19T08:00:00+00:00",
+   "trigger_signal_id": "sig-1ac7701017f6",
+   "lead_time_hours": 5.5,
+   "lead_time_display": "5.5 hours advance warning before market event",
+   "peak_story_intensity": 14.98,
    "story_threshold": 7.5,
-   "triggered": false,
+   "triggered": true,
    "naive_keyword": "outage",
    "naive_rule": "Keyword match 'outage' in headline or body",
    "naive_triggers": 590,
@@ -667,12 +671,14 @@
    "name": "Russia-Ukraine Invasion",
    "event_class": "GEOPOLITICAL",
    "primary_entity": "MACRO",
+   "test_type": "re_run_after_diagnosis",
+   "diagnosis_note": "v1 triggered post-event (-15h). Re-evaluated under v2 frozen rules.",
    "total_records": 1614,
    "total_signals": 1614,
    "first_signal_time": "2022-02-21T16:00:00+00:00",
    "market_event_time": "2022-02-24T03:00:00Z",
    "trigger_time": "2022-02-24T18:00:00+00:00",
-   "trigger_signal_id": "sig-9ece6f9eb5dc",
+   "trigger_signal_id": "sig-beb617e878e1",
    "lead_time_hours": -15.0,
    "lead_time_display": "Triggered post-event (15.0 hours after market event)",
    "peak_story_intensity": 9.12,
@@ -682,6 +688,29 @@
    "naive_rule": "Keyword match 'Ukraine' in headline or body",
    "naive_triggers": 1101,
    "naive_first_time": "2022-02-21T16:00:00+00:00"
+  },
+  "first_republic": {
+   "crisis_id": "first_republic",
+   "name": "First Republic Bank Failure",
+   "event_class": "CREDIT",
+   "primary_entity": "FRC",
+   "test_type": "blind_test",
+   "diagnosis_note": "Strict blind test: data and FDIC receivership milestone committed before running engine. Zero threshold or rule tuning.",
+   "total_records": 209,
+   "total_signals": 277,
+   "first_signal_time": "2023-04-24T18:00:00+00:00",
+   "market_event_time": "2023-05-01T07:30:00Z",
+   "trigger_time": "2023-04-24T22:00:00+00:00",
+   "trigger_signal_id": "sig-ed84a8b23eab",
+   "lead_time_hours": 153.5,
+   "lead_time_display": "153.5 hours advance warning before market event",
+   "peak_story_intensity": 14.23,
+   "story_threshold": 7.5,
+   "triggered": true,
+   "naive_keyword": "first republic",
+   "naive_rule": "Keyword match 'First Republic' in headline or body",
+   "naive_triggers": 208,
+   "naive_first_time": "2023-04-24T18:00:00+00:00"
   }
  },
  "crisis_time_machine_v1": {
@@ -747,6 +776,100 @@
    "naive_rule": "Keyword match 'Ukraine' in headline or body",
    "naive_triggers": 1101,
    "naive_first_time": "2022-02-21T16:00:00+00:00"
+  }
+ },
+ "crisis_time_machine_v2": {
+  "svb": {
+   "crisis_id": "svb",
+   "name": "Silicon Valley Bank Collapse",
+   "event_class": "CREDIT",
+   "primary_entity": "SIVB",
+   "test_type": "re_run_after_diagnosis",
+   "diagnosis_note": "v1 missed pre-event trigger because NLP lacked domain credit event rules (labeled bank failure as OTHER with impact 1). v2 adds ISDA 2014 Section 4 rules.",
+   "total_records": 2648,
+   "total_signals": 2687,
+   "first_signal_time": "2023-02-02T13:00:00+00:00",
+   "market_event_time": "2023-03-10T16:45:00Z",
+   "trigger_time": "2023-03-10T16:00:00+00:00",
+   "trigger_signal_id": "sig-a51a61b89a84",
+   "lead_time_hours": 0.75,
+   "lead_time_display": "0.8 hours advance warning before market event",
+   "peak_story_intensity": 15.0,
+   "story_threshold": 7.5,
+   "triggered": true,
+   "naive_keyword": "svb",
+   "naive_rule": "Keyword match 'SVB' in headline or body",
+   "naive_triggers": 162,
+   "naive_first_time": "2023-02-02T13:00:00+00:00"
+  },
+  "crowdstrike": {
+   "crisis_id": "crowdstrike",
+   "name": "CrowdStrike Global Outage",
+   "event_class": "CYBER",
+   "primary_entity": "CRWD",
+   "test_type": "re_run_after_diagnosis",
+   "diagnosis_note": "v1 missed trigger because outage was labeled OTHER with impact 3-4. v2 adds SEC 8-K Item 1.05 material outage rules.",
+   "total_records": 657,
+   "total_signals": 695,
+   "first_signal_time": "2024-07-18T18:00:00+00:00",
+   "market_event_time": "2024-07-19T13:30:00Z",
+   "trigger_time": "2024-07-19T08:00:00+00:00",
+   "trigger_signal_id": "sig-1ac7701017f6",
+   "lead_time_hours": 5.5,
+   "lead_time_display": "5.5 hours advance warning before market event",
+   "peak_story_intensity": 14.98,
+   "story_threshold": 7.5,
+   "triggered": true,
+   "naive_keyword": "outage",
+   "naive_rule": "Keyword match 'outage' in headline or body",
+   "naive_triggers": 590,
+   "naive_first_time": "2024-07-18T18:00:00+00:00"
+  },
+  "ukraine": {
+   "crisis_id": "ukraine",
+   "name": "Russia-Ukraine Invasion",
+   "event_class": "GEOPOLITICAL",
+   "primary_entity": "MACRO",
+   "test_type": "re_run_after_diagnosis",
+   "diagnosis_note": "v1 triggered post-event (-15h). Re-evaluated under v2 frozen rules.",
+   "total_records": 1614,
+   "total_signals": 1614,
+   "first_signal_time": "2022-02-21T16:00:00+00:00",
+   "market_event_time": "2022-02-24T03:00:00Z",
+   "trigger_time": "2022-02-24T18:00:00+00:00",
+   "trigger_signal_id": "sig-beb617e878e1",
+   "lead_time_hours": -15.0,
+   "lead_time_display": "Triggered post-event (15.0 hours after market event)",
+   "peak_story_intensity": 9.12,
+   "story_threshold": 7.5,
+   "triggered": true,
+   "naive_keyword": "ukraine",
+   "naive_rule": "Keyword match 'Ukraine' in headline or body",
+   "naive_triggers": 1101,
+   "naive_first_time": "2022-02-21T16:00:00+00:00"
+  },
+  "first_republic": {
+   "crisis_id": "first_republic",
+   "name": "First Republic Bank Failure",
+   "event_class": "CREDIT",
+   "primary_entity": "FRC",
+   "test_type": "blind_test",
+   "diagnosis_note": "Strict blind test: data and FDIC receivership milestone committed before running engine. Zero threshold or rule tuning.",
+   "total_records": 209,
+   "total_signals": 277,
+   "first_signal_time": "2023-04-24T18:00:00+00:00",
+   "market_event_time": "2023-05-01T07:30:00Z",
+   "trigger_time": "2023-04-24T22:00:00+00:00",
+   "trigger_signal_id": "sig-ed84a8b23eab",
+   "lead_time_hours": 153.5,
+   "lead_time_display": "153.5 hours advance warning before market event",
+   "peak_story_intensity": 14.23,
+   "story_threshold": 7.5,
+   "triggered": true,
+   "naive_keyword": "first republic",
+   "naive_rule": "Keyword match 'First Republic' in headline or body",
+   "naive_triggers": 208,
+   "naive_first_time": "2023-04-24T18:00:00+00:00"
   }
  }
 }

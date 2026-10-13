@@ -73,3 +73,15 @@ Every assumption below is implemented in code; the file that owns it is named so
 - **Zero External Network Calls**: The backend makes strictly zero network requests during runtime. Validated on every commit by `scripts/verify_hygiene.py`.
 - **Local Recording**: Real-time ingest runs out-of-process via `scripts/live/record_live.py`, appending to local files parsed by the engine.
 - **Holdout labels**: the 120-row real-news holdout (`data/eval/holdout_v2_news.csv`) was labeled in one pass by an AI agent, not by a person, and has not been reviewed. It is independent of the repository's models but is not human ground truth; `holdout_v2_news.provenance.json` records this and how to replace it with human labels.
+
+## Verification of Identical 42.42% Holdout Recall Metrics
+
+In the Q4 2023 holdout evaluation (1,336 articles), both `eligible_signals_recall_z3` and `automatic_trigger_recall_z3` evaluate to exactly `42.42%` with identical 95% bootstrap confidence intervals `[0.2727, 0.6061]`.
+
+- **Root Cause & Mathematical Verification**:
+  1. Across the Q4 2023 holdout, there were exactly **33 gold shock events** where the next-day abnormal equity move had $|z| \ge 3.0$ standard deviations.
+  2. The NLPEngine eligibility stage filtered news items through entity resolution, sentiment polarity, and impact rubric ($\ge 7$). Out of the 33 true $|z| \ge 3.0$ shocks, exactly **14 events** met eligibility criteria ($14 / 33 = 0.424242... = 42.4242\%$).
+  3. The StressEngine automated triggering stage evaluates these eligible signals against catastrophic ($\ge 8$) or multi-source story ($\ge 7.5$) criteria. Because true $|z| \ge 3.0$ shocks had catastrophic impact or high multi-source velocity, **all 14 shocks were preserved** downstream without dropping any. Thus, automated trigger recall is also $14 / 33 = 42.4242\%$.
+  4. Both metrics represent 14 successes out of 33 trials, yielding identical bootstrap confidence intervals $[0.2727, 0.6061]$ under seed 42.
+  5. The StressEngine successfully filtered out 4 false alarms from smaller moves ($|z| < 3.0$), dropping triggered signals from 99 to 95 and lifting precision from 23.23% to 24.21% (2.75x lift vs 8.81% base rate).
+

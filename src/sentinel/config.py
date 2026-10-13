@@ -67,6 +67,7 @@ class Settings(BaseSettings):
         "crisis_svb": ("real/crisis/svb.csv", "news", "CRISIS TIME MACHINE: SVB COLLAPSE"),
         "crisis_crowdstrike": ("real/crisis/crowdstrike.csv", "news", "CRISIS TIME MACHINE: CROWDSTRIKE"),
         "crisis_ukraine": ("real/crisis/ukraine.csv", "news", "CRISIS TIME MACHINE: RUSSIA-UKRAINE"),
+        "crisis_first_republic": ("real/crisis/first_republic.csv", "news", "CRISIS TIME MACHINE: FIRST REPUBLIC (BLIND)"),
         "gdelt_live": ("live/gdelt_live.csv", "news", "LIVE CAPTURE"),
         "sec_8k_live": ("live/sec_8k_live.csv", "news", "LIVE CAPTURE"),
         "bluesky_live": ("live/bluesky_live.csv", "social", "LIVE CAPTURE"),

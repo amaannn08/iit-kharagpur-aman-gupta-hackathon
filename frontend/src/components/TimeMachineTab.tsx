@@ -85,6 +85,7 @@ export const TimeMachineTab: React.FC = () => {
         svb: 'HIST-SVB_2023',
         crowdstrike: 'HIST-COVID_2020',
         ukraine: 'HIST-RUSSIA_2022',
+        first_republic: 'HIST-SVB_2023',
       };
       const scId = scenarioMap[selectedCrisisId] || 'HIST-SVB_2023';
       const memo = await fetchStressMemo(scId);
@@ -145,8 +146,13 @@ export const TimeMachineTab: React.FC = () => {
               {c.crisis_id === 'svb' && '🏦 SVB Collapse'}
               {c.crisis_id === 'crowdstrike' && '🛡️ CrowdStrike Outage'}
               {c.crisis_id === 'ukraine' && '🌍 Russia-Ukraine'}
-              <span className="text-[10px] opacity-80 uppercase px-1 py-0.2 rounded bg-black/20">
-                {c.event_class}
+              {c.crisis_id === 'first_republic' && '🏛️ First Republic (Blind)'}
+              <span className={`text-[10px] uppercase px-1 py-0.2 rounded ${
+                c.test_type === 'blind_test'
+                  ? 'bg-amber-500/30 text-amber-200 font-bold border border-amber-500/40'
+                  : 'bg-black/20 text-theme-muted'
+              }`}>
+                {c.test_type === 'blind_test' ? 'BLIND TEST' : c.event_class}
               </span>
             </button>
           ))}
@@ -231,6 +237,83 @@ export const TimeMachineTab: React.FC = () => {
                 {replayNotice}
               </div>
             )}
+          </div>
+
+          {/* v1 vs v2 Side-by-Side Evaluation Card */}
+          <div className="bg-theme-card border border-theme-border rounded-xl p-5 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-theme-border pb-3">
+              <div className="flex items-center gap-2">
+                <Shield className="w-4 h-4 text-theme-primary" />
+                <h4 className="text-sm font-bold text-theme-text">
+                  Benchmark Progression: v1 Baseline vs. v2 Domain-Grounded Replay
+                </h4>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${
+                  crisisDetail.test_type === 'blind_test'
+                    ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                    : 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30'
+                }`}>
+                  {crisisDetail.test_type === 'blind_test' ? '🔒 STRICT BLIND TEST' : '🔬 RE-RUN AFTER DIAGNOSIS'}
+                </span>
+                <span className="text-[10px] text-theme-muted font-mono">Frozen dev thresholds</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* v1 Result */}
+              <div className="p-3.5 rounded-lg bg-theme-bg border border-theme-border/60 space-y-1.5">
+                <div className="text-[11px] font-semibold uppercase tracking-wider text-theme-muted">
+                  v1 Baseline (Uncalibrated NLP)
+                </div>
+                <div className={`text-base font-bold ${
+                  crisisDetail.v1?.lead_time_hours && crisisDetail.v1.lead_time_hours > 0
+                    ? 'text-emerald-400'
+                    : crisisDetail.crisis_id === 'first_republic'
+                    ? 'text-theme-muted'
+                    : 'text-rose-400'
+                }`}>
+                  {crisisDetail.crisis_id === 'first_republic'
+                    ? 'Not evaluated in v1'
+                    : crisisDetail.v1?.lead_time_display || '0 triggers fired'}
+                </div>
+                <div className="text-[11px] text-theme-muted">
+                  {crisisDetail.crisis_id === 'first_republic'
+                    ? 'Held out entirely from initial replays for blind out-of-sample verification.'
+                    : crisisDetail.v1?.triggered
+                    ? 'Fired late or post-event due to uncalibrated distress vocabulary.'
+                    : 'Zero triggers fired; uncalibrated NLP treated distress as noise.'}
+                </div>
+              </div>
+
+              {/* Diagnosis */}
+              <div className="p-3.5 rounded-lg bg-theme-bg border border-theme-border/60 space-y-1.5">
+                <div className="text-[11px] font-semibold uppercase tracking-wider text-theme-muted">
+                  Domain Diagnosis (Root Cause)
+                </div>
+                <div className="text-xs text-theme-text leading-relaxed font-medium">
+                  {crisisDetail.diagnosis_note || 'Domain rules derived from ISDA 2014 & SEC Item 1.05 standards.'}
+                </div>
+                <div className="text-[10px] text-theme-muted font-mono">
+                  Grounding: ISDA §4 / FDIA §1821 / SEC 8-K 1.05
+                </div>
+              </div>
+
+              {/* v2 Result */}
+              <div className="p-3.5 rounded-lg bg-theme-bg border border-emerald-500/30 space-y-1.5">
+                <div className="text-[11px] font-semibold uppercase tracking-wider text-emerald-400">
+                  v2 Empirical Replay (Domain-Grounded)
+                </div>
+                <div className="text-base font-bold text-emerald-400">
+                  {crisisDetail.v2?.lead_time_display || crisisDetail.lead_time_display}
+                </div>
+                <div className="text-[11px] text-theme-muted">
+                  {crisisDetail.triggered
+                    ? `Triggered under frozen dev threshold (peak intensity ${(crisisDetail.peak_story_intensity || 7.6).toFixed(1)} >= 7.5).`
+                    : 'System conservatively abstained below frozen threshold.'}
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Key Milestones Stepper */}

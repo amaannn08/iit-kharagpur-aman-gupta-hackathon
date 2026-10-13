@@ -26,6 +26,8 @@ CRISIS_METADATA = [
         "benchmark_name": "SPDR S&P Regional Banking ETF",
         "window_start": "2023-03-08",
         "window_end": "2023-03-14",
+        "test_type": "re_run_after_diagnosis",
+        "diagnosis_note": "v1 missed pre-event trigger because NLP lacked domain credit event rules (bank run and capital hole labeled OTHER with impact 1). v2 adds ISDA 2014 Section 4 credit rules.",
         "description": "On March 8, 2023, SVB filed an 8-K disclosing a $1.8B loss on AFS securities and emergency capital raise. Bank run accelerated through March 9-10 until California DFPI closed the bank and appointed the FDIC receiver.",
     },
     {
@@ -38,6 +40,8 @@ CRISIS_METADATA = [
         "benchmark_name": "CrowdStrike Common Stock",
         "window_start": "2024-07-18",
         "window_end": "2024-07-22",
+        "test_type": "re_run_after_diagnosis",
+        "diagnosis_note": "v1 missed trigger because outage was labeled OTHER with impact 3-4. v2 adds SEC 8-K Item 1.05 material outage rules.",
         "description": "Defective Falcon sensor channel update crashed 8.5 million Windows hosts on July 19, 2024, grounding thousands of flights and halting enterprise services worldwide.",
     },
     {
@@ -50,33 +54,91 @@ CRISIS_METADATA = [
         "benchmark_name": "SPDR S&P 500 ETF Trust",
         "window_start": "2022-02-21",
         "window_end": "2022-02-26",
+        "test_type": "re_run_after_diagnosis",
+        "diagnosis_note": "v1 triggered post-event (-15.0h). Re-evaluated under v2 frozen rules.",
         "description": "Recognition of breakaway regions and Russian troop mobilization preceded full military operations on February 24, 2022.",
+    },
+    {
+        "crisis_id": "first_republic",
+        "name": "First Republic Bank Failure",
+        "event_class": "CREDIT",
+        "primary_entity": "FRC",
+        "entity_name": "First Republic Bank",
+        "benchmark_ticker": "KRE",
+        "benchmark_name": "SPDR S&P Regional Banking ETF",
+        "window_start": "2023-04-24",
+        "window_end": "2023-05-02",
+        "test_type": "blind_test",
+        "diagnosis_note": "Strict blind test: real GDELT news slice and FDIC takeover milestone committed before running engine. Zero threshold or rule tuning.",
+        "description": "On April 24, 2023, First Republic reported Q1 deposit flight of $100B+. Stock plunged from $16 to under $2 amid rescue talks until California DFPI closed the bank and appointed FDIC receiver on May 1, 2023 at 07:30 UTC, selling deposits to JPMorgan Chase.",
     },
 ]
 
 
-def load_crisis_metrics() -> Dict[str, Any]:
+def load_all_metrics() -> Dict[str, Any]:
     """Load evaluation metrics produced by scripts/run_evaluation.py."""
     if METRICS_PATH.exists():
         try:
-            data = json.loads(METRICS_PATH.read_text(encoding="utf-8"))
-            return data.get("crisis_time_machine", {})
+            return json.loads(METRICS_PATH.read_text(encoding="utf-8"))
         except Exception:
             pass
     return {}
 
 
+def load_crisis_metrics() -> Dict[str, Any]:
+    """Load latest crisis metrics."""
+    data = load_all_metrics()
+    return data.get("crisis_time_machine_v2") or data.get("crisis_time_machine", {})
+
+
+def format_version_comparison(ev: Dict[str, Any], version: str) -> Dict[str, Any]:
+    if not ev:
+        return {
+            "version": version,
+            "lead_time_hours": None,
+            "lead_time_display": "Not evaluated",
+            "triggered": False,
+            "status_label": "Not evaluated",
+        }
+    trig = ev.get("triggered", False)
+    lt = ev.get("lead_time_hours")
+    if not trig or lt is None:
+        status_label = "Missed (0 triggers)"
+    elif lt < 0:
+        status_label = f"Post-event ({abs(lt):.1f}h late)"
+    else:
+        status_label = f"{lt:.1f}h advance warning"
+    return {
+        "version": version,
+        "lead_time_hours": lt,
+        "lead_time_display": ev.get("lead_time_display", status_label),
+        "triggered": trig,
+        "status_label": status_label,
+    }
+
+
 @router.get("/crises")
 def list_crises() -> List[Dict[str, Any]]:
     """List available historical crisis scenarios with metadata and evaluated lead-time summaries."""
-    metrics = load_crisis_metrics()
+    all_metrics = load_all_metrics()
+    v1_metrics = all_metrics.get("crisis_time_machine_v1", {})
+    v2_metrics = all_metrics.get("crisis_time_machine_v2") or all_metrics.get("crisis_time_machine", {})
+
     result = []
     for item in CRISIS_METADATA:
         c = dict(item)
-        ev = metrics.get(item["crisis_id"], {})
-        c["lead_time_hours"] = ev.get("lead_time_hours")
-        c["lead_time_display"] = ev.get("lead_time_display", "Lead time not evaluated")
-        c["triggered"] = ev.get("triggered", False)
+        cid = item["crisis_id"]
+        v1_ev = v1_metrics.get(cid, {})
+        v2_ev = v2_metrics.get(cid, {})
+
+        c["lead_time_hours"] = v2_ev.get("lead_time_hours")
+        c["lead_time_display"] = v2_ev.get("lead_time_display", "Lead time not evaluated")
+        c["triggered"] = v2_ev.get("triggered", False)
+        c["test_type"] = item.get("test_type", "re_run_after_diagnosis")
+        c["diagnosis_note"] = item.get("diagnosis_note", "")
+
+        c["v1"] = format_version_comparison(v1_ev, "v1")
+        c["v2"] = format_version_comparison(v2_ev, "v2")
         result.append(c)
     return result
 
@@ -94,8 +156,18 @@ def get_crisis_detail(crisis_id: str) -> Dict[str, Any]:
         )
 
     meta = json.loads(prices_path.read_text(encoding="utf-8"))
-    metrics = load_crisis_metrics()
-    ev = metrics.get(crisis_id, {})
+    all_metrics = load_all_metrics()
+    v1_metrics = all_metrics.get("crisis_time_machine_v1", {})
+    v2_metrics = all_metrics.get("crisis_time_machine_v2") or all_metrics.get("crisis_time_machine", {})
+    v1_ev = v1_metrics.get(crisis_id, {})
+    v2_ev = v2_metrics.get(crisis_id, {})
+    ev = v2_ev
+
+    cfg = next((c for c in CRISIS_METADATA if c["crisis_id"] == crisis_id), {})
+    meta["test_type"] = cfg.get("test_type", "re_run_after_diagnosis")
+    meta["diagnosis_note"] = cfg.get("diagnosis_note", "")
+    meta["v1"] = format_version_comparison(v1_ev, "v1")
+    meta["v2"] = format_version_comparison(v2_ev, "v2")
 
     df = pd.read_csv(csv_path)
     df["dt"] = pd.to_datetime(df["published_at"])
@@ -107,9 +179,13 @@ def get_crisis_detail(crisis_id: str) -> Dict[str, Any]:
 
     # Extract price return lookup by date
     px_lookup = {}
-    benchmark_key = f"{meta['benchmark_ticker'].lower()}_return"
+    benchmark_key = f"{meta.get('benchmark_ticker', '').lower()}_return"
     for pt in meta.get("price_trajectory", []):
-        px_lookup[pt["date"]] = pt.get(benchmark_key, 0.0)
+        val = pt.get(benchmark_key)
+        if val is None:
+            pct = pt.get("benchmark_return_pct", 0.0)
+            val = pct / 100.0 if abs(pct) > 1.0 else pct
+        px_lookup[pt["date"]] = val
 
     # Milestones from meta
     milestones = list(meta.get("milestones", []))

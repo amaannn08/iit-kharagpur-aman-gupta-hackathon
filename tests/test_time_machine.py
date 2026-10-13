@@ -14,11 +14,12 @@ def test_list_crises():
     res = client.get("/api/time-machine/crises")
     assert res.status_code == 200
     data = res.json()
-    assert len(data) == 3
+    assert len(data) == 4
     crisis_ids = [c["crisis_id"] for c in data]
     assert "svb" in crisis_ids
     assert "crowdstrike" in crisis_ids
     assert "ukraine" in crisis_ids
+    assert "first_republic" in crisis_ids
     for c in data:
         assert "lead_time_display" in c
         assert "triggered" in c
@@ -81,13 +82,13 @@ def test_crisis_threshold_sensitivity_proves_computed():
         record_id="1",
         source_id="test",
         source_type=SourceType.NEWS,
-        text="Regional bank suffers severe deposit outflows and capital losses.",
+        text="Silicon Valley Bank suffers massive deposit run and $1.8B loss on bond sale.",
     )
     rec2 = InputRecord(
         record_id="2",
         source_id="test",
         source_type=SourceType.NEWS,
-        text="Bank emergency capital sale fails amid deepening liquidity panic.",
+        text="Silicon Valley Bank emergency capital raise fails amid deepening liquidity panic.",
     )
     s1 = nlp.process_record(rec1, "run")
     s2 = nlp.process_record(rec2, "run")
@@ -96,7 +97,7 @@ def test_crisis_threshold_sensitivity_proves_computed():
     _, t1_low, _ = tracker_low.process_signal(s1)
     _, t2_low, reason_low = tracker_low.process_signal(s2)
 
-    tracker_high = StoryTracker(trigger_threshold=10.0)
+    tracker_high = StoryTracker(trigger_threshold=15.0)
     _, t1_high, _ = tracker_high.process_signal(s1)
     _, t2_high, reason_high = tracker_high.process_signal(s2)
 

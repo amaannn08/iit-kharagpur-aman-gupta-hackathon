@@ -531,6 +531,14 @@ export interface LiveStatusResponse {
 export const fetchLiveStatus = () => getJson<LiveStatusResponse>('/replay/live_status');
 
 // --- Crisis Time Machine Types & API ---
+export interface CrisisVersionComparison {
+  version: 'v1' | 'v2';
+  lead_time_hours: number | null;
+  lead_time_display: string;
+  triggered: boolean;
+  status_label: string;
+}
+
 export interface CrisisSummary {
   crisis_id: string;
   name: string;
@@ -539,11 +547,16 @@ export interface CrisisSummary {
   entity_name: string;
   benchmark_ticker: string;
   benchmark_name: string;
-  lead_time_hours: number;
+  lead_time_hours: number | null;
   lead_time_display: string;
   window_start: string;
   window_end: string;
   description: string;
+  triggered?: boolean;
+  test_type?: 're_run_after_diagnosis' | 'blind_test';
+  diagnosis_note?: string;
+  v1?: CrisisVersionComparison;
+  v2?: CrisisVersionComparison;
 }
 
 export interface CrisisMilestone {
@@ -579,6 +592,10 @@ export interface CrisisDetail {
   trigger_time?: string | null;
   first_signal_time?: string | null;
   peak_story_intensity?: number;
+  test_type?: 're_run_after_diagnosis' | 'blind_test';
+  diagnosis_note?: string;
+  v1?: CrisisVersionComparison;
+  v2?: CrisisVersionComparison;
   naive_alert_performance: {
     naive_rule: string;
     naive_triggers: number;

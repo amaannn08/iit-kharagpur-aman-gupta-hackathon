@@ -16,7 +16,6 @@ from sentinel.stress.engine import StressEngine
 
 def test_svb_crisis_headlines_classified_as_credit_with_high_impact():
     engine = NLPEngine()
-    stress_engine = StressEngine()
 
     headlines = [
         "Silicon Valley Bank fails, shut down by FDIC after run on deposits",
