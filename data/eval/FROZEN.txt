@@ -1,3 +1,9 @@
 dataset: data/eval/holdout_v2_news.csv
 rows: 120
 sha256: c278abb251f0d52a7262591b14b69a57d85c6e96c5ed645a3e5e35b3858f5302
+
+story_trigger_intensity_threshold: 7.5
+story_trigger_single_event_catastrophic_threshold: 8
+dev_split: Polygon 2023 Q1-Q3 (2023-01-01 to 2023-09-30)
+dev_excluded_windows: 2023-03-01 to 2023-05-15 (SVB and FRC distress windows), 2022-02-15 to 2022-03-15 (Russia-Ukraine), 2024-07-15 to 2024-07-25 (CrowdStrike)
+holdout_split: Polygon 2023 Q4 (2023-10-01 to 2023-12-31)
