@@ -18,6 +18,7 @@ Every assumption below is implemented in code; the file that owns it is named so
 | SEC EDGAR XBRL company facts (latest 10-K fiscal year only) give each issuer's debt, interest coverage and equity/assets | `scripts/data/build_wholesale_book.py` | Public SEC EDGAR filings; issuers without a current annual balance sheet are excluded with the reason recorded in `wholesale_real.json` |
 | Baseline one-year PD by rating = S&P Global Ratings, 2020 Annual Global Corporate Default and Rating Transition Study, Table 3, weighted long-term average 1981-2020 | `scripts/data/build_wholesale_book.py` | Cited published statistics |
 | The 120-row real-news holdout labels were written by an AI agent and have not been reviewed by a person | `data/eval/holdout_v2_news.provenance.json` | Reported as such; no annotator agreement is claimed |
+| Crisis Time Machine temporal resolution: historical crisis replays use 2–4 hour GDELT GKG snapshots (plus exact-timestamp SEC 8-K filings), matching archived sample intervals rather than 15-minute intervals. The live feed recorder polls GDELT's real-time 15-minute slice feed. | `sentinel.api.routes.time_machine`, `data/real/crisis` | Accurately stated on screen and in code; no inflated resolution claim |
 
 ## NLP
 

@@ -120,7 +120,7 @@ export const TimeMachineTab: React.FC = () => {
             <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-theme-primary/10 text-theme-primary border border-theme-primary/20">
               WOW MOMENT: LEAD-TIME BENCHMARK
             </span>
-            <span className="text-xs text-theme-muted font-mono">15-min Replay Resolution</span>
+            <span className="text-xs text-theme-muted font-mono">2–4h Historical Snapshot Resolution</span>
           </div>
           <h2 className="text-2xl font-bold tracking-tight text-theme-text mt-1">
             Crisis Time Machine

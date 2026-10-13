@@ -1,4 +1,4 @@
-"""Crisis Time Machine API: replay real crises at 15-minute resolution and measure lead time."""
+"""Crisis Time Machine API: replay real crises at 2–4 hour snapshot resolution and measure lead time."""
 
 import json
 import math
