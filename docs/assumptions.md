@@ -32,6 +32,7 @@ Every assumption below is implemented in code; the file that owns it is named so
 | Impact 1-10 = decile of the out-of-fold prediction; only signals with a classified event use the model, others keep the rubric; systemic signals use the rubric, capped at 7 without explicit magnitude; catastrophic language on a stress class sets a floor of 8 | `sentinel.nlp.severity` |
 | Social posts are actionable only with a cashtag or financial/macro context and no spam markers | `sentinel.nlp.relevance` |
 | Near-duplicates: Jaccard >= 0.75 or containment >= 0.85 (>= 4 shared tokens) within 24 hours of record time | `sentinel.replay.dedup` |
+| Domain credit & cyber rules: grounded in ISDA 2014 Credit Derivatives Definitions (Bankruptcy, Failure to Pay, Restructuring, Repudiation/Moratorium, Governmental Intervention; FDIA 12 U.S.C. § 1821(c)) and SEC Form 8-K Item 1.05. Bankruptcy/receivership/regulatory seizure sets severity floor >= 8; failure to pay/bank run/capital loss/material cyber sets severity floor >= 7. Entity must be verified subject; conference/sponsorship uses excluded. | `sentinel.nlp.credit_terms`, `sentinel.nlp.events`, `sentinel.nlp.severity` |
 
 ## Module B (Wholesale & Retail Stress Testing)
 

@@ -116,6 +116,26 @@ class NLPEngine:
         event: EventOutput,
         n_companies: int = 1,
     ) -> RiskSignal:
+        # Check domain-specific credit/cyber rules with entity subject verification
+        from sentinel.nlp.credit_terms import match_credit_or_cyber_event
+
+        domain_match = match_credit_or_cyber_event(
+            record.text,
+            entity_spans=entity_spans,
+            primary_entity_id=entity_ref.ticker,
+        )
+        if domain_match is not None:
+            if event.label == "OTHER" or event.abstained or domain_match.severity_floor >= 7:
+                event = event.model_copy(
+                    update={
+                        "label": domain_match.event_class,
+                        "confidence": max(event.confidence, domain_match.confidence),
+                        "abstained": False,
+                    }
+                )
+                if not any(s.start == domain_match.evidence_span.start for s in event.evidence):
+                    event.evidence.append(domain_match.evidence_span)
+
         # 4. Severity Rubric Scoring
         impact, severity_spans = self.severity_engine.evaluate(
             event_class=event.label,
@@ -152,7 +172,7 @@ class NLPEngine:
             eligible = False
             block_reasons.append("CONFIDENCE_BELOW_THRESHOLD")
 
-        if impact.score <= self.action_impact_threshold:
+        if impact.score < self.action_impact_threshold:
             eligible = False
             block_reasons.append("IMPACT_BELOW_ACTION_THRESHOLD")
 

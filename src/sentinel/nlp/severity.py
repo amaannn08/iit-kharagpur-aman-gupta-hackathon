@@ -193,6 +193,16 @@ class SeverityRubricEngine:
             else:
                 out.score = min(out.score, SYSTEMIC_CAP)
 
+        from sentinel.nlp.credit_terms import match_credit_or_cyber_event
+
+        domain_match = match_credit_or_cyber_event(text)
+        if domain_match is not None and event_class.upper() in STRESS_CLASSES:
+            if out.score < domain_match.severity_floor:
+                out.score = domain_match.severity_floor
+                out.method = "floor"
+            if not any(s.start == domain_match.evidence_span.start for s in spans):
+                spans.append(domain_match.evidence_span)
+
         if event_class.upper() in STRESS_CLASSES and (m := CATASTROPHIC.search(text)):
             if out.score < CATASTROPHIC_FLOOR:
                 out.score = CATASTROPHIC_FLOOR

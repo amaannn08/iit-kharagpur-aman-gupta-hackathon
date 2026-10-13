@@ -237,13 +237,42 @@ class EventClassifier:
             top_label = "M_AND_A"
             top_conf = max(0.65, dist.get("M_AND_A", 0.65))
 
+        from sentinel.nlp.credit_terms import match_credit_or_cyber_event
+
+        domain_match = match_credit_or_cyber_event(text)
+        if domain_match is not None and domain_match.severity_floor >= 7:
+            if domain_match.confidence >= self.confidence_threshold:
+                return EventOutput(
+                    label=domain_match.event_class,
+                    confidence=max(top_conf, domain_match.confidence),
+                    abstained=False,
+                    evidence=[domain_match.evidence_span],
+                    probabilities=dist,
+                )
+
         if top_conf < self.confidence_threshold or top_label == "OTHER":
+            if domain_match is not None and domain_match.confidence >= self.confidence_threshold:
+                return EventOutput(
+                    label=domain_match.event_class,
+                    confidence=max(top_conf, domain_match.confidence),
+                    abstained=False,
+                    evidence=[domain_match.evidence_span],
+                    probabilities=dist,
+                )
             return EventOutput(
                 label="OTHER", confidence=top_conf, abstained=True, probabilities=dist
             )
 
         gated_label, evidence = apply_gate(top_label, text)
         if gated_label == "OTHER":
+            if domain_match is not None and domain_match.confidence >= self.confidence_threshold:
+                return EventOutput(
+                    label=domain_match.event_class,
+                    confidence=max(top_conf, domain_match.confidence),
+                    abstained=False,
+                    evidence=[domain_match.evidence_span],
+                    probabilities=dist,
+                )
             return EventOutput(
                 label="OTHER", confidence=top_conf, abstained=True, probabilities=dist
             )
