@@ -200,9 +200,38 @@ export const TimeMachineTab: React.FC = () => {
                       : 'No Trigger Fired Under Frozen Threshold'}
                   </span>
                 </div>
-                <h3 className="text-3xl font-extrabold text-theme-text tracking-tight">
+                <h3 className="text-2xl lg:text-3xl font-extrabold text-theme-text tracking-tight">
                   {crisisDetail.lead_time_display}
                 </h3>
+
+                {/* Dual Reference Times & Data Resolution Badges */}
+                <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
+                  <span className="px-2.5 py-1 rounded bg-black/30 border border-theme-border font-mono text-theme-text">
+                    ⏱️ Resolution: ±{crisisDetail.data_resolution_h ?? 2.0}h snapshot
+                  </span>
+                  {crisisDetail.lead_vs_market_reaction_h !== undefined && crisisDetail.lead_vs_market_reaction_h !== null && (
+                    <span className="px-2.5 py-1 rounded bg-indigo-500/10 border border-indigo-500/30 font-mono text-indigo-300">
+                      Market Reaction: {crisisDetail.lead_vs_market_reaction_h > 0 ? '+' : ''}{crisisDetail.lead_vs_market_reaction_h.toFixed(1)}h
+                      {crisisDetail.first_market_reaction_time && ` (vs ${crisisDetail.first_market_reaction_time.replace('T', ' ').replace('Z', ' UTC')})`}
+                    </span>
+                  )}
+                  {crisisDetail.lead_vs_resolution_h !== undefined && crisisDetail.lead_vs_resolution_h !== null && (
+                    <span className="px-2.5 py-1 rounded bg-purple-500/10 border border-purple-500/30 font-mono text-purple-300">
+                      Resolution: {crisisDetail.lead_vs_resolution_h > 0 ? '+' : ''}{crisisDetail.lead_vs_resolution_h.toFixed(1)}h
+                      {crisisDetail.resolution_event_time && ` (vs ${crisisDetail.resolution_event_time.replace('T', ' ').replace('Z', ' UTC')})`}
+                    </span>
+                  )}
+                </div>
+
+                {crisisDetail.first_unmatched_trigger && (
+                  <div className="p-2.5 rounded bg-amber-500/10 border border-amber-500/30 text-xs text-amber-200 mt-2">
+                    <span className="font-semibold">⚠️ Unmatched wire trigger:</span> First trigger on wire fired on{' '}
+                    <span className="font-mono font-bold">{crisisDetail.first_unmatched_trigger.entity}</span> ({crisisDetail.first_unmatched_trigger.event_class}) at{' '}
+                    <span className="font-mono">{crisisDetail.first_unmatched_trigger.time.replace('T', ' ').replace('Z', ' UTC')}</span>:{' '}
+                    <em>"{crisisDetail.first_unmatched_trigger.headline}"</em>. On-target crisis entity trigger fired subsequently.
+                  </div>
+                )}
+
                 <p className="text-sm text-theme-muted max-w-3xl leading-relaxed">
                   {crisisDetail.triggered
                     ? `Sentinel evaluated stories on ${crisisDetail.primary_entity} under frozen dev thresholds (intensity >= 7.5). When triggered, Module B evaluated capital impact while naive keyword alerts produced false alarms.`
@@ -309,8 +338,8 @@ export const TimeMachineTab: React.FC = () => {
                 </div>
                 <div className="text-[11px] text-theme-muted">
                   {crisisDetail.triggered
-                    ? `Triggered under frozen dev threshold (peak intensity ${(crisisDetail.peak_story_intensity || 7.6).toFixed(1)} >= 7.5).`
-                    : 'System conservatively abstained below frozen threshold.'}
+                    ? `Triggered under frozen dev threshold (peak intensity ${(crisisDetail.peak_story_intensity || 7.6).toFixed(1)} >= 7.5; resolution ±${crisisDetail.data_resolution_h ?? 2.0}h).`
+                    : 'System conservatively abstained below frozen threshold (0 triggers).'}
                 </div>
               </div>
             </div>
@@ -460,11 +489,21 @@ export const TimeMachineTab: React.FC = () => {
                 <div className="p-3 rounded-lg bg-emerald-950/20 border border-emerald-500/30 space-y-1.5">
                   <div className="flex items-center justify-between text-xs font-bold text-emerald-400">
                     <span>✅ Sentinel Story Clustering Engine</span>
-                    <span>{crisisDetail.sentinel_performance.sentinel_triggers} Trigger ({crisisDetail.sentinel_performance.sentinel_false_positives} False Positives)</span>
+                    <span>
+                      {crisisDetail.engine_triggers ?? crisisDetail.sentinel_performance.sentinel_triggers} Triggers
+                      {crisisDetail.engine_triggers_on_crisis_entity !== undefined && (
+                        <> ({crisisDetail.engine_triggers_on_crisis_entity} on-target, {Math.round((crisisDetail.share_on_crisis_entity ?? 1) * 100)}%)</>
+                      )}
+                    </span>
                   </div>
                   <div className="text-[11px] text-theme-muted">
                     <strong>Rule:</strong> {crisisDetail.sentinel_performance.sentinel_rule}
                   </div>
+                  {crisisDetail.off_target_entities && crisisDetail.off_target_entities.length > 0 && (
+                    <div className="text-[10px] text-zinc-400 font-mono">
+                      <strong>Off-target wire mentions:</strong> {crisisDetail.off_target_entities.join(', ')}
+                    </div>
+                  )}
                   <div className="text-[11px] text-emerald-300">
                     {crisisDetail.sentinel_performance.verdict}
                   </div>

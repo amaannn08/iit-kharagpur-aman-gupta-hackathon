@@ -102,15 +102,27 @@ def format_version_comparison(ev: Dict[str, Any], version: str) -> Dict[str, Any
         }
     trig = ev.get("triggered", False)
     lt = ev.get("lead_time_hours")
-    if not trig or lt is None:
+    lm = ev.get("lead_vs_market_reaction_h")
+    lr = ev.get("lead_vs_resolution_h")
+    if not trig or (lt is None and lm is None):
         status_label = "Missed (0 triggers)"
-    elif lt < 0:
+    elif lm is not None and lm < 0:
+        status_label = f"Post-market (~{abs(lm):.1f}h late)"
+    elif lm is not None:
+        status_label = f"{lm:.1f}h advance warning"
+    elif lt is not None and lt < 0:
         status_label = f"Post-event ({abs(lt):.1f}h late)"
     else:
-        status_label = f"{lt:.1f}h advance warning"
+        status_label = f"{lt:.1f}h advance warning" if lt is not None else "Evaluated"
+
     return {
         "version": version,
         "lead_time_hours": lt,
+        "lead_vs_market_reaction_h": lm,
+        "lead_vs_resolution_h": lr,
+        "first_market_reaction_time": ev.get("first_market_reaction_time"),
+        "resolution_event_time": ev.get("resolution_event_time"),
+        "data_resolution_h": ev.get("data_resolution_h", 2.0),
         "lead_time_display": ev.get("lead_time_display", status_label),
         "triggered": trig,
         "status_label": status_label,
@@ -132,10 +144,20 @@ def list_crises() -> List[Dict[str, Any]]:
         v2_ev = v2_metrics.get(cid, {})
 
         c["lead_time_hours"] = v2_ev.get("lead_time_hours")
+        c["lead_vs_market_reaction_h"] = v2_ev.get("lead_vs_market_reaction_h")
+        c["lead_vs_resolution_h"] = v2_ev.get("lead_vs_resolution_h")
+        c["first_market_reaction_time"] = v2_ev.get("first_market_reaction_time")
+        c["resolution_event_time"] = v2_ev.get("resolution_event_time")
+        c["data_resolution_h"] = v2_ev.get("data_resolution_h", 2.0)
         c["lead_time_display"] = v2_ev.get("lead_time_display", "Lead time not evaluated")
         c["triggered"] = v2_ev.get("triggered", False)
         c["test_type"] = item.get("test_type", "re_run_after_diagnosis")
         c["diagnosis_note"] = item.get("diagnosis_note", "")
+        c["engine_triggers"] = v2_ev.get("engine_triggers")
+        c["engine_triggers_on_crisis_entity"] = v2_ev.get("engine_triggers_on_crisis_entity")
+        c["share_on_crisis_entity"] = v2_ev.get("share_on_crisis_entity")
+        c["off_target_entities"] = v2_ev.get("off_target_entities", [])
+        c["first_unmatched_trigger"] = v2_ev.get("first_unmatched_trigger")
 
         c["v1"] = format_version_comparison(v1_ev, "v1")
         c["v2"] = format_version_comparison(v2_ev, "v2")
@@ -230,6 +252,16 @@ def get_crisis_detail(crisis_id: str) -> Dict[str, Any]:
     meta["total_articles"] = len(df)
     meta["lead_time_hours"] = ev.get("lead_time_hours")
     meta["lead_time_display"] = ev.get("lead_time_display", "Lead time not evaluated")
+    meta["lead_vs_market_reaction_h"] = ev.get("lead_vs_market_reaction_h")
+    meta["lead_vs_resolution_h"] = ev.get("lead_vs_resolution_h")
+    meta["first_market_reaction_time"] = ev.get("first_market_reaction_time")
+    meta["resolution_event_time"] = ev.get("resolution_event_time")
+    meta["data_resolution_h"] = ev.get("data_resolution_h", 2.0)
+    meta["engine_triggers"] = ev.get("engine_triggers")
+    meta["engine_triggers_on_crisis_entity"] = ev.get("engine_triggers_on_crisis_entity")
+    meta["share_on_crisis_entity"] = ev.get("share_on_crisis_entity")
+    meta["off_target_entities"] = ev.get("off_target_entities", [])
+    meta["first_unmatched_trigger"] = ev.get("first_unmatched_trigger")
     meta["triggered"] = ev.get("triggered", False)
     meta["trigger_time"] = trigger_ts
     meta["first_signal_time"] = ev.get("first_signal_time")
@@ -254,16 +286,20 @@ def get_crisis_detail(crisis_id: str) -> Dict[str, Any]:
             else "No keyword matches observed."
         ),
     }
-    sentinel_triggers = 1 if ev.get("triggered") else 0
+    sentinel_triggers = ev.get("engine_triggers")
+    if sentinel_triggers is None:
+        sentinel_triggers = 1 if ev.get("triggered") else 0
+    on_target_trigs = ev.get("engine_triggers_on_crisis_entity", sentinel_triggers)
     meta["sentinel_performance"] = {
         "sentinel_rule": f"Story Intensity >= {ev.get('story_threshold', 7.5)} (frozen dev threshold)",
         "sentinel_triggers": sentinel_triggers,
+        "sentinel_on_target_triggers": on_target_trigs,
         "sentinel_trigger_time": trigger_ts or "None (abstained below threshold)",
         "sentinel_false_positives": 0,
         "verdict": (
-            "Zero false alarms on routine items; triggered on multi-source story escalation."
-            if sentinel_triggers > 0
-            else "Correctly filtered noise; abstained below frozen threshold."
+            f"{on_target_trigs} on-target trigger(s) on crisis entity; triggered on multi-source story escalation."
+            if (sentinel_triggers and sentinel_triggers > 0 and ev.get("triggered"))
+            else ("Zero on-target triggers (missed market-wide event)." if sentinel_triggers and sentinel_triggers > 0 else "Correctly filtered noise; abstained below frozen threshold.")
         ),
     }
 

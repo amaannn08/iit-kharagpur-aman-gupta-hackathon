@@ -23,6 +23,8 @@ def test_list_crises():
     for c in data:
         assert "lead_time_display" in c
         assert "triggered" in c
+        assert "data_resolution_h" in c
+        assert "engine_triggers" in c
 
 
 def test_get_svb_crisis_detail():
@@ -31,6 +33,11 @@ def test_get_svb_crisis_detail():
     data = res.json()
     assert data["crisis_id"] == "svb"
     assert "lead_time_display" in data
+    assert "lead_vs_market_reaction_h" in data
+    assert "lead_vs_resolution_h" in data
+    assert "data_resolution_h" in data
+    assert data["engine_triggers"] is not None
+    assert data["engine_triggers_on_crisis_entity"] is not None
     assert len(data["milestones"]) >= 2
     assert len(data["price_trajectory"]) > 0
     assert len(data["timeline_series"]) > 0

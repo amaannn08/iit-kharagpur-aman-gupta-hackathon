@@ -531,10 +531,27 @@ export interface LiveStatusResponse {
 export const fetchLiveStatus = () => getJson<LiveStatusResponse>('/replay/live_status');
 
 // --- Crisis Time Machine Types & API ---
+export interface CrisisFirstUnmatchedTrigger {
+  entity: string;
+  event_class: string;
+  headline: string;
+  time: string;
+}
+
 export interface CrisisVersionComparison {
   version: 'v1' | 'v2';
   lead_time_hours: number | null;
   lead_time_display: string;
+  lead_vs_market_reaction_h?: number | null;
+  lead_vs_resolution_h?: number | null;
+  first_market_reaction_time?: string | null;
+  resolution_event_time?: string | null;
+  data_resolution_h?: number;
+  engine_triggers?: number | null;
+  engine_triggers_on_crisis_entity?: number | null;
+  share_on_crisis_entity?: number | null;
+  off_target_entities?: string[];
+  first_unmatched_trigger?: CrisisFirstUnmatchedTrigger | null;
   triggered: boolean;
   status_label: string;
 }
@@ -549,6 +566,16 @@ export interface CrisisSummary {
   benchmark_name: string;
   lead_time_hours: number | null;
   lead_time_display: string;
+  lead_vs_market_reaction_h?: number | null;
+  lead_vs_resolution_h?: number | null;
+  first_market_reaction_time?: string | null;
+  resolution_event_time?: string | null;
+  data_resolution_h?: number;
+  engine_triggers?: number | null;
+  engine_triggers_on_crisis_entity?: number | null;
+  share_on_crisis_entity?: number | null;
+  off_target_entities?: string[];
+  first_unmatched_trigger?: CrisisFirstUnmatchedTrigger | null;
   window_start: string;
   window_end: string;
   description: string;
@@ -586,6 +613,16 @@ export interface CrisisDetail {
   benchmark_name: string;
   lead_time_hours: number | null;
   lead_time_display: string;
+  lead_vs_market_reaction_h?: number | null;
+  lead_vs_resolution_h?: number | null;
+  first_market_reaction_time?: string | null;
+  resolution_event_time?: string | null;
+  data_resolution_h?: number;
+  engine_triggers?: number | null;
+  engine_triggers_on_crisis_entity?: number | null;
+  share_on_crisis_entity?: number | null;
+  off_target_entities?: string[];
+  first_unmatched_trigger?: CrisisFirstUnmatchedTrigger | null;
   window_start: string;
   window_end: string;
   triggered?: boolean;
@@ -606,6 +643,7 @@ export interface CrisisDetail {
   sentinel_performance: {
     sentinel_rule: string;
     sentinel_triggers: number;
+    sentinel_on_target_triggers?: number;
     sentinel_trigger_time: string;
     sentinel_false_positives: number;
     verdict: string;
