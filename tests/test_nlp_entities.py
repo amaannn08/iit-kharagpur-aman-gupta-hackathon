@@ -160,3 +160,17 @@ def test_share_classes_and_possessive_entity_names():
     ref_meta, _ = linker.resolve("Meta's advertising revenue gained 15% year-over-year")
     assert ref_meta.ticker == "META"
 
+
+def test_mas_stop_ticker_disambiguation():
+    linker = EntityLinker()
+    # Bare acronym 'MAS' refers to Monetary Authority of Singapore (regulatory agency), not Masco Corp
+    ref_reg, _ = linker.resolve("MAS Statement on Global Outage Affecting IT Systems")
+    assert ref_reg.ticker != "MAS"
+
+    # Official company name or cashtag still resolves to Masco Corp
+    ref_corp, _ = linker.resolve("Masco Corporation reports quarterly dividend increase")
+    assert ref_corp.ticker == "MAS"
+
+    ref_cashtag, _ = linker.resolve("Bullish options volume observed on $MAS ahead of earnings")
+    assert ref_cashtag.ticker == "MAS"
+

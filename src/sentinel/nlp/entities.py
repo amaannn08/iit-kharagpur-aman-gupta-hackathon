@@ -49,7 +49,7 @@ BARE_TICKER = re.compile(r"\b[A-Z]{3,5}\b")
 STOP_TICKERS = {
     "ALL", "ARE", "BIG", "CEO", "CFO", "COO", "USA", "EPS", "FDA", "SEC", "GDP", "IPO", "ETF",
     "YOY", "NOW", "KEY", "LOW", "CAT", "FED", "ECB", "IMF", "CPI", "PPI", "AI", "EV", "ESG",
-    "NYSE", "AMEX", "OPEC", "NATO", "FTC", "DOJ", "LLC", "INC", "LTD", "PLC", "USD",
+    "NYSE", "AMEX", "OPEC", "NATO", "FTC", "DOJ", "LLC", "INC", "LTD", "PLC", "USD", "MAS",
     "EUR", "GBP", "JPY", "CNY", "API", "IT", "ON", "ONE", "HAS", "FOR", "NEW", "TOP", "BUY",
     "SELL", "HOLD", "Q1", "Q2", "Q3", "Q4", "UK", "EU", "US", "UN", "WHO", "ATM", "CDC",
     "FOMC", "SPAC", "NFT", "GPU", "CPU", "SUV", "TV", "PC", "VIX", "SPY", "DJIA", "CNBC",
@@ -113,6 +113,10 @@ EXTRA_ALIASES: Dict[str, List[Tuple[str, bool]]] = {
     "EBAY": [
         ("eBay Inc.", False),
         ("eBay", False),
+    ],
+    "MAS": [
+        ("Masco Corporation", False),
+        ("Masco Corp", False),
     ],
 }
 
