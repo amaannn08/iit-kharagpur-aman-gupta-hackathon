@@ -24,6 +24,7 @@ import html
 import io
 import json
 import re
+import sys
 import time
 import urllib.request
 import zipfile
@@ -34,6 +35,8 @@ import pandas as pd
 import yfinance as yf
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 CRISIS_DIR = REPO_ROOT / "data" / "real" / "crisis"
 GDELT_DIR = REPO_ROOT / "data" / "real" / "gdelt"
 POLYGON_PATH = REPO_ROOT / "data" / "real" / "polygon_news" / "polygon_news.csv"
@@ -228,10 +231,14 @@ def build_svb_dataset() -> None:
     out_df.to_csv(out_csv, index=False)
     print(f"  Saved {len(out_df)} SVB records to {out_csv}")
 
-    # Fetch yfinance closes
+    # Prices
+    build_svb_prices()
+
+
+def build_svb_prices() -> None:
     print("  Fetching SVB market price trajectories (KRE, SCHW, ZION)...")
     tickers = ["KRE", "SCHW", "ZION"]
-    px_data = yf.download(tickers, start="2023-03-06", end="2023-03-16", progress=False)["Close"]
+    px_data = yf.download(tickers, start="2023-01-20", end="2023-03-16", progress=False)["Close"]
     base_kre = float(px_data["KRE"].loc["2023-03-08"])
     base_schw = float(px_data["SCHW"].loc["2023-03-08"])
     base_zion = float(px_data["ZION"].loc["2023-03-08"])
@@ -249,7 +256,6 @@ def build_svb_dataset() -> None:
             "zion_return": round((float(row["ZION"]) - base_zion) / base_zion, 4),
         })
 
-    # Milestones: cite real live public source URLs (HTTP 200 verified)
     milestones = [
         {
             "id": "first_signal",
@@ -351,8 +357,12 @@ def build_crowdstrike_dataset() -> None:
     print(f"  Saved {len(out_df)} CrowdStrike records to {out_csv}")
 
     # Prices
+    build_crowdstrike_prices()
+
+
+def build_crowdstrike_prices() -> None:
     print("  Fetching CrowdStrike market price trajectories (CRWD, MSFT, DAL)...")
-    px_data = yf.download(["CRWD", "MSFT", "DAL"], start="2024-07-16", end="2024-07-26", progress=False)["Close"]
+    px_data = yf.download(["CRWD", "MSFT", "DAL"], start="2024-06-01", end="2024-07-26", progress=False)["Close"]
     base_crwd = float(px_data["CRWD"].loc["2024-07-18"])
     base_msft = float(px_data["MSFT"].loc["2024-07-18"])
     base_dal = float(px_data["DAL"].loc["2024-07-18"])
@@ -470,8 +480,12 @@ def build_ukraine_dataset() -> None:
     print(f"  Saved {len(out_df)} Russia-Ukraine records to {out_csv}")
 
     # Prices
+    build_ukraine_prices()
+
+
+def build_ukraine_prices() -> None:
     print("  Fetching Russia-Ukraine market price trajectories (SPY, XLE, ITA)...")
-    px_data = yf.download(["SPY", "XLE", "ITA"], start="2022-02-18", end="2022-03-02", progress=False)["Close"]
+    px_data = yf.download(["SPY", "XLE", "ITA"], start="2022-01-03", end="2022-03-02", progress=False)["Close"]
     base_spy = float(px_data["SPY"].loc["2022-02-22"])
     base_xle = float(px_data["XLE"].loc["2022-02-22"])
     base_ita = float(px_data["ITA"].loc["2022-02-22"])
@@ -595,8 +609,12 @@ def build_first_republic_dataset() -> None:
     print(f"  Saved {len(out_df)} First Republic records to {out_csv}")
 
     # Prices
+    build_first_republic_prices()
+
+
+def build_first_republic_prices() -> None:
     print("  Fetching First Republic market price trajectories (FRCB, KRE, JPM)...")
-    px_data = yf.download(["FRCB", "KRE", "JPM"], start="2023-04-24", end="2023-05-04", progress=False)["Close"]
+    px_data = yf.download(["FRCB", "KRE", "JPM"], start="2023-03-15", end="2023-05-04", progress=False)["Close"]
     base_frc = float(px_data["FRCB"].loc["2023-04-24"])
     base_kre = float(px_data["KRE"].loc["2023-04-24"])
     base_jpm = float(px_data["JPM"].loc["2023-04-24"])
@@ -674,7 +692,21 @@ def build_first_republic_dataset() -> None:
 
 
 def main() -> None:
+    prices_only = "--prices-only" in sys.argv
     CRISIS_DIR.mkdir(parents=True, exist_ok=True)
+
+    if prices_only:
+        print("[CRISIS] Refreshing crisis market prices only (extended pre-window trajectories)...")
+        build_svb_prices()
+        build_crowdstrike_prices()
+        build_ukraine_prices()
+        build_first_republic_prices()
+        print("[CRISIS] Price trajectories updated. Updating manifest...")
+        from scripts.data.build_manifest import update_manifest
+        update_manifest()
+        print("[CRISIS] Done updating crisis price trajectories and manifest.")
+        return
+
     build_svb_dataset()
     build_crowdstrike_dataset()
     build_ukraine_dataset()
@@ -688,7 +720,7 @@ def main() -> None:
         "the public domain under US law. Used for non-commercial educational benchmarking.\n"
     )
 
-    print("\n[CRISIS] Done! All 3 crisis datasets created with verified integrity.")
+    print("\n[CRISIS] Done! All 4 crisis datasets created with verified integrity.")
 
 
 if __name__ == "__main__":

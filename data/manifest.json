@@ -748,8 +748,8 @@
       "license": "Yahoo Finance (Historical market prices)",
       "primary_keys": [],
       "source": "yfinance historical daily closes",
-      "byte_size": 3259,
-      "sha256": "54ef8c2aaa0180d95b0daffdf65d2aeca11e84da7656047eb19da32c6e661eb1",
+      "byte_size": 9424,
+      "sha256": "51ceaf6633cb2b4b9256339b6241784cb55a72a4961d247945b670e1c5927844",
       "record_count": 1
     },
     {
@@ -787,8 +787,8 @@
       "license": "Yahoo Finance (Historical market prices)",
       "primary_keys": [],
       "source": "yfinance historical daily closes",
-      "byte_size": 3208,
-      "sha256": "4be5033f1d2df5dfd048f59d15bac221c7114deffb76bbe9f7c8cbd2d7e6e0e2",
+      "byte_size": 9203,
+      "sha256": "161c5b51da91bf0a0bba1fb31f5704a2dc001d3b98018c68b51865bcddb45e60",
       "record_count": 1
     },
     {
@@ -826,8 +826,8 @@
       "license": "Yahoo Finance (Historical market prices)",
       "primary_keys": [],
       "source": "yfinance historical daily closes",
-      "byte_size": 2995,
-      "sha256": "cfe00bf9d2e0afed115ee4519f18256fb953e11eac1a6537eef027a93b71371e",
+      "byte_size": 9718,
+      "sha256": "73f6f7f29a69020c5a9ff8a3d63d31040d007798d54e006934551a5d938943ba",
       "record_count": 1
     },
     {
@@ -865,10 +865,10 @@
       "license": "Yahoo Finance (Historical market prices)",
       "primary_keys": [],
       "source": "yfinance historical daily closes",
-      "byte_size": 4026,
-      "sha256": "652a793f87a3def2d585999ad4e6bb38ce6228b43a1f0f359d8ab86ccd4d0ff0",
+      "byte_size": 10229,
+      "sha256": "878f703e99db0139c83acfa0c7b04903ffbef01e20254e30292fa528cb3aebe0",
       "record_count": 1
     }
   ],
-  "updated_at": "2026-10-13T00:51:00.000000+00:00"
+  "updated_at": "2026-10-16T13:51:04.989516+00:00"
 }

@@ -37,6 +37,276 @@
   ],
   "price_trajectory": [
     {
+      "date": "2023-01-20",
+      "kre_close": 53.68,
+      "kre_return": 0.0359,
+      "schw_close": 73.02,
+      "schw_return": 0.0078,
+      "zion_close": 44.76,
+      "zion_return": 0.0943
+    },
+    {
+      "date": "2023-01-23",
+      "kre_close": 54.53,
+      "kre_return": 0.0523,
+      "schw_close": 73.68,
+      "schw_return": 0.0169,
+      "zion_close": 45.78,
+      "zion_return": 0.1191
+    },
+    {
+      "date": "2023-01-24",
+      "kre_close": 53.89,
+      "kre_return": 0.0399,
+      "schw_close": 75.12,
+      "schw_return": 0.0368,
+      "zion_close": 45.02,
+      "zion_return": 0.1004
+    },
+    {
+      "date": "2023-01-25",
+      "kre_close": 54.01,
+      "kre_return": 0.0423,
+      "schw_close": 75.08,
+      "schw_return": 0.0363,
+      "zion_close": 45.23,
+      "zion_return": 0.1057
+    },
+    {
+      "date": "2023-01-26",
+      "kre_close": 54.39,
+      "kre_return": 0.0496,
+      "schw_close": 73.98,
+      "schw_return": 0.0211,
+      "zion_close": 45.39,
+      "zion_return": 0.1096
+    },
+    {
+      "date": "2023-01-27",
+      "kre_close": 54.73,
+      "kre_return": 0.0562,
+      "schw_close": 70.8,
+      "schw_return": -0.0229,
+      "zion_close": 46.41,
+      "zion_return": 0.1344
+    },
+    {
+      "date": "2023-01-30",
+      "kre_close": 54.18,
+      "kre_return": 0.0454,
+      "schw_close": 71.57,
+      "schw_return": -0.0123,
+      "zion_close": 45.42,
+      "zion_return": 0.1102
+    },
+    {
+      "date": "2023-01-31",
+      "kre_close": 55.79,
+      "kre_return": 0.0766,
+      "schw_close": 73.39,
+      "schw_return": 0.0129,
+      "zion_close": 46.23,
+      "zion_return": 0.13
+    },
+    {
+      "date": "2023-02-01",
+      "kre_close": 56.58,
+      "kre_return": 0.0919,
+      "schw_close": 74.17,
+      "schw_return": 0.0237,
+      "zion_close": 46.43,
+      "zion_return": 0.1349
+    },
+    {
+      "date": "2023-02-02",
+      "kre_close": 58.09,
+      "kre_return": 0.121,
+      "schw_close": 72.63,
+      "schw_return": 0.0024,
+      "zion_close": 47.21,
+      "zion_return": 0.154
+    },
+    {
+      "date": "2023-02-03",
+      "kre_close": 58.13,
+      "kre_return": 0.1217,
+      "schw_close": 74.9,
+      "schw_return": 0.0338,
+      "zion_close": 47.31,
+      "zion_return": 0.1565
+    },
+    {
+      "date": "2023-02-06",
+      "kre_close": 57.57,
+      "kre_return": 0.1109,
+      "schw_close": 75.7,
+      "schw_return": 0.0448,
+      "zion_close": 47.04,
+      "zion_return": 0.1499
+    },
+    {
+      "date": "2023-02-07",
+      "kre_close": 58.19,
+      "kre_return": 0.1229,
+      "schw_close": 76.96,
+      "schw_return": 0.0622,
+      "zion_close": 47.64,
+      "zion_return": 0.1646
+    },
+    {
+      "date": "2023-02-08",
+      "kre_close": 57.53,
+      "kre_return": 0.1102,
+      "schw_close": 76.41,
+      "schw_return": 0.0546,
+      "zion_close": 46.38,
+      "zion_return": 0.1338
+    },
+    {
+      "date": "2023-02-09",
+      "kre_close": 56.69,
+      "kre_return": 0.0939,
+      "schw_close": 75.67,
+      "schw_return": 0.0444,
+      "zion_close": 45.77,
+      "zion_return": 0.1189
+    },
+    {
+      "date": "2023-02-10",
+      "kre_close": 56.57,
+      "kre_return": 0.0917,
+      "schw_close": 76.5,
+      "schw_return": 0.0559,
+      "zion_close": 45.66,
+      "zion_return": 0.1161
+    },
+    {
+      "date": "2023-02-13",
+      "kre_close": 57.03,
+      "kre_return": 0.1005,
+      "schw_close": 76.47,
+      "schw_return": 0.0554,
+      "zion_close": 46.0,
+      "zion_return": 0.1244
+    },
+    {
+      "date": "2023-02-14",
+      "kre_close": 56.82,
+      "kre_return": 0.0964,
+      "schw_close": 76.8,
+      "schw_return": 0.06,
+      "zion_close": 45.85,
+      "zion_return": 0.1208
+    },
+    {
+      "date": "2023-02-15",
+      "kre_close": 57.49,
+      "kre_return": 0.1094,
+      "schw_close": 76.52,
+      "schw_return": 0.0562,
+      "zion_close": 45.73,
+      "zion_return": 0.1178
+    },
+    {
+      "date": "2023-02-16",
+      "kre_close": 56.47,
+      "kre_return": 0.0898,
+      "schw_close": 76.39,
+      "schw_return": 0.0543,
+      "zion_close": 45.04,
+      "zion_return": 0.1009
+    },
+    {
+      "date": "2023-02-17",
+      "kre_close": 56.76,
+      "kre_return": 0.0953,
+      "schw_close": 76.37,
+      "schw_return": 0.0541,
+      "zion_close": 45.07,
+      "zion_return": 0.1018
+    },
+    {
+      "date": "2023-02-21",
+      "kre_close": 55.44,
+      "kre_return": 0.0698,
+      "schw_close": 75.97,
+      "schw_return": 0.0486,
+      "zion_close": 43.64,
+      "zion_return": 0.0668
+    },
+    {
+      "date": "2023-02-22",
+      "kre_close": 55.17,
+      "kre_return": 0.0646,
+      "schw_close": 76.07,
+      "schw_return": 0.0499,
+      "zion_close": 43.22,
+      "zion_return": 0.0566
+    },
+    {
+      "date": "2023-02-23",
+      "kre_close": 55.39,
+      "kre_return": 0.0688,
+      "schw_close": 75.09,
+      "schw_return": 0.0364,
+      "zion_close": 43.26,
+      "zion_return": 0.0574
+    },
+    {
+      "date": "2023-02-24",
+      "kre_close": 55.4,
+      "kre_return": 0.069,
+      "schw_close": 76.64,
+      "schw_return": 0.0577,
+      "zion_close": 44.05,
+      "zion_return": 0.0769
+    },
+    {
+      "date": "2023-02-27",
+      "kre_close": 55.38,
+      "kre_return": 0.0686,
+      "schw_close": 74.05,
+      "schw_return": 0.022,
+      "zion_close": 44.16,
+      "zion_return": 0.0795
+    },
+    {
+      "date": "2023-02-28",
+      "kre_close": 55.29,
+      "kre_return": 0.0669,
+      "schw_close": 74.09,
+      "schw_return": 0.0226,
+      "zion_close": 44.36,
+      "zion_return": 0.0844
+    },
+    {
+      "date": "2023-03-01",
+      "kre_close": 54.96,
+      "kre_return": 0.0605,
+      "schw_close": 73.6,
+      "schw_return": 0.0159,
+      "zion_close": 44.2,
+      "zion_return": 0.0805
+    },
+    {
+      "date": "2023-03-02",
+      "kre_close": 53.56,
+      "kre_return": 0.0336,
+      "schw_close": 72.35,
+      "schw_return": -0.0014,
+      "zion_close": 42.34,
+      "zion_return": 0.0349
+    },
+    {
+      "date": "2023-03-03",
+      "kre_close": 54.23,
+      "kre_return": 0.0464,
+      "schw_close": 73.6,
+      "schw_return": 0.0159,
+      "zion_close": 43.14,
+      "zion_return": 0.0546
+    },
+    {
       "date": "2023-03-06",
       "kre_close": 53.82,
       "kre_return": 0.0386,

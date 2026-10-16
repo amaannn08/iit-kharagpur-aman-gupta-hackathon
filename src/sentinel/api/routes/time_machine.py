@@ -104,8 +104,12 @@ def format_version_comparison(ev: Dict[str, Any], version: str) -> Dict[str, Any
     lt = ev.get("lead_time_hours")
     lm = ev.get("lead_vs_market_reaction_h")
     lr = ev.get("lead_vs_resolution_h")
+    cid = ev.get("crisis_id")
     if not trig or (lt is None and lm is None):
-        status_label = "Missed (0 triggers)"
+        if cid == "ukraine":
+            status_label = "Missed (0 on-target triggers; 1 off-target: BKNG earnings)"
+        else:
+            status_label = "Missed (0 triggers)"
     elif lm is not None and lm < 0:
         status_label = f"Post-market (~{abs(lm):.1f}h late)"
     elif lm is not None:

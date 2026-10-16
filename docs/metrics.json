@@ -476,10 +476,10 @@
  },
  "perf": {
   "records": 2000,
-  "records_per_s": 118.8,
+  "records_per_s": 117.9,
   "latency_p50_s": 0.0079,
   "latency_p95_s": 0.0118,
-  "peak_rss_gb": 0.346,
+  "peak_rss_gb": 0.345,
   "note": "single process, CPU, full pipeline (linking, sentiment, event, impact)"
  },
  "synthetic_regression": {
@@ -489,7 +489,7 @@
   "sentiment_macro_f1": 0.3477,
   "severity_mae": 2.79
  },
- "generated_at": "2026-10-16T09:23:10+00:00",
+ "generated_at": "2026-10-16T14:10:37+00:00",
  "targets": {
   "event_macro_f1": 0.7,
   "sentiment_macro_f1": 0.75,
@@ -638,7 +638,9 @@
    "total_signals": 2687,
    "engine_triggers": 66,
    "engine_triggers_on_crisis_entity": 60,
+   "engine_triggers_on_target": 60,
    "share_on_crisis_entity": 0.9091,
+   "share_on_target": 0.9091,
    "off_target_entities": [
     "FDX",
     "NSC",
@@ -647,25 +649,27 @@
    ],
    "first_unmatched_trigger": null,
    "first_signal_time": "2023-02-02T13:00:00+00:00",
-   "first_market_reaction_time": "2023-03-09T14:30:00Z",
-   "resolution_event_time": "2023-03-10T16:45:00Z",
+   "first_market_reaction_ticker": "KRE",
+   "first_market_reaction_z": -5.68,
    "market_event_time": "2023-03-09T14:30:00Z",
-   "data_resolution_h": 2.0,
    "trigger_time": "2023-03-10T16:00:00+00:00",
-   "trigger_signal_id": "sig-4231623688ac",
+   "trigger_signal_id": "sig-76aeedd3d9b2",
    "trigger_entity": "SIVB",
    "trigger_headline": "Silicon Valley Bank's Liquidity Crisis Rocks the Tech World",
    "lead_vs_market_reaction_h": -25.5,
    "lead_vs_resolution_h": 0.75,
    "lead_time_hours": -25.5,
-   "lead_time_display": "Credit trigger fired in the same data snapshot as the closure (re-run after diagnosis, not blind); ~25.5 h after the first market reaction.",
+   "lead_time_display": "Credit trigger fired in the same data snapshot as the closure (within \u00b14.0h data resolution) (re-run after diagnosis, not blind); ~25.5 h after the first market reaction.",
    "peak_story_intensity": 15.0,
    "story_threshold": 7.5,
    "triggered": true,
    "naive_keyword": "svb",
    "naive_rule": "Keyword match 'SVB' in headline or body",
    "naive_triggers": 162,
-   "naive_first_time": "2023-02-02T13:00:00+00:00"
+   "naive_first_time": "2023-02-02T13:00:00+00:00",
+   "first_market_reaction_time": "2023-03-09T14:30:00Z",
+   "resolution_event_time": "2023-03-10T16:45:00Z",
+   "data_resolution_h": 4.0
   },
   "crowdstrike": {
    "crisis_id": "crowdstrike",
@@ -684,7 +688,9 @@
    "total_signals": 695,
    "engine_triggers": 63,
    "engine_triggers_on_crisis_entity": 35,
+   "engine_triggers_on_target": 35,
    "share_on_crisis_entity": 0.5556,
+   "share_on_target": 0.5556,
    "off_target_entities": [
     "MSFT",
     "None"
@@ -697,16 +703,15 @@
     "headline": "Microsoft Windows Global Outage: Airlines, Stock Exchanges, Media Firms & More Hit By Blue Screen Me"
    },
    "first_signal_time": "2024-07-18T18:00:00+00:00",
-   "first_market_reaction_time": "2024-07-19T13:30:00Z",
-   "resolution_event_time": "2024-07-19T13:30:00Z",
+   "first_market_reaction_ticker": "CRWD",
+   "first_market_reaction_z": -3.82,
    "market_event_time": "2024-07-19T13:30:00Z",
-   "data_resolution_h": 2.0,
    "trigger_time": "2024-07-19T10:00:00+00:00",
-   "trigger_signal_id": "sig-8d1666c61dc8",
+   "trigger_signal_id": "sig-e5a942982dde",
    "trigger_entity": "CRWD",
    "trigger_headline": "Crowdstrike and Microsoft: What we know about global IT outage",
    "lead_vs_market_reaction_h": 3.5,
-   "lead_vs_resolution_h": 3.5,
+   "lead_vs_resolution_h": null,
    "lead_time_hours": 3.5,
    "lead_time_display": "CRWD cyber trigger at 10:00 UTC, 3.5 h before the US open (re-run after diagnosis).",
    "peak_story_intensity": 14.98,
@@ -715,7 +720,10 @@
    "naive_keyword": "outage",
    "naive_rule": "Keyword match 'outage' in headline or body",
    "naive_triggers": 590,
-   "naive_first_time": "2024-07-18T18:00:00+00:00"
+   "naive_first_time": "2024-07-18T18:00:00+00:00",
+   "first_market_reaction_time": "2024-07-19T13:30:00Z",
+   "resolution_event_time": null,
+   "data_resolution_h": 2.0
   },
   "ukraine": {
    "crisis_id": "ukraine",
@@ -737,7 +745,9 @@
    "total_signals": 1614,
    "engine_triggers": 1,
    "engine_triggers_on_crisis_entity": 0,
+   "engine_triggers_on_target": 0,
    "share_on_crisis_entity": 0.0,
+   "share_on_target": 0.0,
    "off_target_entities": [
     "BKNG"
    ],
@@ -749,10 +759,9 @@
     "headline": "Booking's Earnings Bring an Upgrade as Ukraine Worries Hit Travel Stocks"
    },
    "first_signal_time": "2022-02-21T16:00:00+00:00",
-   "first_market_reaction_time": "2022-02-28T14:30:00Z",
-   "resolution_event_time": "2022-02-24T03:00:00Z",
-   "market_event_time": "2022-02-28T14:30:00Z",
-   "data_resolution_h": 2.0,
+   "first_market_reaction_ticker": null,
+   "first_market_reaction_z": null,
+   "market_event_time": null,
    "trigger_time": null,
    "trigger_signal_id": null,
    "trigger_entity": null,
@@ -760,22 +769,24 @@
    "lead_vs_market_reaction_h": null,
    "lead_vs_resolution_h": null,
    "lead_time_hours": null,
-   "lead_time_display": "Missed: company-level stories can't capture a market-wide event (limitation).",
+   "lead_time_display": "Missed (0 on-target triggers; 1 off-target: BKNG earnings): company-level stories can't capture a market-wide event (limitation).",
    "peak_story_intensity": 9.12,
    "story_threshold": 7.5,
    "triggered": false,
    "naive_keyword": "ukraine",
    "naive_rule": "Keyword match 'Ukraine' in headline or body",
    "naive_triggers": 1101,
-   "naive_first_time": "2022-02-21T16:00:00+00:00"
+   "naive_first_time": "2022-02-21T16:00:00+00:00",
+   "first_market_reaction_time": null,
+   "resolution_event_time": null,
+   "data_resolution_h": 8.0
   },
   "first_republic": {
    "crisis_id": "first_republic",
    "name": "First Republic Bank Failure",
    "event_class": "CREDIT",
    "allowed_event_classes": [
-    "CREDIT",
-    "EARNINGS"
+    "CREDIT"
    ],
    "primary_entity": "FRC",
    "allowed_entities": [
@@ -786,32 +797,43 @@
    "total_records": 209,
    "total_signals": 277,
    "engine_triggers": 31,
-   "engine_triggers_on_crisis_entity": 22,
-   "share_on_crisis_entity": 0.7097,
+   "engine_triggers_on_crisis_entity": 16,
+   "engine_triggers_on_target": 16,
+   "share_on_crisis_entity": 0.5161,
+   "share_on_target": 0.5161,
    "off_target_entities": [
+    "FRC",
     "JPM"
    ],
-   "first_unmatched_trigger": null,
+   "first_unmatched_trigger": {
+    "timestamp": "2023-04-24T22:00:00+00:00",
+    "entity": "FRC",
+    "event_class": "EARNINGS",
+    "impact": 9,
+    "headline": "First Republic Q1 23 Earnings $FRC"
+   },
    "first_signal_time": "2023-04-24T18:00:00+00:00",
-   "first_market_reaction_time": "2023-04-25T13:30:00Z",
-   "resolution_event_time": "2023-05-01T07:30:00Z",
+   "first_market_reaction_ticker": "FRCB",
+   "first_market_reaction_z": -3.39,
    "market_event_time": "2023-04-25T13:30:00Z",
-   "data_resolution_h": 2.0,
    "trigger_time": "2023-04-24T22:00:00+00:00",
-   "trigger_signal_id": "sig-535f5fcb5604",
+   "trigger_signal_id": "sig-99d1ede18152",
    "trigger_entity": "FRC",
-   "trigger_headline": "First Republic Q1 23 Earnings $FRC",
+   "trigger_headline": "First Republic Stock Plunges As Deposit Flight Mars Q1 Earnings Beat",
    "lead_vs_market_reaction_h": 15.5,
    "lead_vs_resolution_h": 153.5,
    "lead_time_hours": 15.5,
-   "lead_time_display": "Credit trigger on the deposit-outflow disclosure at 22:00 UTC, 15.5 h before the next session's open and 6.4 days before receivership.",
+   "lead_time_display": "Credit trigger in the first snapshot after the after-hours deposit-outflow disclosure at 22:00 UTC; 15.5 h before the next regular session (\u221249% day) and 6.40 days before receivership.",
    "peak_story_intensity": 14.23,
    "story_threshold": 7.5,
    "triggered": true,
    "naive_keyword": "first republic",
    "naive_rule": "Keyword match 'First Republic' in headline or body",
    "naive_triggers": 208,
-   "naive_first_time": "2023-04-24T18:00:00+00:00"
+   "naive_first_time": "2023-04-24T18:00:00+00:00",
+   "first_market_reaction_time": "2023-04-25T13:30:00Z",
+   "resolution_event_time": "2023-05-01T07:30:00Z",
+   "data_resolution_h": 4.0
   }
  },
  "crisis_time_machine_v1": {
@@ -898,7 +920,9 @@
    "total_signals": 2687,
    "engine_triggers": 66,
    "engine_triggers_on_crisis_entity": 60,
+   "engine_triggers_on_target": 60,
    "share_on_crisis_entity": 0.9091,
+   "share_on_target": 0.9091,
    "off_target_entities": [
     "FDX",
     "NSC",
@@ -907,25 +931,27 @@
    ],
    "first_unmatched_trigger": null,
    "first_signal_time": "2023-02-02T13:00:00+00:00",
-   "first_market_reaction_time": "2023-03-09T14:30:00Z",
-   "resolution_event_time": "2023-03-10T16:45:00Z",
+   "first_market_reaction_ticker": "KRE",
+   "first_market_reaction_z": -5.68,
    "market_event_time": "2023-03-09T14:30:00Z",
-   "data_resolution_h": 2.0,
    "trigger_time": "2023-03-10T16:00:00+00:00",
-   "trigger_signal_id": "sig-4231623688ac",
+   "trigger_signal_id": "sig-76aeedd3d9b2",
    "trigger_entity": "SIVB",
    "trigger_headline": "Silicon Valley Bank's Liquidity Crisis Rocks the Tech World",
    "lead_vs_market_reaction_h": -25.5,
    "lead_vs_resolution_h": 0.75,
    "lead_time_hours": -25.5,
-   "lead_time_display": "Credit trigger fired in the same data snapshot as the closure (re-run after diagnosis, not blind); ~25.5 h after the first market reaction.",
+   "lead_time_display": "Credit trigger fired in the same data snapshot as the closure (within \u00b14.0h data resolution) (re-run after diagnosis, not blind); ~25.5 h after the first market reaction.",
    "peak_story_intensity": 15.0,
    "story_threshold": 7.5,
    "triggered": true,
    "naive_keyword": "svb",
    "naive_rule": "Keyword match 'SVB' in headline or body",
    "naive_triggers": 162,
-   "naive_first_time": "2023-02-02T13:00:00+00:00"
+   "naive_first_time": "2023-02-02T13:00:00+00:00",
+   "first_market_reaction_time": "2023-03-09T14:30:00Z",
+   "resolution_event_time": "2023-03-10T16:45:00Z",
+   "data_resolution_h": 4.0
   },
   "crowdstrike": {
    "crisis_id": "crowdstrike",
@@ -944,7 +970,9 @@
    "total_signals": 695,
    "engine_triggers": 63,
    "engine_triggers_on_crisis_entity": 35,
+   "engine_triggers_on_target": 35,
    "share_on_crisis_entity": 0.5556,
+   "share_on_target": 0.5556,
    "off_target_entities": [
     "MSFT",
     "None"
@@ -957,16 +985,15 @@
     "headline": "Microsoft Windows Global Outage: Airlines, Stock Exchanges, Media Firms & More Hit By Blue Screen Me"
    },
    "first_signal_time": "2024-07-18T18:00:00+00:00",
-   "first_market_reaction_time": "2024-07-19T13:30:00Z",
-   "resolution_event_time": "2024-07-19T13:30:00Z",
+   "first_market_reaction_ticker": "CRWD",
+   "first_market_reaction_z": -3.82,
    "market_event_time": "2024-07-19T13:30:00Z",
-   "data_resolution_h": 2.0,
    "trigger_time": "2024-07-19T10:00:00+00:00",
-   "trigger_signal_id": "sig-8d1666c61dc8",
+   "trigger_signal_id": "sig-e5a942982dde",
    "trigger_entity": "CRWD",
    "trigger_headline": "Crowdstrike and Microsoft: What we know about global IT outage",
    "lead_vs_market_reaction_h": 3.5,
-   "lead_vs_resolution_h": 3.5,
+   "lead_vs_resolution_h": null,
    "lead_time_hours": 3.5,
    "lead_time_display": "CRWD cyber trigger at 10:00 UTC, 3.5 h before the US open (re-run after diagnosis).",
    "peak_story_intensity": 14.98,
@@ -975,7 +1002,10 @@
    "naive_keyword": "outage",
    "naive_rule": "Keyword match 'outage' in headline or body",
    "naive_triggers": 590,
-   "naive_first_time": "2024-07-18T18:00:00+00:00"
+   "naive_first_time": "2024-07-18T18:00:00+00:00",
+   "first_market_reaction_time": "2024-07-19T13:30:00Z",
+   "resolution_event_time": null,
+   "data_resolution_h": 2.0
   },
   "ukraine": {
    "crisis_id": "ukraine",
@@ -997,7 +1027,9 @@
    "total_signals": 1614,
    "engine_triggers": 1,
    "engine_triggers_on_crisis_entity": 0,
+   "engine_triggers_on_target": 0,
    "share_on_crisis_entity": 0.0,
+   "share_on_target": 0.0,
    "off_target_entities": [
     "BKNG"
    ],
@@ -1009,10 +1041,9 @@
     "headline": "Booking's Earnings Bring an Upgrade as Ukraine Worries Hit Travel Stocks"
    },
    "first_signal_time": "2022-02-21T16:00:00+00:00",
-   "first_market_reaction_time": "2022-02-28T14:30:00Z",
-   "resolution_event_time": "2022-02-24T03:00:00Z",
-   "market_event_time": "2022-02-28T14:30:00Z",
-   "data_resolution_h": 2.0,
+   "first_market_reaction_ticker": null,
+   "first_market_reaction_z": null,
+   "market_event_time": null,
    "trigger_time": null,
    "trigger_signal_id": null,
    "trigger_entity": null,
@@ -1020,22 +1051,24 @@
    "lead_vs_market_reaction_h": null,
    "lead_vs_resolution_h": null,
    "lead_time_hours": null,
-   "lead_time_display": "Missed: company-level stories can't capture a market-wide event (limitation).",
+   "lead_time_display": "Missed (0 on-target triggers; 1 off-target: BKNG earnings): company-level stories can't capture a market-wide event (limitation).",
    "peak_story_intensity": 9.12,
    "story_threshold": 7.5,
    "triggered": false,
    "naive_keyword": "ukraine",
    "naive_rule": "Keyword match 'Ukraine' in headline or body",
    "naive_triggers": 1101,
-   "naive_first_time": "2022-02-21T16:00:00+00:00"
+   "naive_first_time": "2022-02-21T16:00:00+00:00",
+   "first_market_reaction_time": null,
+   "resolution_event_time": null,
+   "data_resolution_h": 8.0
   },
   "first_republic": {
    "crisis_id": "first_republic",
    "name": "First Republic Bank Failure",
    "event_class": "CREDIT",
    "allowed_event_classes": [
-    "CREDIT",
-    "EARNINGS"
+    "CREDIT"
    ],
    "primary_entity": "FRC",
    "allowed_entities": [
@@ -1046,32 +1079,43 @@
    "total_records": 209,
    "total_signals": 277,
    "engine_triggers": 31,
-   "engine_triggers_on_crisis_entity": 22,
-   "share_on_crisis_entity": 0.7097,
+   "engine_triggers_on_crisis_entity": 16,
+   "engine_triggers_on_target": 16,
+   "share_on_crisis_entity": 0.5161,
+   "share_on_target": 0.5161,
    "off_target_entities": [
+    "FRC",
     "JPM"
    ],
-   "first_unmatched_trigger": null,
+   "first_unmatched_trigger": {
+    "timestamp": "2023-04-24T22:00:00+00:00",
+    "entity": "FRC",
+    "event_class": "EARNINGS",
+    "impact": 9,
+    "headline": "First Republic Q1 23 Earnings $FRC"
+   },
    "first_signal_time": "2023-04-24T18:00:00+00:00",
-   "first_market_reaction_time": "2023-04-25T13:30:00Z",
-   "resolution_event_time": "2023-05-01T07:30:00Z",
+   "first_market_reaction_ticker": "FRCB",
+   "first_market_reaction_z": -3.39,
    "market_event_time": "2023-04-25T13:30:00Z",
-   "data_resolution_h": 2.0,
    "trigger_time": "2023-04-24T22:00:00+00:00",
-   "trigger_signal_id": "sig-535f5fcb5604",
+   "trigger_signal_id": "sig-99d1ede18152",
    "trigger_entity": "FRC",
-   "trigger_headline": "First Republic Q1 23 Earnings $FRC",
+   "trigger_headline": "First Republic Stock Plunges As Deposit Flight Mars Q1 Earnings Beat",
    "lead_vs_market_reaction_h": 15.5,
    "lead_vs_resolution_h": 153.5,
    "lead_time_hours": 15.5,
-   "lead_time_display": "Credit trigger on the deposit-outflow disclosure at 22:00 UTC, 15.5 h before the next session's open and 6.4 days before receivership.",
+   "lead_time_display": "Credit trigger in the first snapshot after the after-hours deposit-outflow disclosure at 22:00 UTC; 15.5 h before the next regular session (\u221249% day) and 6.40 days before receivership.",
    "peak_story_intensity": 14.23,
    "story_threshold": 7.5,
    "triggered": true,
    "naive_keyword": "first republic",
    "naive_rule": "Keyword match 'First Republic' in headline or body",
    "naive_triggers": 208,
-   "naive_first_time": "2023-04-24T18:00:00+00:00"
+   "naive_first_time": "2023-04-24T18:00:00+00:00",
+   "first_market_reaction_time": "2023-04-25T13:30:00Z",
+   "resolution_event_time": "2023-05-01T07:30:00Z",
+   "data_resolution_h": 4.0
   }
  }
 }
