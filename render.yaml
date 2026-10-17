@@ -1,0 +1,13 @@
+# Render Blueprint — see https://render.com/docs/infrastructure-as-code
+#
+# Deploys the committed demo as-is: no external services, no secrets, no
+# persistent disk (SQLite is reseeded from data/news_demo.csv + social_demo.csv
+# on every cold start via the app's lifespan hook).
+services:
+  - type: web
+    name: sp-sentinel
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /api/health
+    autoDeploy: true
